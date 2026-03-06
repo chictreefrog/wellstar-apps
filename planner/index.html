@@ -6,11 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A0A1E">
-<title>5분법칙 플래너</title>
+<title>5분법칙플래너</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<meta name="apple-mobile-web-app-title" content="5분법칙">
+<meta name="apple-mobile-web-app-title" content="5분법칙플래너">
 <meta name="description" content="5분 단위 타임블록킹으로 하루를 설계하세요. Brain Dump → 우선순위 → 타임라인 3단계 플래너.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -98,7 +98,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
 
 /* ─── HEADER ─── */
-.hdr{flex-shrink:0;padding:10px 16px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg-secondary);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+.hdr{flex-shrink:0;padding:10px 16px 6px;padding-top:max(10px,env(safe-area-inset-top,10px));display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg-secondary);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
 .hdr__sub{font-size:12px;font-weight:500;color:var(--text-3);letter-spacing:.3px}
 .hdr__main{font-size:17px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:10px}
 .hdr__btn{font-size:16px;color:var(--accent);padding:4px 8px;border-radius:var(--r-sm)}
@@ -156,6 +156,8 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .tblock__dur{font-family:var(--mono);font-size:10px;color:var(--text-3);background:var(--bg-input);padding:2px 6px;border-radius:4px}
 .tblock__del{font-size:14px;color:var(--text-3);padding:4px}
 .tblock__del:active{color:var(--red)}
+.tblock__move{font-size:14px;color:var(--text-3);padding:4px}
+.tblock__move:active{color:var(--accent)}
 
 /* Now line */
 .tnow{position:absolute;left:48px;right:0;height:2px;background:var(--red);z-index:5;pointer-events:none}
@@ -204,7 +206,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .dump.collapsed .dump__row,.dump.collapsed .stk-bar,.dump.collapsed .dump__chips{display:none}
 
 /* ─── TAB BAR ─── */
-.tabs{flex-shrink:0;display:flex;background:var(--bg-secondary);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,8px);backdrop-filter:blur(20px)}
+.tabs{flex-shrink:0;display:flex;background:var(--bg-secondary);border-top:1px solid var(--border);padding:8px 0 max(8px,env(safe-area-inset-bottom,8px));backdrop-filter:blur(20px)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--text-3);transition:var(--tr);font-size:10px;font-weight:500}
 .tab.on{color:var(--accent)}
 .tab__ic{font-size:20px}
@@ -246,6 +248,42 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .sgrp{background:var(--bg-card);border-radius:var(--r-lg);border:1px solid var(--border);margin-bottom:12px;overflow:hidden;backdrop-filter:blur(10px)}
 .sitm{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
 .sitm:last-child{border-bottom:none}
+
+/* Font size buttons */
+.fsize-btns{display:flex;gap:6px}
+.fsize-btn{border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg-input);color:var(--text-2);font-weight:600;transition:var(--tr)}
+.fsize-btn[data-size="small"]{font-size:12px;padding:4px 8px}
+.fsize-btn[data-size="medium"]{font-size:15px;padding:4px 8px}
+.fsize-btn[data-size="large"]{font-size:18px;padding:4px 8px}
+.fsize-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fsize-btn:active{transform:scale(.92)}
+
+/* Font size scaling */
+[data-fsize="small"]{font-size:14px}
+[data-fsize="large"]{font-size:18px}
+@media(max-width:768px){
+  [data-fsize="small"] .pri__txt{font-size:13px}
+  [data-fsize="small"] .tblock__txt{font-size:12px}
+  [data-fsize="small"] .chip{font-size:12px}
+  [data-fsize="small"] .tslot__time{font-size:11px}
+  [data-fsize="small"] .dump__inp{font-size:13px}
+  [data-fsize="small"] .hdr__quote{font-size:12px}
+  [data-fsize="small"] .panel__tt{font-size:12px}
+  [data-fsize="small"] .sitm__lb{font-size:13px}
+
+  [data-fsize="large"] .pri__txt{font-size:18px}
+  [data-fsize="large"] .tblock__txt{font-size:17px}
+  [data-fsize="large"] .chip{font-size:17px}
+  [data-fsize="large"] .tslot__time{font-size:15px}
+  [data-fsize="large"] .dump__inp{font-size:18px}
+  [data-fsize="large"] .hdr__quote{font-size:16px}
+  [data-fsize="large"] .hdr__main{font-size:22px}
+  [data-fsize="large"] .panel__tt{font-size:17px}
+  [data-fsize="large"] .sitm__lb{font-size:18px}
+  [data-fsize="large"] .scard__val{font-size:36px}
+  [data-fsize="large"] .tpicker__slot-time{font-size:18px}
+  [data-fsize="large"] .tpicker__slot-label{font-size:17px}
+}
 .sitm__lb{font-size:14px;color:var(--text-1)}
 .sitm__val{font-size:13px;color:var(--text-2)}
 .tog{width:44px;height:26px;border-radius:13px;background:var(--bg-input);position:relative;cursor:pointer;transition:var(--tr);border:1px solid var(--border)}
@@ -294,6 +332,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .tpicker__slot{display:flex;align-items:center;padding:12px 14px;border-radius:var(--r-sm);margin-bottom:2px;gap:10px;transition:var(--tr)}
 .tpicker__slot:active{background:var(--accent-soft);transform:scale(.98)}
 .tpicker__slot.occupied{opacity:.35;pointer-events:none}
+.tpicker__slot.current{background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r-sm)}
 .tpicker__slot-time{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text-2);width:52px}
 .tpicker__slot-label{font-size:13px;color:var(--text-3)}
 .tpicker__slot.occupied .tpicker__slot-label{color:var(--text-3);font-style:italic}
@@ -309,7 +348,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   .panel{min-height:0;flex:1}
 
   /* ─ Header ─ */
-  .hdr{padding:14px 16px 8px}
+  .hdr{padding:14px 16px 8px;padding-top:max(14px,env(safe-area-inset-top,14px))}
   .hdr__sub{font-size:14px}
   .hdr__main{font-size:20px}
   .hdr__btn{font-size:20px;padding:6px 12px}
@@ -342,6 +381,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   .tblock__txt{font-size:15px}
   .tblock__dur{font-size:12px;padding:3px 8px}
   .tblock__del{font-size:18px;padding:6px}
+  .tblock__move{font-size:18px;padding:6px}
   .tinput{font-size:16px;padding:10px 12px}
 
   /* ─ Brain Dump ─ */
@@ -364,7 +404,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   .chip__act{font-size:18px;padding:2px 4px}
 
   /* ─ Tab bar ─ */
-  .tabs{padding:8px 0 env(safe-area-inset-bottom,10px)}
+  .tabs{padding:8px 0 max(12px,env(safe-area-inset-bottom,12px))}
   .tab{font-size:12px;gap:3px;padding:8px 0}
   .tab__ic{font-size:22px}
 
@@ -506,6 +546,14 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       <div class="sgrp">
         <div class="sitm"><span class="sitm__lb">🌙 다크 모드</span><div class="tog on" id="togTheme" onclick="togTheme()"></div></div>
         <div class="sitm"><span class="sitm__lb">🔔 알림</span><div class="tog" id="togNotif" onclick="togNotif()"></div></div>
+        <div class="sitm">
+          <span class="sitm__lb">🔤 글자 크기</span>
+          <div class="fsize-btns">
+            <button class="fsize-btn" data-size="small" onclick="setFontSize('small')">가</button>
+            <button class="fsize-btn on" data-size="medium" onclick="setFontSize('medium')">가</button>
+            <button class="fsize-btn" data-size="large" onclick="setFontSize('large')">가</button>
+          </div>
+        </div>
       </div>
       <div class="sgrp">
         <div class="sitm"><span class="sitm__lb">📊 현재 레벨</span><span class="sitm__val" id="setLv">Lv.1 입문 (60분)</span></div>
@@ -670,6 +718,7 @@ function renderTL(){
             ${task.sticker?`<span class="tblock__stk">${task.sticker}</span>`:''}
             <span class="tblock__txt">${esc(task.text)}</span>
             <span class="tblock__dur">${task.duration||bm}m</span>
+            <span class="tblock__move" onclick="event.stopPropagation();reschedule('${task.id}')">↔</span>
             <span class="tblock__del" onclick="event.stopPropagation();delTask('${task.id}')">✕</span>
           </div>`:''}
         </div>
@@ -728,12 +777,13 @@ function moveToTL(id){
   for(let h=6;h<24;h++){
     for(let s=0;s<sph;s++){
       const min=s*bm, ts=`${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
-      const existing=tasks.find(x=>x.zone==='timeline'&&x.timeSlot===ts);
+      const existing=tasks.find(x=>x.zone==='timeline'&&x.timeSlot===ts&&x.id!==id);
+      const isCurrent=tasks.find(x=>x.zone==='timeline'&&x.timeSlot===ts&&x.id===id);
       const isPast=isToday&&(h<now.getHours()||(h===now.getHours()&&min<now.getMinutes()));
       
-      html+=`<div class="tpicker__slot ${existing?'occupied':''}" onclick="${existing?'':`pickTime('${ts}')`}">
+      html+=`<div class="tpicker__slot ${existing?'occupied':''} ${isCurrent?'current':''}" onclick="${existing?'':`pickTime('${ts}')`}">
         <span class="tpicker__slot-time">${ts}</span>
-        <span class="tpicker__slot-label">${existing ? '🔒 '+esc(existing.text) : (isPast ? '지난 시간' : '비어있음 — 탭하여 선택')}</span>
+        <span class="tpicker__slot-label">${existing ? '🔒 '+esc(existing.text) : (isCurrent ? '📍 현재 위치' : (isPast ? '지난 시간' : '비어있음 — 탭하여 선택'))}</span>
       </div>`;
     }
   }
@@ -761,6 +811,11 @@ function pickTime(ts){
 function closePicker(){
   $('tpicker').classList.remove('show');
   pickerTaskId=null;
+}
+
+function reschedule(id){
+  // Reuse the time picker to move an existing timeline task
+  moveToTL(id);
 }
 
 function moveToSlot(id, ts){
@@ -889,6 +944,13 @@ function togNotif(){
     $('togNotif').classList.toggle('on',p==='granted');
     if(p==='granted') toast('🔔 알림이 켜졌습니다!');
   });
+}
+
+function setFontSize(size){
+  document.documentElement.setAttribute('data-fsize', size);
+  document.querySelectorAll('.fsize-btn').forEach(b=>b.classList.toggle('on',b.dataset.size===size));
+  localStorage.setItem('p_fsize', size);
+  toast(size==='small'?'🔤 작은 글자':size==='large'?'🔤 큰 글자':'🔤 보통 글자');
 }
 
 function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
@@ -1068,6 +1130,8 @@ if('serviceWorker' in navigator){
 /* ═══ INIT ═══ */
 function init(){
   if(localStorage.getItem('p_theme')==='light'){isDark=false;document.documentElement.setAttribute('data-theme','light');$('togTheme').classList.remove('on');}
+  const savedFsize=localStorage.getItem('p_fsize')||'medium';
+  if(savedFsize!=='medium'){document.documentElement.setAttribute('data-fsize',savedFsize);document.querySelectorAll('.fsize-btn').forEach(b=>b.classList.toggle('on',b.dataset.size===savedFsize));}
   loadStats(); loadTasks(); mkStars(); renderStk(); renderAll(); initVoice();
   $('dumpInp').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addDump();}});
   setTimeout(shootStar,5000+Math.random()*10000);
