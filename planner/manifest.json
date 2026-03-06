@@ -1,6 +1,6 @@
 {
-  "name": "5분법칙 플래너 — 스마트 타임블록킹",
-  "short_name": "5분법칙",
+  "name": "5분법칙플래너 — 스마트 타임블록킹",
+  "short_name": "5분법칙플래너",
   "description": "5분 단위 타임블록킹으로 하루를 설계하세요. Brain Dump → 우선순위 → 타임라인 3단계 플래너.",
   "start_url": "/planner/",
   "display": "standalone",
@@ -23,7 +23,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "오늘의 플래너",
