@@ -298,6 +298,41 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:var(--tr);box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .tog.on::after{transform:translateX(18px)}
 
+/* ─── TOOL RECOMMENDATIONS (Stats tab) ─── */
+.tool-rec{margin-top:16px;padding:16px 0}
+.tool-rec__title{font-size:13px;font-weight:600;color:var(--text-3);margin-bottom:12px}
+.tool-rec__cards{display:flex;gap:10px}
+.tool-rec__card{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 12px;text-align:center;text-decoration:none;transition:var(--tr);display:flex;flex-direction:column;align-items:center;gap:6px}
+.tool-rec__card:active{transform:scale(.97);border-color:var(--accent)}
+.tool-rec__icon{font-size:28px}
+.tool-rec__name{font-size:13px;font-weight:600;color:var(--text-1)}
+.tool-rec__desc{font-size:11px;color:var(--text-3);line-height:1.4}
+
+/* ─── TOOL DISCOVERY (Settings tab) ─── */
+.tool-disc{margin-top:4px}
+.tool-disc__hd{display:flex;align-items:center;gap:8px;padding:12px 4px}
+.tool-disc__badge{font-size:20px}
+.tool-disc__title{font-size:14px;font-weight:600;color:var(--text-2)}
+.tool-disc__list{background:var(--bg-card);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;backdrop-filter:blur(10px)}
+.tool-disc__item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);text-decoration:none;transition:var(--tr)}
+.tool-disc__item:last-child{border-bottom:none}
+.tool-disc__item:active{background:var(--bg-hover)}
+.tool-disc__icon{font-size:28px;flex-shrink:0}
+.tool-disc__info{flex:1;min-width:0}
+.tool-disc__name{display:block;font-size:14px;font-weight:600;color:var(--text-1)}
+.tool-disc__sub{display:block;font-size:12px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tool-disc__arrow{font-size:20px;color:var(--text-3);flex-shrink:0}
+@media(max-width:768px){
+  .tool-rec__card{padding:14px 10px}
+  .tool-rec__icon{font-size:32px}
+  .tool-rec__name{font-size:14px}
+  .tool-rec__desc{font-size:12px}
+  .tool-disc__item{padding:16px}
+  .tool-disc__icon{font-size:32px}
+  .tool-disc__name{font-size:15px}
+  .tool-disc__sub{font-size:13px}
+}
+
 /* ─── EMAIL GATE ─── */
 .gate{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);padding:20px}
 .gate.show{display:flex}
@@ -692,6 +727,22 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
         <div class="wchart__bars" id="wBars"></div>
       </div>
       <button class="share-btn" onclick="generateShareCard()">📤 오늘의 성과 공유하기</button>
+      <!-- Tool Recommendations -->
+      <div class="tool-rec" id="statsRec">
+        <div class="tool-rec__title">💡 이런 도구도 있어요</div>
+        <div class="tool-rec__cards">
+          <a class="tool-rec__card" href="/saju/" onclick="event.preventDefault();toast('🔮 준비 중이에요!')">
+            <span class="tool-rec__icon">🔮</span>
+            <span class="tool-rec__name">사주 성공진단</span>
+            <span class="tool-rec__desc">나의 강점을 알아보세요</span>
+          </a>
+          <a class="tool-rec__card" href="/sales-diary/" onclick="event.preventDefault();toast('📒 준비 중이에요!')">
+            <span class="tool-rec__icon">📒</span>
+            <span class="tool-rec__name">세일즈 다이어리</span>
+            <span class="tool-rec__desc">영업 활동을 체계적으로</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -723,6 +774,47 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
         <div class="sitm" style="flex-direction:column;align-items:flex-start;gap:4px">
           <span class="sitm__lb">5분법칙 플래너 v1.0</span>
           <span style="font-size:11px;color:var(--text-3)">by 옆집디노 · wellstar.life</span>
+        </div>
+      </div>
+      <!-- Tool Discovery -->
+      <div class="tool-disc">
+        <div class="tool-disc__hd">
+          <span class="tool-disc__badge">🦕</span>
+          <span class="tool-disc__title">옆집디노의 다른 도구들</span>
+        </div>
+        <div class="tool-disc__list">
+          <a class="tool-disc__item" href="/saju/" onclick="event.preventDefault();toast('🔮 준비 중이에요!')">
+            <span class="tool-disc__icon">🔮</span>
+            <div class="tool-disc__info">
+              <span class="tool-disc__name">사주 성공진단</span>
+              <span class="tool-disc__sub">사주로 보는 나의 숨겨진 강점과 성공 전략</span>
+            </div>
+            <span class="tool-disc__arrow">›</span>
+          </a>
+          <a class="tool-disc__item" href="/sales-diary/" onclick="event.preventDefault();toast('📒 준비 중이에요!')">
+            <span class="tool-disc__icon">📒</span>
+            <div class="tool-disc__info">
+              <span class="tool-disc__name">세일즈 다이어리</span>
+              <span class="tool-disc__sub">매일 영업 활동을 기록하고 성과를 추적하세요</span>
+            </div>
+            <span class="tool-disc__arrow">›</span>
+          </a>
+          <a class="tool-disc__item" href="/coach/" onclick="event.preventDefault();toast('🤖 준비 중이에요!')">
+            <span class="tool-disc__icon">🤖</span>
+            <div class="tool-disc__info">
+              <span class="tool-disc__name">AI 세일즈 코치</span>
+              <span class="tool-disc__sub">AI가 실시간으로 코칭하고 스크립트를 만들어줘요</span>
+            </div>
+            <span class="tool-disc__arrow">›</span>
+          </a>
+          <a class="tool-disc__item" href="/tools/" onclick="event.preventDefault();toast('🚀 준비 중이에요!')">
+            <span class="tool-disc__icon">🚀</span>
+            <div class="tool-disc__info">
+              <span class="tool-disc__name">전체 도구 보기</span>
+              <span class="tool-disc__sub">50개 이상의 도구를 만나보세요</span>
+            </div>
+            <span class="tool-disc__arrow">›</span>
+          </a>
         </div>
       </div>
     </div>
@@ -1623,8 +1715,31 @@ function moveToSlot(id, ts){
 function togDone(id){
   const t=tasks.find(x=>x.id===id); if(!t)return;
   t.done=!t.done;
-  if(t.done){stats.totalDone++;saveStats();}
+  if(t.done){
+    stats.totalDone++;saveStats();
+    // Check if all tasks completed
+    const all=tasks.filter(x=>x.zone!=='dump'&&x.zone!=='memo');
+    const done=all.filter(x=>x.done);
+    if(all.length>=3 && done.length===all.length){
+      setTimeout(()=>toast('🎉 오늘 할일 전부 완료! 대단해요!'),500);
+      setTimeout(()=>showToolTip(),3000);
+    }
+  }
   saveTasks(); renderAll();
+}
+
+function showToolTip(){
+  // Show contextual recommendation only once per day
+  const today=dk(new Date());
+  if(localStorage.getItem('p_tip_shown')===today)return;
+  localStorage.setItem('p_tip_shown',today);
+  const tips=[
+    '🔮 나의 숨겨진 강점이 궁금하다면? 사주 성공진단을 체험해보세요!',
+    '📒 매일 세일즈 활동도 관리해보세요! 세일즈 다이어리가 준비 중이에요',
+    '🤖 AI 세일즈 코치가 곧 찾아옵니다! 설정에서 다른 도구를 확인해보세요',
+    '🦕 옆집디노의 50개 이상 도구를 만나보세요! 설정 → 다른 도구들',
+  ];
+  toast(tips[Math.floor(Math.random()*tips.length)]);
 }
 
 function delTask(id){
@@ -1682,7 +1797,11 @@ function chkLvUp(){
   for(let i=LVS.length-1;i>=0;i--){
     if(stats.streak>=LVS[i].sReq && rate>=LVS[i].rReq){stats.level=LVS[i].lv;break;}
   }
-  if(stats.level>old){const l=LVS[stats.level-1]; toast(`🎉 레벨업! Lv.${l.lv} ${l.name} ${l.badge}`);}
+  if(stats.level>old){
+    const l=LVS[stats.level-1];
+    toast(`🎉 레벨업! Lv.${l.lv} ${l.name} ${l.badge}`);
+    setTimeout(()=>toast('🦕 설정에서 옆집디노의 다른 도구들도 확인해보세요!'),3000);
+  }
 }
 
 function updLvUI(){
@@ -2005,7 +2124,7 @@ if('serviceWorker' in navigator){
   // Force clear old caches on load
   if('caches' in window){
     caches.keys().then(keys => {
-      keys.forEach(k => { if(k !== '5min-planner-v13') caches.delete(k); });
+      keys.forEach(k => { if(k !== '5min-planner-v14') caches.delete(k); });
     });
   }
   
