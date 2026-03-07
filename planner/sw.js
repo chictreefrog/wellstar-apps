@@ -1,4 +1,4 @@
-const CACHE_NAME = '5min-planner-v12';
+const CACHE_NAME = '5min-planner-v13';
 const ASSETS = [
   '/planner/',
   '/planner/index.html',
