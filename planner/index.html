@@ -731,7 +731,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       <button class="share-modal__close" onclick="closeShare()">✕</button>
     </div>
     <div class="share-modal__body">
-      <canvas id="shareCanvas" width="540" height="540" style="width:100%;border-radius:12px"></canvas>
+      <canvas id="shareCanvas" width="1080" height="1080" style="width:100%;border-radius:12px"></canvas>
     </div>
     <div class="share-modal__acts">
       <button class="share-modal__btn share-modal__btn--share" onclick="shareCard()">📤 공유하기</button>
@@ -1115,138 +1115,117 @@ function closeCarry(){
 function generateShareCard(){
   const canvas=$('shareCanvas');
   const ctx=canvas.getContext('2d');
-  const W=540, H=540;
+  const W=1080, H=1080;
   canvas.width=W; canvas.height=H;
   
-  // Gather stats
   const all=tasks.filter(t=>t.zone!=='dump'&&t.zone!=='memo');
   const done=all.filter(t=>t.done);
   const rate=all.length?Math.round(done.length/all.length*100):0;
   const lv=LVS[stats.level-1]||LVS[0];
-  const dateStr=fmtDate(curDate);
+  const d=curDate;
+  const dateStr=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYS_KR[d.getDay()]}요일`;
   
-  // === DRAW CARD ===
-  
-  // Background gradient
+  // === BACKGROUND ===
   const bg=ctx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,'#07071A');
-  bg.addColorStop(0.5,'#0E1433');
-  bg.addColorStop(1,'#1A0A2E');
-  ctx.fillStyle=bg;
-  ctx.roundRect(0,0,W,H,24);
-  ctx.fill();
+  if(rate>=80){ bg.addColorStop(0,'#0A2E1A');bg.addColorStop(1,'#062E14'); }
+  else if(rate>=50){ bg.addColorStop(0,'#0A1A3D');bg.addColorStop(1,'#0A1433'); }
+  else { bg.addColorStop(0,'#1A0A2E');bg.addColorStop(1,'#140A22'); }
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  
+  // Deco circles
+  ctx.globalAlpha=0.06; ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(850,180,300,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(200,900,250,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
   
   // Stars
-  for(let i=0;i<40;i++){
-    ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.4+0.1})`;
-    ctx.beginPath();
-    ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.5+0.5, 0, Math.PI*2);
-    ctx.fill();
+  for(let i=0;i<30;i++){
+    ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.3+0.05})`;
+    ctx.beginPath(); ctx.arc(Math.random()*W,Math.random()*H,Math.random()*2+0.5,0,Math.PI*2); ctx.fill();
   }
   
-  // Top badge area
-  ctx.fillStyle='rgba(10,132,255,0.1)';
-  ctx.beginPath();
-  ctx.roundRect(W/2-80,30,160,36,18);
-  ctx.fill();
-  ctx.fillStyle='#0A84FF';
-  ctx.font='600 14px "Noto Sans KR", sans-serif';
+  // === TOP ===
   ctx.textAlign='center';
-  ctx.fillText(`${lv.badge} Lv.${lv.lv} ${lv.name}`,W/2,54);
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.font='600 28px "Noto Sans KR", sans-serif';
+  ctx.fillText('⏱ 5분법칙 플래너',W/2,70);
   
-  // Date
-  ctx.fillStyle='rgba(255,255,255,0.5)';
-  ctx.font='500 14px "Noto Sans KR", sans-serif';
-  ctx.fillText(dateStr,W/2,90);
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='500 32px "Noto Sans KR", sans-serif';
+  ctx.fillText(dateStr,W/2,125);
   
-  // Big completion rate
+  // === BIG NUMBER ===
+  const numColor=rate>=80?'#30D158':rate>=50?'#0A84FF':'#BF5AF2';
+  const glowColor=rate>=80?'rgba(48,209,88,0.15)':rate>=50?'rgba(10,132,255,0.15)':'rgba(191,90,242,0.15)';
+  ctx.fillStyle=glowColor;
+  ctx.beginPath(); ctx.arc(W/2,340,200,0,Math.PI*2); ctx.fill();
+  
+  ctx.fillStyle=numColor;
+  ctx.font='800 220px "Noto Sans KR", sans-serif';
+  ctx.fillText(`${rate}%`,W/2,400);
+  
   ctx.fillStyle='#FFFFFF';
-  ctx.font='700 72px "Noto Sans KR", sans-serif';
-  ctx.fillText(`${rate}%`,W/2,175);
+  ctx.font='700 40px "Noto Sans KR", sans-serif';
+  ctx.fillText('오늘의 달성률',W/2,475);
   
-  ctx.fillStyle='rgba(255,255,255,0.5)';
-  ctx.font='500 16px "Noto Sans KR", sans-serif';
-  ctx.fillText('오늘의 달성률',W/2,200);
+  // === MOTIVATION ===
+  let msg='';
+  if(rate>=100) msg='🏆 완벽한 하루!';
+  else if(rate>=80) msg='🔥 대단해요! 거의 다 해냈어요';
+  else if(rate>=50) msg='💪 절반 이상 달성!';
+  else if(rate>0) msg='🌱 시작이 반! 꾸준히 가보자';
+  else msg='✨ 오늘의 하루를 계획해보세요';
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='500 30px "Noto Sans KR", sans-serif';
+  ctx.fillText(msg,W/2,540);
   
-  // Stats boxes
-  const boxY=230, boxH=80, boxW=110, gap=16;
-  const totalW=boxW*4+gap*3;
-  const startX=(W-totalW)/2;
+  // === STATS ROW (colored boxes) ===
+  const boxY=610, boxH=140, boxW=210, gap=30;
+  const totalBW=boxW*4+gap*3;
+  const startBX=(W-totalBW)/2;
   const boxes=[
     {label:'할일',value:all.length,color:'#0A84FF'},
     {label:'완료',value:done.length,color:'#30D158'},
     {label:'습관',value:stats.streak+'일',color:'#FF9F0A'},
     {label:'레벨',value:'Lv.'+lv.lv,color:'#BF5AF2'},
   ];
-  
   boxes.forEach((b,i)=>{
-    const x=startX+i*(boxW+gap);
-    // Box bg
+    const x=startBX+i*(boxW+gap);
     ctx.fillStyle='rgba(255,255,255,0.06)';
-    ctx.beginPath();
-    ctx.roundRect(x,boxY,boxW,boxH,12);
-    ctx.fill();
-    // Value
+    ctx.beginPath(); ctx.roundRect(x,boxY,boxW,boxH,16); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.1)';
+    ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(x,boxY,boxW,boxH,16); ctx.stroke();
     ctx.fillStyle=b.color;
-    ctx.font='700 28px "Noto Sans KR", sans-serif';
+    ctx.font='700 52px "Noto Sans KR", sans-serif';
     ctx.textAlign='center';
-    ctx.fillText(String(b.value),x+boxW/2,boxY+38);
-    // Label
+    ctx.fillText(String(b.value),x+boxW/2,boxY+75);
     ctx.fillStyle='rgba(255,255,255,0.5)';
-    ctx.font='500 12px "Noto Sans KR", sans-serif';
-    ctx.fillText(b.label,x+boxW/2,boxY+60);
+    ctx.font='500 24px "Noto Sans KR", sans-serif';
+    ctx.fillText(b.label,x+boxW/2,boxY+115);
   });
   
-  // Completed tasks list
-  const doneTasks=done.slice(0,5);
-  if(doneTasks.length>0){
-    ctx.textAlign='left';
-    const listY=340;
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.font='600 12px "Noto Sans KR", sans-serif';
-    ctx.fillText('✅ 오늘 완료한 일',40,listY);
-    
-    doneTasks.forEach((t,i)=>{
-      const y=listY+24+i*28;
-      ctx.fillStyle='rgba(48,209,88,0.15)';
-      ctx.beginPath();
-      ctx.roundRect(40,y-14,W-80,24,6);
-      ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,0.7)';
-      ctx.font='500 13px "Noto Sans KR", sans-serif';
-      const display=(t.sticker||'✓')+' '+t.text;
-      ctx.fillText(display.substring(0,28)+(display.length>28?'...':''),52,y+1);
-    });
-    if(done.length>5){
-      const y=listY+24+5*28;
-      ctx.fillStyle='rgba(255,255,255,0.3)';
-      ctx.font='400 12px "Noto Sans KR", sans-serif';
-      ctx.fillText(`외 ${done.length-5}개 더...`,52,y+1);
-    }
-  } else {
+  // === COMPLETED TASKS ===
+  if(done.length>0){
     ctx.textAlign='center';
-    ctx.fillStyle='rgba(255,255,255,0.3)';
-    ctx.font='500 14px "Noto Sans KR", sans-serif';
-    ctx.fillText('오늘 할일을 완료하고 공유해보세요!',W/2,380);
+    const tt=done.slice(0,3).map(t=>(t.sticker||'✓')+' '+t.text.substring(0,12)).join('  ·  ');
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.font='500 24px "Noto Sans KR", sans-serif';
+    ctx.fillText(tt.substring(0,50),W/2,800);
   }
   
-  // Footer branding
-  ctx.textAlign='center';
-  ctx.fillStyle='rgba(255,255,255,0.2)';
-  ctx.font='500 12px "Noto Sans KR", sans-serif';
-  ctx.fillText('5분법칙 플래너  ·  app.wellstar.life/planner',W/2,H-20);
+  // === BOTTOM CTA ===
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(200,H-180); ctx.lineTo(W-200,H-180); ctx.stroke();
   
-  // Accent line
-  const lineGrad=ctx.createLinearGradient(100,H-40,W-100,H-40);
-  lineGrad.addColorStop(0,'transparent');
-  lineGrad.addColorStop(0.5,'rgba(10,132,255,0.3)');
-  lineGrad.addColorStop(1,'transparent');
-  ctx.strokeStyle=lineGrad;
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(100,H-36);
-  ctx.lineTo(W-100,H-36);
-  ctx.stroke();
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.font='600 34px "Noto Sans KR", sans-serif';
+  ctx.fillText('나도 5분법칙으로 하루를 바꿔볼까? 👀',W/2,H-120);
+  
+  ctx.fillStyle=numColor;
+  ctx.font='700 32px "Noto Sans KR", sans-serif';
+  ctx.fillText('app.wellstar.life/planner',W/2,H-60);
   
   $('shareModal').classList.add('show');
 }
@@ -1895,7 +1874,7 @@ if('serviceWorker' in navigator){
   // Force clear old caches on load
   if('caches' in window){
     caches.keys().then(keys => {
-      keys.forEach(k => { if(k !== '5min-planner-v9') caches.delete(k); });
+      keys.forEach(k => { if(k !== '5min-planner-v12') caches.delete(k); });
     });
   }
   
