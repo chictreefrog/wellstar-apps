@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<meta name="apple-mobile-web-app-title" content="5분법칙플래너">
+<meta name="apple-mobile-web-app-title" content="5분법칙 플래너">
 <meta name="description" content="5분 단위 타임블록킹으로 하루를 설계하세요. Brain Dump → 우선순위 → 타임라인 3단계 플래너.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@
   --bg-dump: rgba(255,159,10,0.06);
   --text-1: #F5F5F7;
   --text-2: rgba(255,255,255,0.6);
-  --text-3: rgba(255,255,255,0.35);
+  --text-3: rgba(255,255,255,0.45);
   --text-done: rgba(255,255,255,0.3);
   --accent: #0A84FF;
   --accent-glow: rgba(10,132,255,0.3);
@@ -62,7 +62,7 @@
   --bg-slot-hover: rgba(10,132,255,0.06); --bg-block: rgba(10,132,255,0.1);
   --bg-block-done: rgba(0,0,0,0.03); --bg-dump: rgba(255,159,10,0.06);
   --text-1: #1D1D1F; --text-2: rgba(0,0,0,0.55);
-  --text-3: rgba(0,0,0,0.3); --text-done: rgba(0,0,0,0.25);
+  --text-3: rgba(0,0,0,0.45); --text-done: rgba(0,0,0,0.25);
   --accent: #0066CC; --accent-glow: rgba(0,102,204,0.2);
   --accent-soft: rgba(0,102,204,0.08);
   --border: rgba(0,0,0,0.08); --border-active: rgba(0,102,204,0.3);
@@ -72,8 +72,8 @@
 
 /* ═══ RESET ═══ */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html{height:100%;-webkit-tap-highlight-color:transparent}
-body{height:100%;font-family:var(--font);background:var(--bg-primary);color:var(--text-1);overflow:hidden;-webkit-font-smoothing:antialiased}
+html{height:100%;height:100dvh;-webkit-tap-highlight-color:transparent}
+body{height:100%;height:100dvh;font-family:var(--font);background:var(--bg-primary);color:var(--text-1);overflow:hidden;-webkit-font-smoothing:antialiased}
 input,button,textarea{font-family:inherit;border:none;outline:none;background:none}
 button{cursor:pointer;-webkit-user-select:none;user-select:none}
 
@@ -95,7 +95,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .shooting-star.active{animation:shoot .8s ease-out forwards}
 
 /* ═══ APP SHELL ═══ */
-#app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
+#app{position:relative;z-index:1;height:100%;height:100dvh;display:flex;flex-direction:column}
 
 /* ─── HEADER ─── */
 .hdr{flex-shrink:0;padding:10px 16px 6px;padding-top:max(10px,env(safe-area-inset-top,10px));display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg-secondary);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
@@ -212,7 +212,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .dump.collapsed .dump__row,.dump.collapsed .stk-bar,.dump.collapsed .dump__chips{display:none}
 
 /* ─── TAB BAR ─── */
-.tabs{flex-shrink:0;display:flex;background:var(--bg-secondary);border-top:1px solid var(--border);padding:8px 0 max(8px,env(safe-area-inset-bottom,8px));backdrop-filter:blur(20px)}
+.tabs{flex-shrink:0;display:flex;background:var(--bg-secondary);border-top:1px solid var(--border);padding:8px 0 calc(env(safe-area-inset-bottom,0px));backdrop-filter:blur(20px)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;color:var(--text-3);transition:var(--tr);font-size:10px;font-weight:500}
 .tab.on{color:var(--accent)}
 .tab__ic{font-size:20px}
@@ -407,7 +407,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   .chip__act{font-size:18px;padding:2px 4px}
 
   /* ─ Tab bar ─ */
-  .tabs{padding:8px 0 max(12px,env(safe-area-inset-bottom,12px))}
+  .tabs{padding:8px 0 calc(env(safe-area-inset-bottom,0px))}
   .tab{font-size:12px;gap:3px;padding:8px 0}
   .tab__ic{font-size:22px}
 
@@ -993,12 +993,13 @@ function resetAll(){
   tasks=[];stats={streak:0,level:1,totalDone:0,lastDate:null};saveStats();renderAll();toast('🗑 초기화 완료');
 }
 
-/* ═══ VOICE RECOGNITION (Continuous Mode) ═══ */
+/* ═══ VOICE RECOGNITION (Galaxy + iOS compatible) ═══ */
 let recognition = null;
 let isRecording = false;
-let voiceBuffer = '';       // accumulated text for current chunk
-let silenceTimer = null;    // 3-second auto-chip timer
-const SILENCE_MS = 3000;    // 3 seconds of silence = auto add chip
+let voiceChunks = [];       // completed text chunks
+let silenceTimer = null;
+let restartTimer = null;
+const SILENCE_MS = 5000;    // 5 seconds of silence = auto add chip
 
 function initVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1010,73 +1011,93 @@ function initVoice(){
   
   recognition = new SR();
   recognition.lang = 'ko-KR';
-  recognition.continuous = true;       // Keep listening!
+  recognition.continuous = false;  // Single-shot for Galaxy compatibility
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
   
   recognition.onstart = () => {
-    isRecording = true;
-    voiceBuffer = '';
     $('micBtn').classList.add('recording');
-    $('dumpInp').placeholder = '🎤 듣고 있어요... (다시 탭하면 종료)';
+    if(voiceChunks.length === 0){
+      $('dumpInp').placeholder = '🎤 듣고 있어요... (다시 탭하면 종료)';
+    }
   };
   
   recognition.onresult = (e) => {
-    let finalText = '', interimText = '';
+    let finalText = '';
+    let interimText = '';
     
     for(let i = e.resultIndex; i < e.results.length; i++){
-      const transcript = e.results[i][0].transcript;
       if(e.results[i].isFinal){
-        finalText += transcript;
+        finalText += e.results[i][0].transcript;
       } else {
-        interimText += transcript;
+        interimText += e.results[i][0].transcript;
       }
     }
     
-    // Show what's being heard in input
-    $('dumpInp').value = voiceBuffer + (finalText || interimText);
+    // Show in input: all chunks + current
+    const display = [...voiceChunks, finalText || interimText].join(' ').trim();
+    $('dumpInp').value = display;
     
     if(finalText){
-      voiceBuffer += finalText;
-      $('dumpInp').value = voiceBuffer;
+      voiceChunks.push(finalText.trim());
       
-      // Reset silence timer — wait 3 seconds before auto-adding chip
+      // Reset silence timer
       clearTimeout(silenceTimer);
       silenceTimer = setTimeout(() => {
-        if(voiceBuffer.trim()){
-          $('dumpInp').value = voiceBuffer.trim();
-          addDump();
-          toast('🎤 음성으로 추가!');
-          voiceBuffer = '';
-          $('dumpInp').value = '';
-          $('dumpInp').placeholder = '🎤 계속 말하세요...';
-        }
+        autoAddChip();
       }, SILENCE_MS);
     }
   };
   
   recognition.onerror = (e) => {
     if(e.error === 'no-speech'){
-      // No speech detected — just keep listening, don't stop
+      // No speech — restart if still recording
+      if(isRecording) restartRecognition();
       return;
-    } else if(e.error === 'not-allowed'){
+    }
+    if(e.error === 'aborted') return;
+    if(e.error === 'not-allowed'){
       toast('🎤 마이크 권한을 허용해주세요');
       stopVoice();
-    } else if(e.error === 'aborted'){
-      // User stopped manually, handled in stopVoice
-    } else {
-      toast('🎤 음성 인식 오류: ' + e.error);
-      stopVoice();
+      return;
     }
+    // Other errors — try restart
+    if(isRecording) restartRecognition();
   };
   
   recognition.onend = () => {
-    // If still supposed to be recording, restart (browser sometimes stops)
+    // Auto-restart for continuous listening (key for Galaxy!)
     if(isRecording){
-      try { recognition.start(); }
-      catch(e){ /* already started */ }
+      restartRecognition();
     }
   };
+}
+
+function restartRecognition(){
+  clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    if(!isRecording) return;
+    try { recognition.start(); }
+    catch(e){ 
+      // If already running, wait and retry
+      setTimeout(() => { 
+        if(isRecording) try { recognition.start(); } catch(ex){} 
+      }, 500);
+    }
+  }, 200);
+}
+
+function autoAddChip(){
+  if(voiceChunks.length === 0) return;
+  const text = voiceChunks.join(' ').trim();
+  if(!text) return;
+  
+  $('dumpInp').value = text;
+  addDump();
+  toast('🎤 음성으로 추가!');
+  voiceChunks = [];
+  $('dumpInp').value = '';
+  if(isRecording) $('dumpInp').placeholder = '🎤 계속 말하세요...';
 }
 
 function toggleVoice(){
@@ -1085,28 +1106,39 @@ function toggleVoice(){
     return;
   }
   if(isRecording){
-    // Stop recording — save any remaining buffer
+    // Stop — save remaining
     isRecording = false;
     clearTimeout(silenceTimer);
-    recognition.stop();
+    clearTimeout(restartTimer);
+    try { recognition.stop(); } catch(e){}
     
-    if(voiceBuffer.trim()){
-      $('dumpInp').value = voiceBuffer.trim();
-      addDump();
-      toast('🎤 음성으로 추가!');
+    if(voiceChunks.length > 0){
+      const text = voiceChunks.join(' ').trim();
+      if(text){
+        $('dumpInp').value = text;
+        addDump();
+        toast('🎤 음성으로 추가!');
+      }
     }
-    voiceBuffer = '';
     stopVoice();
   } else {
+    isRecording = true;
+    voiceChunks = [];
     try { recognition.start(); }
-    catch(e){ recognition.stop(); setTimeout(() => { try{recognition.start();}catch(ex){} }, 200); }
+    catch(e){ 
+      try { recognition.stop(); } catch(ex){}
+      setTimeout(() => { 
+        if(isRecording) try { recognition.start(); } catch(ex){} 
+      }, 300);
+    }
   }
 }
 
 function stopVoice(){
   isRecording = false;
   clearTimeout(silenceTimer);
-  voiceBuffer = '';
+  clearTimeout(restartTimer);
+  voiceChunks = [];
   $('micBtn').classList.remove('recording');
   $('dumpInp').value = '';
   $('dumpInp').placeholder = '할 일을 입력하세요...';
@@ -1180,10 +1212,31 @@ function checkIOSInstall(){
   }
 }
 
-/* ═══ SERVICE WORKER ═══ */
+/* ═══ SERVICE WORKER (auto-update) ═══ */
 if('serviceWorker' in navigator){
+  // Force clear old caches on load
+  if('caches' in window){
+    caches.keys().then(keys => {
+      keys.forEach(k => { if(k !== '5min-planner-v5') caches.delete(k); });
+    });
+  }
+  
   navigator.serviceWorker.register('sw.js', {scope: '/planner/'})
-    .then(reg => console.log('SW registered:', reg.scope))
+    .then(reg => {
+      console.log('SW registered:', reg.scope);
+      // Check for updates immediately
+      reg.update();
+      // When new SW is found, activate it
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if(newSW.state === 'activated'){
+            console.log('New SW activated, reloading...');
+            window.location.reload();
+          }
+        });
+      });
+    })
     .catch(err => console.log('SW failed:', err));
 }
 
