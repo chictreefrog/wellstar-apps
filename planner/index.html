@@ -298,6 +298,34 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:var(--tr);box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .tog.on::after{transform:translateX(18px)}
 
+/* ─── EMAIL GATE ─── */
+.gate{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);padding:20px}
+.gate.show{display:flex}
+.gate__box{background:var(--bg-card-solid);border:1px solid var(--border);border-radius:var(--r-xl);width:100%;max-width:380px;padding:32px 24px;text-align:center;box-shadow:var(--shadow-lg);animation:slideUp .3s ease}
+.gate__icon{font-size:48px;margin-bottom:12px}
+.gate__title{font-size:20px;font-weight:700;color:var(--text-1);margin-bottom:8px;line-height:1.4}
+.gate__desc{font-size:14px;color:var(--text-2);line-height:1.6;margin-bottom:20px}
+.gate__benefits{text-align:left;margin-bottom:20px;padding:0 8px}
+.gate__benefit{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:var(--text-2)}
+.gate__benefit-icon{font-size:16px;flex-shrink:0}
+.gate__input{width:100%;padding:14px 16px;border-radius:var(--r-md);background:var(--bg-input);border:1px solid var(--border);font-size:15px;color:var(--text-1);margin-bottom:10px;transition:var(--tr)}
+.gate__input:focus{border-color:var(--accent);background:var(--bg-input-focus)}
+.gate__input::placeholder{color:var(--text-3)}
+.gate__submit{width:100%;padding:14px;border-radius:var(--r-md);background:var(--accent);color:#fff;font-size:16px;font-weight:700;transition:var(--tr);margin-bottom:10px}
+.gate__submit:active{transform:scale(.98)}
+.gate__kakao{width:100%;padding:14px;border-radius:var(--r-md);background:#FEE500;color:#3C1E1E;font-size:15px;font-weight:700;transition:var(--tr);margin-bottom:14px}
+.gate__kakao:active{transform:scale(.98)}
+.gate__skip{font-size:13px;color:var(--text-3);padding:8px;transition:var(--tr)}
+.gate__skip:active{color:var(--text-2)}
+.gate__privacy{font-size:11px;color:var(--text-3);margin-top:8px;line-height:1.4}
+@media(max-width:768px){
+  .gate__box{padding:28px 20px}
+  .gate__title{font-size:19px}
+  .gate__desc{font-size:14px}
+  .gate__input{font-size:16px;padding:14px}
+  .gate__submit{font-size:16px}
+}
+
 /* ─── CARRYOVER MODAL ─── */
 .carry-modal{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);padding:16px}
 .carry-modal.show{display:flex}
@@ -683,6 +711,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
         </div>
       </div>
       <div class="sgrp">
+        <div class="sitm"><span class="sitm__lb">📧 이메일</span><span class="sitm__val" id="setEmail" onclick="if(!localStorage.getItem('p_email'))showGate()">미등록 — 탭하여 등록</span></div>
         <div class="sitm"><span class="sitm__lb">📊 현재 레벨</span><span class="sitm__val" id="setLv">Lv.1 입문 (60분)</span></div>
         <div class="sitm"><span class="sitm__lb">💾 백업</span><button style="color:var(--accent);font-size:13px;font-weight:600" onclick="exportData()">내보내기</button></div>
         <div class="sitm"><span class="sitm__lb">📥 복원</span><button style="color:var(--accent);font-size:13px;font-weight:600" onclick="importData()">가져오기</button></div>
@@ -705,6 +734,25 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
     <button class="tab" data-tab="Stats" onclick="switchTab(this)"><span class="tab__ic">📊</span>통계</button>
     <button class="tab" data-tab="Set" onclick="switchTab(this)"><span class="tab__ic">⚙️</span>설정</button>
   </nav>
+</div>
+
+<!-- Email Gate Modal -->
+<div class="gate" id="gateModal">
+  <div class="gate__box">
+    <div class="gate__icon">🚀</div>
+    <div class="gate__title">플래너가 마음에 드셨나요?</div>
+    <div class="gate__desc">이메일을 등록하면 데이터가 안전하게 저장되고,<br>새로운 기능 소식도 받아볼 수 있어요!</div>
+    <div class="gate__benefits">
+      <div class="gate__benefit"><span class="gate__benefit-icon">💾</span> 데이터 안전 보관 (기기 변경 시 복원)</div>
+      <div class="gate__benefit"><span class="gate__benefit-icon">📊</span> 주간/월간 리포트 이메일 발송</div>
+      <div class="gate__benefit"><span class="gate__benefit-icon">🎁</span> 새로운 도구 출시 알림 + 얼리버드 혜택</div>
+      <div class="gate__benefit"><span class="gate__benefit-icon">🔓</span> 프리미엄 기능 우선 체험</div>
+    </div>
+    <input class="gate__input" id="gateEmail" type="email" placeholder="이메일 주소를 입력하세요" enterkeyhint="done">
+    <button class="gate__submit" onclick="submitGate()">무료로 시작하기</button>
+    <button class="gate__skip" onclick="skipGate()">다음에 할게요</button>
+    <div class="gate__privacy">등록된 이메일은 서비스 안내 목적으로만 사용되며,<br>언제든 해제할 수 있습니다.</div>
+  </div>
 </div>
 
 <!-- Carryover Modal -->
@@ -979,6 +1027,9 @@ function addDump(){
     renderChips();
     toast('💡 Brain Dump에 추가!');
   }
+  // Lead gate trigger
+  gateTaskCount++;
+  if(gateTaskCount === GATE_TRIGGER) checkGate();
 }
 
 /* ═══ DETAIL MODAL ═══ */
@@ -1110,6 +1161,84 @@ function closeCarry(){
   $('carryModal').classList.remove('show');
   carryItems = [];
 }
+
+/* ═══ EMAIL GATE (Lead Collection) ═══ */
+let gateTaskCount = 0;  // track tasks added in this session
+const GATE_TRIGGER = 3; // show after 3 tasks added
+
+function checkGate(){
+  // Already registered?
+  if(localStorage.getItem('p_email')) return;
+  // Recently skipped? (24 hour cooldown)
+  const skipped = localStorage.getItem('p_gate_skipped');
+  if(skipped && Date.now() - parseInt(skipped) < 86400000) return;
+  // Is this a return visitor? (has used before)
+  const isReturn = localStorage.getItem('p_stats');
+  // Trigger conditions:
+  // 1. Added 3+ tasks this session
+  // 2. OR return visitor (came back another day)
+  if(gateTaskCount >= GATE_TRIGGER || isReturn){
+    setTimeout(() => showGate(), 500);
+  }
+}
+
+function showGate(){
+  if(localStorage.getItem('p_email')) return;
+  $('gateModal').classList.add('show');
+}
+
+function submitGate(){
+  const email = $('gateEmail').value.trim();
+  if(!email || !email.includes('@')){
+    $('gateEmail').style.borderColor='var(--red)';
+    $('gateEmail').placeholder='올바른 이메일을 입력해주세요';
+    return;
+  }
+  
+  // Save email
+  localStorage.setItem('p_email', email);
+  localStorage.setItem('p_email_date', new Date().toISOString());
+  
+  // Send to collection endpoint (Supabase later, for now store locally)
+  saveLeadLocally(email);
+  
+  $('gateModal').classList.remove('show');
+  toast('🎉 등록 완료! 감사합니다');
+  updateEmailDisplay();
+}
+
+function skipGate(){
+  localStorage.setItem('p_gate_skipped', String(Date.now()));
+  $('gateModal').classList.remove('show');
+}
+
+function saveLeadLocally(email){
+  const leads = JSON.parse(localStorage.getItem('p_leads') || '[]');
+  leads.push({
+    email,
+    date: new Date().toISOString(),
+    source: 'planner',
+    device: /iPhone|iPad/.test(navigator.userAgent) ? 'iOS' : /Android/.test(navigator.userAgent) ? 'Android' : 'PC'
+  });
+  localStorage.setItem('p_leads', JSON.stringify(leads));
+}
+
+function updateEmailDisplay(){
+  const email = localStorage.getItem('p_email');
+  const el = $('setEmail');
+  if(email){
+    el.textContent = email;
+    el.style.color = 'var(--green)';
+    el.onclick = null;
+  } else {
+    el.textContent = '미등록 — 탭하여 등록';
+    el.style.color = 'var(--text-3)';
+    el.style.cursor = 'pointer';
+  }
+}
+
+// Hook into addDump to track task count
+// (gate trigger added directly in addDump function)
 
 /* ═══ SHARE CARD ═══ */
 function generateShareCard(){
@@ -1515,8 +1644,10 @@ function inlineEdit(ts){
 function saveInline(ts,text){
   text=text.trim(); if(!text){renderTL();return;}
   const lv=LVS[stats.level-1]||LVS[0];
-  tasks.push({id:uid(),text,sticker:'',zone:'timeline',timeSlot:ts,duration:lv.block,done:false,order:0});
+  tasks.push({id:uid(),text,sticker:'',zone:'timeline',timeSlot:ts,duration:lv.block,done:false,order:0,createdAt:Date.now()});
   saveTasks(); renderAll(); toast('⏱ 타임라인에 추가!');
+  gateTaskCount++;
+  if(gateTaskCount === GATE_TRIGGER) checkGate();
 }
 
 /* ═══ TASK MOVEMENT (Button-based, reliable on all devices) ═══ */
@@ -1874,7 +2005,7 @@ if('serviceWorker' in navigator){
   // Force clear old caches on load
   if('caches' in window){
     caches.keys().then(keys => {
-      keys.forEach(k => { if(k !== '5min-planner-v12') caches.delete(k); });
+      keys.forEach(k => { if(k !== '5min-planner-v13') caches.delete(k); });
     });
   }
   
@@ -1920,12 +2051,16 @@ function init(){
   if(localStorage.getItem('p_theme')==='light'){isDark=false;document.documentElement.setAttribute('data-theme','light');$('togTheme').classList.remove('on');}
   const savedFsize=localStorage.getItem('p_fsize')||'medium';
   if(savedFsize!=='medium'){document.documentElement.setAttribute('data-fsize',savedFsize);document.querySelectorAll('.fsize-btn').forEach(b=>b.classList.toggle('on',b.dataset.size===savedFsize));}
-  loadStats(); loadTasks(); mkStars(); renderStk(); renderAll(); initVoice();
+  loadStats(); loadTasks(); mkStars(); renderStk(); renderAll(); initVoice(); updateEmailDisplay();
   $('dumpInp').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addDump();}});
   setTimeout(shootStar,5000+Math.random()*10000);
   setInterval(()=>{if($('vwPlan').classList.contains('on'))renderTL();},60000);
   checkIOSInstall();
   checkCarryOver();
+  // Check gate for return visitors (delay to not overwhelm)
+  setTimeout(()=>{ if(localStorage.getItem('p_stats') && !localStorage.getItem('p_email')) checkGate(); }, 10000);
+  // Email input enter key
+  $('gateEmail').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitGate();}});
 }
 init();
 </script>
