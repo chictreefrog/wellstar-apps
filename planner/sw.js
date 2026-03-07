@@ -1,4 +1,4 @@
-const CACHE_NAME = '5min-planner-v2';
+const CACHE_NAME = '5min-planner-v5';
 const ASSETS = [
   '/planner/',
   '/planner/index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   '/planner/icon-512.png'
 ];
 
+// Install — cache core assets, activate immediately
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,6 +16,7 @@ self.addEventListener('install', e => {
   );
 });
 
+// Activate — delete ALL old caches, take control immediately
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -23,8 +25,10 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Fetch — NETWORK FIRST, cache fallback (always get latest)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
@@ -45,6 +49,7 @@ self.addEventListener('fetch', e => {
   );
 });
 
+// Push notification handler
 self.addEventListener('push', e => {
   if (!e.data) return;
   const data = e.data.json();
@@ -59,6 +64,7 @@ self.addEventListener('push', e => {
   );
 });
 
+// Notification click — open app
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
