@@ -125,6 +125,12 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 /* Drop target highlight */
 .panel.drop-over{background:var(--accent-soft);outline:2px dashed var(--accent);outline-offset:-2px}
 
+/* ─── SUB TABS (mobile only) ─── */
+.subtabs{display:none;flex-shrink:0;background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:4px 12px;gap:4px}
+.subtab{flex:1;padding:8px 0;text-align:center;font-size:14px;font-weight:600;color:var(--text-3);border-radius:var(--r-sm);transition:var(--tr)}
+.subtab.on{color:var(--accent);background:var(--accent-soft)}
+.subtab:active{transform:scale(.97)}
+
 /* ─── PRIORITY ITEMS ─── */
 .pri{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);transition:var(--tr)}
 .pri.done{opacity:.5}
@@ -292,9 +298,9 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 .tog.on::after{transform:translateX(18px)}
 
 /* ─── EMPTY STATE ─── */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;text-align:center;color:var(--text-3);gap:6px;height:100%}
-.empty__ic{font-size:32px;opacity:.5}
-.empty__tx{font-size:12px;line-height:1.5}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;text-align:center;color:var(--text-3);gap:4px;height:100%}
+.empty__ic{font-size:24px;opacity:.5}
+.empty__tx{font-size:11px;line-height:1.4}
 
 /* ─── TOAST ─── */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-card-solid);color:var(--text-1);padding:10px 20px;border-radius:var(--r-xl);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);border:1px solid var(--border);z-index:999;opacity:0;transition:all .3s;pointer-events:none}
@@ -344,8 +350,32 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
 
 /* ═══ RESPONSIVE - MOBILE ═══ */
 @media(max-width:768px){
+  /* Show sub-tabs on mobile */
+  .subtabs{display:flex}
+  
+  /* Single panel view on mobile */
   .panels{flex-direction:column}
-  .panel{min-height:0;flex:1}
+  .panel{display:none;flex:1;min-height:0}
+  .panel.sub-on{display:flex}
+
+  /* Full-width panel elements */
+  .pri{padding:12px 16px;gap:10px}
+  .pri__chk{width:24px;height:24px;font-size:12px}
+  .pri__stk{font-size:17px}
+  .pri__txt{font-size:16px}
+  .pri__act{font-size:20px;padding:5px}
+
+  .tslot{min-height:50px}
+  .tslot__time{width:54px;font-size:13px;padding:6px 6px 6px 4px}
+  .tslot__body{padding:5px 10px;min-height:46px}
+  .tblock{padding:8px 10px;gap:6px}
+  .tblock__chk{width:22px;height:22px;font-size:11px}
+  .tblock__stk{font-size:15px}
+  .tblock__txt{font-size:15px}
+  .tblock__dur{font-size:11px;padding:2px 6px}
+  .tblock__del{font-size:17px;padding:4px}
+  .tblock__move{font-size:17px;padding:4px}
+  .tinput{font-size:16px;padding:8px 10px}
 
   /* ─ Header ─ */
   .hdr{padding:14px 16px 8px;padding-top:max(14px,env(safe-area-inset-top,14px))}
@@ -356,33 +386,6 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   .hdr__quote-en{font-size:12px;line-height:1.4}
   .hdr__lv{font-size:13px;gap:6px;margin-top:4px}
   .hdr__lv-bar{width:60px;height:4px}
-
-  /* ─ Panel headers ─ */
-  .panel__hd{padding:10px 14px}
-  .panel__tt{font-size:15px}
-  .panel__cnt{font-size:13px;padding:2px 8px}
-
-  /* ─ Priority items ─ */
-  .pri{padding:12px 14px;gap:10px}
-  .pri__chk{width:26px;height:26px;font-size:14px}
-  .pri__stk{font-size:18px}
-  .pri__txt{font-size:16px}
-  .pri__act{font-size:20px;padding:6px}
-
-  /* ─ Timeline ─ */
-  .tslot{min-height:52px}
-  .tslot__time{width:56px;font-size:13px;padding:8px 8px 8px 6px}
-  .tslot__body{padding:6px 10px;min-height:48px}
-  .tslot__body.empty:hover::after,
-  .tslot__body.empty:active::after{font-size:14px}
-  .tblock{padding:10px 12px;gap:8px}
-  .tblock__chk{width:24px;height:24px;font-size:12px}
-  .tblock__stk{font-size:16px}
-  .tblock__txt{font-size:15px}
-  .tblock__dur{font-size:12px;padding:3px 8px}
-  .tblock__del{font-size:18px;padding:6px}
-  .tblock__move{font-size:18px;padding:6px}
-  .tinput{font-size:16px;padding:10px 12px}
 
   /* ─ Brain Dump ─ */
   .dump{padding:10px 14px 12px}
@@ -475,9 +478,14 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
   <!-- ═══ PLANNER ═══ -->
   <div class="vw on" id="vwPlan">
     <div class="main">
+      <!-- Sub-tabs (mobile only) -->
+      <div class="subtabs" id="subtabs">
+        <button class="subtab on" data-sub="todo" onclick="switchSub('todo')">☑️ 할일</button>
+        <button class="subtab" data-sub="timeline" onclick="switchSub('timeline')">⏱ 타임라인</button>
+      </div>
       <div class="panels">
         <!-- Priority -->
-        <div class="panel" id="panelPri">
+        <div class="panel sub-on" id="panelPri">
           <div class="panel__hd">
             <div class="panel__tt">☑️ 오늘 할일 <span class="panel__cnt" id="priCnt">0</span></div>
           </div>
@@ -806,6 +814,8 @@ function pickTime(ts){
   if(!pickerTaskId)return;
   moveToSlot(pickerTaskId, ts);
   closePicker();
+  // Auto-switch to timeline tab on mobile
+  if(window.innerWidth <= 768) switchSub('timeline');
 }
 
 function closePicker(){
@@ -924,6 +934,16 @@ function switchTab(btn){
   if(btn.dataset.tab==='Stats') updStats();
 }
 
+function switchSub(tab){
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('on',t.dataset.sub===tab));
+  $('panelPri').classList.toggle('sub-on', tab==='todo');
+  $('panelTL').classList.toggle('sub-on', tab==='timeline');
+  // Show/hide brain dump based on tab
+  const dump=$('dump');
+  if(tab==='timeline'){ dump.style.display='none'; }
+  else { dump.style.display=''; }
+}
+
 function chgDate(d){ curDate.setDate(curDate.getDate()+d); loadTasks(); renderAll(); }
 
 function togDump(){
@@ -973,9 +993,12 @@ function resetAll(){
   tasks=[];stats={streak:0,level:1,totalDone:0,lastDate:null};saveStats();renderAll();toast('🗑 초기화 완료');
 }
 
-/* ═══ VOICE RECOGNITION ═══ */
+/* ═══ VOICE RECOGNITION (Continuous Mode) ═══ */
 let recognition = null;
 let isRecording = false;
+let voiceBuffer = '';       // accumulated text for current chunk
+let silenceTimer = null;    // 3-second auto-chip timer
+const SILENCE_MS = 3000;    // 3 seconds of silence = auto add chip
 
 function initVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -987,49 +1010,72 @@ function initVoice(){
   
   recognition = new SR();
   recognition.lang = 'ko-KR';
-  recognition.continuous = false;
+  recognition.continuous = true;       // Keep listening!
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
   
   recognition.onstart = () => {
     isRecording = true;
+    voiceBuffer = '';
     $('micBtn').classList.add('recording');
-    $('dumpInp').placeholder = '🎤 듣고 있어요...';
-    $('dumpInp').focus();
+    $('dumpInp').placeholder = '🎤 듣고 있어요... (다시 탭하면 종료)';
   };
   
   recognition.onresult = (e) => {
-    let final = '', interim = '';
+    let finalText = '', interimText = '';
+    
     for(let i = e.resultIndex; i < e.results.length; i++){
       const transcript = e.results[i][0].transcript;
       if(e.results[i].isFinal){
-        final += transcript;
+        finalText += transcript;
       } else {
-        interim += transcript;
+        interimText += transcript;
       }
     }
-    $('dumpInp').value = final || interim;
     
-    if(final){
-      $('dumpInp').value = final;
-      addDump();
-      toast('🎤 음성으로 추가!');
+    // Show what's being heard in input
+    $('dumpInp').value = voiceBuffer + (finalText || interimText);
+    
+    if(finalText){
+      voiceBuffer += finalText;
+      $('dumpInp').value = voiceBuffer;
+      
+      // Reset silence timer — wait 3 seconds before auto-adding chip
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        if(voiceBuffer.trim()){
+          $('dumpInp').value = voiceBuffer.trim();
+          addDump();
+          toast('🎤 음성으로 추가!');
+          voiceBuffer = '';
+          $('dumpInp').value = '';
+          $('dumpInp').placeholder = '🎤 계속 말하세요...';
+        }
+      }, SILENCE_MS);
     }
   };
   
   recognition.onerror = (e) => {
-    stopVoice();
     if(e.error === 'no-speech'){
-      toast('🎤 음성이 감지되지 않았어요');
+      // No speech detected — just keep listening, don't stop
+      return;
     } else if(e.error === 'not-allowed'){
       toast('🎤 마이크 권한을 허용해주세요');
+      stopVoice();
+    } else if(e.error === 'aborted'){
+      // User stopped manually, handled in stopVoice
     } else {
-      toast('🎤 음성 인식 오류');
+      toast('🎤 음성 인식 오류: ' + e.error);
+      stopVoice();
     }
   };
   
   recognition.onend = () => {
-    stopVoice();
+    // If still supposed to be recording, restart (browser sometimes stops)
+    if(isRecording){
+      try { recognition.start(); }
+      catch(e){ /* already started */ }
+    }
   };
 }
 
@@ -1039,16 +1085,30 @@ function toggleVoice(){
     return;
   }
   if(isRecording){
+    // Stop recording — save any remaining buffer
+    isRecording = false;
+    clearTimeout(silenceTimer);
     recognition.stop();
+    
+    if(voiceBuffer.trim()){
+      $('dumpInp').value = voiceBuffer.trim();
+      addDump();
+      toast('🎤 음성으로 추가!');
+    }
+    voiceBuffer = '';
+    stopVoice();
   } else {
     try { recognition.start(); }
-    catch(e){ recognition.stop(); setTimeout(() => recognition.start(), 100); }
+    catch(e){ recognition.stop(); setTimeout(() => { try{recognition.start();}catch(ex){} }, 200); }
   }
 }
 
 function stopVoice(){
   isRecording = false;
+  clearTimeout(silenceTimer);
+  voiceBuffer = '';
   $('micBtn').classList.remove('recording');
+  $('dumpInp').value = '';
   $('dumpInp').placeholder = '할 일을 입력하세요...';
 }
 
