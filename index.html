@@ -2,15 +2,272 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>옆집디노 도구 모음</title>
-<meta http-equiv="refresh" content="0;url=/planner/">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#07071A">
+<title>옆집디노 — AI 생산성 도구 모음</title>
+<meta name="description" content="5분법칙 플래너, 사주 성공진단, 세일즈 다이어리 등 50개 이상의 AI 도구로 당신의 하루를 바꿔보세요.">
+<meta property="og:title" content="옆집디노 — AI 생산성 도구 모음">
+<meta property="og:description" content="무료 AI 도구로 생산성을 높이세요. 5분법칙 플래너, 사주 성공진단 등.">
+<meta property="og:url" content="https://app.wellstar.life">
+<link rel="icon" type="image/png" href="/planner/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#07071A;color:#fff;font-family:-apple-system,sans-serif}
-a{color:#0A84FF}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07071A;--bg2:#0E0E2A;--card:rgba(14,14,42,0.7);
+  --text:#F5F5F7;--text2:rgba(255,255,255,0.6);--text3:rgba(255,255,255,0.35);
+  --accent:#0A84FF;--accent-soft:rgba(10,132,255,0.12);
+  --green:#30D158;--orange:#FF9F0A;--purple:#BF5AF2;
+  --border:rgba(255,255,255,0.08);
+  --font:'Noto Sans KR',-apple-system,sans-serif;
+  --font-en:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+
+/* Stars */
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.star{position:absolute;border-radius:50%;background:#fff}
+.star--s{width:1px;height:1px;opacity:.3}
+.star--m{width:2px;height:2px;opacity:.4}
+.star--l{width:3px;height:3px;opacity:.6;box-shadow:0 0 4px rgba(180,214,255,.3)}
+@keyframes tw{0%,100%{opacity:.2}50%{opacity:.7}}
+.star--tw{animation:tw 3s ease-in-out infinite}
+
+/* Layout */
+.wrap{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:0 20px}
+section{padding:60px 0}
+
+/* Hero */
+.hero{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 0 60px}
+.hero__badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid rgba(10,132,255,0.2);padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:24px;animation:fadeUp .6s ease}
+.hero__title{font-size:44px;font-weight:900;line-height:1.25;letter-spacing:-1px;margin-bottom:16px;animation:fadeUp .6s ease .1s both}
+.hero__title span{background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero__desc{font-size:18px;color:var(--text2);line-height:1.7;max-width:520px;margin-bottom:36px;animation:fadeUp .6s ease .2s both}
+.hero__cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp .6s ease .3s both}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;font-size:16px;font-weight:700;transition:all .2s;border:none;cursor:pointer;font-family:var(--font)}
+.btn--primary{background:var(--accent);color:#fff}
+.btn--primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(10,132,255,0.3)}
+.btn--ghost{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid var(--border)}
+.btn--ghost:hover{background:rgba(255,255,255,0.1)}
+.hero__stats{display:flex;gap:32px;margin-top:48px;animation:fadeUp .6s ease .4s both}
+.hero__stat{text-align:center}
+.hero__stat-num{font-family:var(--font-en);font-size:32px;font-weight:800;color:var(--accent)}
+.hero__stat-label{font-size:12px;color:var(--text3);margin-top:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section */
+.section-label{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:2px;margin-bottom:12px;text-align:center}
+.section-title{font-size:32px;font-weight:800;margin-bottom:12px;line-height:1.3;text-align:center}
+.section-desc{font-size:16px;color:var(--text2);line-height:1.6;max-width:500px;margin:0 auto 32px;text-align:center}
+
+/* Featured */
+.featured__card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;backdrop-filter:blur(10px);transition:all .3s}
+.featured__card:hover{border-color:rgba(10,132,255,0.3);transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.featured__top{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.featured__icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,rgba(10,132,255,0.2),rgba(191,90,242,0.2));border:1px solid rgba(10,132,255,0.15)}
+.featured__name{font-size:22px;font-weight:700}
+.featured__tag{font-size:12px;color:var(--green);background:rgba(48,209,88,0.12);padding:3px 10px;border-radius:8px;font-weight:600;margin-top:4px;display:inline-block}
+.featured__features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.featured__feat{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text2)}
+.featured__feat-icon{font-size:16px;flex-shrink:0}
+.featured__cta{display:block;width:100%;padding:14px;border-radius:12px;background:var(--accent);color:#fff;font-size:16px;font-weight:700;text-align:center;transition:all .2s;border:none;cursor:pointer;font-family:var(--font)}
+.featured__cta:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(10,132,255,0.3)}
+
+/* Tools */
+.tools__grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 20px;backdrop-filter:blur(10px);transition:all .3s;cursor:pointer;position:relative;overflow:hidden;display:block;color:var(--text)}
+.tool-card:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px)}
+.tool-card--soon{cursor:default}
+.tool-card--soon::after{content:'곧 출시';position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;color:var(--orange);background:rgba(255,159,10,0.12);padding:2px 8px;border-radius:6px}
+.tool-card__icon{font-size:32px;margin-bottom:12px}
+.tool-card__name{font-size:15px;font-weight:700;margin-bottom:4px}
+.tool-card__desc{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* Email */
+.email-box{background:linear-gradient(135deg,rgba(10,132,255,0.08),rgba(191,90,242,0.08));border:1px solid rgba(10,132,255,0.15);border-radius:20px;padding:40px 24px;max-width:500px;margin:0 auto;text-align:center}
+.email-box__icon{font-size:48px;margin-bottom:16px}
+.email-box__title{font-size:22px;font-weight:700;margin-bottom:8px}
+.email-box__desc{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.email-row{display:flex;gap:8px;max-width:380px;margin:0 auto}
+.email-input{flex:1;padding:12px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);font-size:15px;font-family:var(--font);transition:all .2s}
+.email-input:focus{outline:none;border-color:var(--accent);background:rgba(255,255,255,0.1)}
+.email-input::placeholder{color:var(--text3)}
+.email-submit{padding:12px 20px;border-radius:10px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .2s}
+.email-submit:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(10,132,255,0.3)}
+.email-privacy{font-size:11px;color:var(--text3);margin-top:12px}
+.email-ok{display:none;font-size:16px;color:var(--green);font-weight:600;padding:12px}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:32px 0;text-align:center}
+.footer__brand{font-size:18px;font-weight:700;margin-bottom:8px}
+.footer__brand span{font-size:22px}
+.footer__links{display:flex;gap:20px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.footer__link{font-size:13px;color:var(--text3);transition:color .2s}
+.footer__link:hover{color:var(--text)}
+.footer__copy{font-size:11px;color:var(--text3)}
+
+/* Responsive */
+@media(max-width:600px){
+  .hero__title{font-size:32px}
+  .hero__desc{font-size:16px}
+  .hero__stats{gap:20px}
+  .hero__stat-num{font-size:26px}
+  .btn{padding:12px 22px;font-size:15px}
+  .section-title{font-size:26px}
+  .featured__features{grid-template-columns:1fr}
+  .tools__grid{gap:10px}
+  .tool-card{padding:18px 14px}
+  .email-row{flex-direction:column}
+  .email-submit{width:100%}
+}
+/* Scroll Reveal */
+.reveal{opacity:0;transform:translateY(30px);transition:all .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
-<p>이동 중... <a href="/planner/">5분법칙 플래너 바로가기</a></p>
+
+<div class="stars" id="stars"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero__badge">🦕 옆집디노 AI 도구 모음</div>
+    <h1 class="hero__title">당신의 하루를<br><span>AI 도구</span>로 바꾸세요</h1>
+    <p class="hero__desc">시간관리부터 세일즈까지, 매일 쓰는 무료 AI 도구로 생산성을 높이고 성과를 만들어보세요.</p>
+    <div class="hero__cta">
+      <a class="btn btn--primary" href="/planner/">⏱ 5분법칙 플래너 시작하기</a>
+      <a class="btn btn--ghost" href="#tools">도구 둘러보기 →</a>
+    </div>
+    <div class="hero__stats">
+      <div class="hero__stat"><div class="hero__stat-num">50+</div><div class="hero__stat-label">AI 도구</div></div>
+      <div class="hero__stat"><div class="hero__stat-num">100%</div><div class="hero__stat-label">무료 사용</div></div>
+      <div class="hero__stat"><div class="hero__stat-num">PWA</div><div class="hero__stat-label">앱처럼 설치</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED TOOL -->
+<section class="featured reveal" id="featured">
+  <div class="wrap">
+    <div class="section-label">🔥 지금 바로 사용 가능</div>
+    <h2 class="section-title">5분법칙 플래너</h2>
+    <p class="section-desc">CEO들이 실천하는 5분 단위 타임블록킹. 하루를 설계하고, 실행하고, 성과를 공유하세요.</p>
+    <div class="featured__card">
+      <div class="featured__top">
+        <div class="featured__icon">⏱</div>
+        <div>
+          <div class="featured__name">5분법칙 플래너</div>
+          <span class="featured__tag">✅ 무료 사용 가능</span>
+        </div>
+      </div>
+      <div class="featured__features">
+        <div class="featured__feat"><span class="featured__feat-icon">💡</span> Brain Dump 빠른 메모</div>
+        <div class="featured__feat"><span class="featured__feat-icon">☑️</span> 우선순위 할일 관리</div>
+        <div class="featured__feat"><span class="featured__feat-icon">⏱</span> 타임라인 시간 배분</div>
+        <div class="featured__feat"><span class="featured__feat-icon">🎤</span> 음성 입력 지원</div>
+        <div class="featured__feat"><span class="featured__feat-icon">📋</span> 루틴 템플릿 5종</div>
+        <div class="featured__feat"><span class="featured__feat-icon">📤</span> 성과 카드 SNS 공유</div>
+        <div class="featured__feat"><span class="featured__feat-icon">📝</span> 아이디어 메모 자동분류</div>
+        <div class="featured__feat"><span class="featured__feat-icon">🌱</span> 레벨 시스템 (습관 형성)</div>
+      </div>
+      <a class="featured__cta" href="/planner/">무료로 시작하기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS GRID -->
+<section class="tools reveal" id="tools">
+  <div class="wrap">
+    <div class="section-label">🛠 도구 모음</div>
+    <h2 class="section-title">매일 쓰는 AI 도구들</h2>
+    <p class="section-desc">필요한 도구를 골라 사용하세요. 새로운 도구가 계속 추가됩니다.</p>
+    <div class="tools__grid">
+      <a class="tool-card" href="/planner/">
+        <div class="tool-card__icon">⏱</div>
+        <div class="tool-card__name">5분법칙 플래너</div>
+        <div class="tool-card__desc">5분 단위 타임블록킹으로 하루를 설계하세요</div>
+      </a>
+      <div class="tool-card tool-card--soon">
+        <div class="tool-card__icon">🔮</div>
+        <div class="tool-card__name">사주 성공진단</div>
+        <div class="tool-card__desc">나의 숨겨진 강점과 성공 전략을 알아보세요</div>
+      </div>
+      <div class="tool-card tool-card--soon">
+        <div class="tool-card__icon">📒</div>
+        <div class="tool-card__name">세일즈 다이어리</div>
+        <div class="tool-card__desc">매일 영업 활동을 기록하고 성과를 추적하세요</div>
+      </div>
+      <div class="tool-card tool-card--soon">
+        <div class="tool-card__icon">🤖</div>
+        <div class="tool-card__name">AI 세일즈 코치</div>
+        <div class="tool-card__desc">AI가 실시간으로 코칭하고 스크립트를 만들어줘요</div>
+      </div>
+      <div class="tool-card tool-card--soon">
+        <div class="tool-card__icon">✍️</div>
+        <div class="tool-card__name">블로그 브랜딩 코치</div>
+        <div class="tool-card__desc">AI가 나만의 브랜드 글쓰기를 도와줘요</div>
+      </div>
+      <div class="tool-card tool-card--soon">
+        <div class="tool-card__icon">💬</div>
+        <div class="tool-card__name">DM 메시지 생성기</div>
+        <div class="tool-card__desc">상황에 맞는 완벽한 메시지를 AI가 작성해줘요</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMAIL CTA -->
+<section class="email-section reveal" id="email">
+  <div class="wrap">
+    <div class="email-box">
+      <div class="email-box__icon">📬</div>
+      <div class="email-box__title">새로운 도구 소식 받기</div>
+      <div class="email-box__desc">이메일을 등록하면 새 도구 출시 알림과<br>생산성 팁을 받아볼 수 있어요.</div>
+      <div class="email-row" id="emailRow">
+        <input class="email-input" id="hubEmail" type="email" placeholder="이메일 주소">
+        <button class="email-submit" onclick="submitHubEmail()">구독하기</button>
+      </div>
+      <div class="email-ok" id="emailOk">✅ 등록 완료! 새 도구 소식을 보내드릴게요.</div>
+      <div class="email-privacy">스팸 없이, 유용한 소식만 보내드려요. 언제든 해제 가능.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer__brand"><span>🦕</span> 옆집디노</div>
+    <div class="footer__links">
+      <a class="footer__link" href="/planner/">5분법칙 플래너</a>
+      <a class="footer__link" href="https://wellstar.life" target="_blank">wellstar.life</a>
+      <a class="footer__link" href="http://pf.kakao.com/_txixmrK/chat" target="_blank">카카오톡 문의</a>
+    </div>
+    <div class="footer__copy">© 2026 옆집디노. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+// Stars
+(function(){const c=document.getElementById('stars');let h='';for(let i=0;i<80;i++){const sz=['s','s','s','m','m','l'][~~(Math.random()*6)];const tw=Math.random()>.7?'star--tw':'';h+=`<div class="star star--${sz} ${tw}" style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*5}s"></div>`;}c.innerHTML=h;})();
+
+// Scroll reveal
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Email submit
+function submitHubEmail(){
+  const email=document.getElementById('hubEmail').value.trim();
+  if(!email||!email.includes('@')){document.getElementById('hubEmail').style.borderColor='#FF453A';document.getElementById('hubEmail').placeholder='올바른 이메일을 입력해주세요';return;}
+  const leads=JSON.parse(localStorage.getItem('hub_leads')||'[]');
+  leads.push({email,date:new Date().toISOString(),source:'hub'});
+  localStorage.setItem('hub_leads',JSON.stringify(leads));
+  document.getElementById('emailRow').style.display='none';
+  document.getElementById('emailOk').style.display='block';
+}
+</script>
 </body>
 </html>
