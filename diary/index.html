@@ -331,6 +331,14 @@ textarea { resize: none; min-height: 80px; }
 .empty-state .empty-text { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text2); }
 .empty-state .empty-sub { font-size: 13px; }
 
+/* AI 기능 */
+.ai-loading { display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.ai-result { background:var(--bg3);border-radius:10px;padding:12px 14px;margin-top:10px;font-size:14px;line-height:1.7;border-left:3px solid var(--accent); }
+.ai-btn { display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(255,107,53,0.05));border:1px solid rgba(255,107,53,0.3);border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;font-weight:600;width:100%;transition:background 0.15s;margin-top:10px; }
+.ai-btn:active { background:rgba(255,107,53,0.25); }
+.ai-btn-icon { font-size:16px; }
+
 /* 삭제 버튼 */
 .btn-danger { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; transition: background 0.15s; }
 .btn-danger:active { background: rgba(231,76,60,0.25); }
@@ -352,6 +360,18 @@ textarea { resize: none; min-height: 80px; }
     </div>
     <div class="home-greeting">
       <div class="date-line" id="home-date-full"></div>
+    </div>
+
+    <!-- AI 인사이트 카드 -->
+    <div id="ai-insight-card" class="card" style="background:linear-gradient(135deg,#1E1E45,#2D1E45);border:1px solid rgba(255,107,53,0.3);margin-top:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:18px">🦕</span>
+        <span style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px">AI 인사이트</span>
+        <button onclick="refreshAiInsight()" id="ai-refresh-btn" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px">↻</button>
+      </div>
+      <div id="ai-insight-text" style="font-size:14px;line-height:1.7;color:var(--text)">
+        <span style="color:var(--text3)">분석 중...</span>
+      </div>
     </div>
 
     <div class="section-title">📞 오늘 연락할 고객</div>
@@ -427,6 +447,83 @@ textarea { resize: none; min-height: 80px; }
     <div id="recommended-customers" style="padding:0 16px 16px"></div>
   </div>
 
+  <!-- ── 설정 ── -->
+  <div id="screen-setting" class="screen">
+    <div class="page-header">
+      <h1>⚙️ 설정</h1>
+      <div class="subtitle">AI 다이어리 커스터마이징</div>
+    </div>
+
+    <!-- 알림 설정 -->
+    <div class="section-title">🔔 팔로업 알림</div>
+    <div class="card">
+      <div class="setting-row">
+        <div><div class="setting-label">알림 시간</div><div class="setting-sub">매일 이 시간에 오늘 연락할 고객 알림</div></div>
+        <input type="time" id="setting-alarm-time" value="08:00" style="width:100px;padding:6px 10px;font-size:14px" onchange="saveSettings()">
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">알림 허용</div><div class="setting-sub">브라우저 알림 권한 필요</div></div>
+        <button class="btn-secondary" onclick="requestNotification()" style="white-space:nowrap;font-size:13px">권한 요청</button>
+      </div>
+    </div>
+
+    <!-- 일일 목표 기본값 -->
+    <div class="section-title">🎯 일일 활동 목표 기본값</div>
+    <div class="card">
+      <div id="default-goals-setting"></div>
+      <button class="btn-primary" onclick="saveDefaultGoals()" style="margin-top:8px">저장</button>
+    </div>
+
+    <!-- 활동 항목 커스터마이징 -->
+    <div class="section-title">📊 활동 항목 관리</div>
+    <div class="card">
+      <div class="setting-sub" style="margin-bottom:12px;color:var(--text2)">최대 10개까지 추가 가능. 기본 7개는 삭제 시 비활성화됩니다.</div>
+      <div id="activity-items-setting"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input type="text" id="new-activity-name" placeholder="새 항목 이름" style="flex:1">
+        <input type="text" id="new-activity-icon" placeholder="아이콘" style="width:60px;text-align:center">
+        <button onclick="addActivityItem()" style="background:var(--accent);border:none;border-radius:10px;padding:0 14px;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">추가</button>
+      </div>
+    </div>
+
+    <!-- 고객 단계 이름 변경 -->
+    <div class="section-title">👥 고객 단계 이름</div>
+    <div class="card">
+      <div class="setting-sub" style="margin-bottom:12px;color:var(--text2)">단계 이름을 내 비즈니스에 맞게 변경할 수 있어요.</div>
+      <div id="stage-names-setting"></div>
+      <button class="btn-primary" onclick="saveStageNames()" style="margin-top:8px">저장</button>
+    </div>
+
+    <!-- 데이터 백업/복원 -->
+    <div class="section-title">💾 데이터 백업 / 복원</div>
+    <div class="card">
+      <div class="setting-row">
+        <div><div class="setting-label">데이터 백업</div><div class="setting-sub">고객, 활동, 목표 전체 내보내기</div></div>
+        <button class="btn-secondary" onclick="backupData()" style="font-size:13px">백업</button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">데이터 복원</div><div class="setting-sub">백업 파일로 복원</div></div>
+        <label style="cursor:pointer">
+          <span class="btn-secondary" style="display:inline-block;font-size:13px;white-space:nowrap">복원</span>
+          <input type="file" accept=".json" onchange="restoreData(event)" style="display:none">
+        </label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">전체 초기화</div><div class="setting-sub" style="color:var(--red)">⚠️ 모든 데이터 삭제</div></div>
+        <button class="btn-danger" onclick="resetAllData()" style="width:auto;padding:8px 14px;font-size:13px">초기화</button>
+      </div>
+    </div>
+
+    <!-- 앱 정보 -->
+    <div class="card" style="text-align:center;color:var(--text3)">
+      <div style="font-size:16px;font-weight:900;color:var(--text2);margin-bottom:4px">AI 다이어리</div>
+      <div style="font-size:12px">당신의 영업 성공을 이끌어주는 트래커</div>
+      <div style="font-size:11px;margin-top:8px">by 옆집디노 · wellstar.life</div>
+      <div style="font-size:11px;margin-top:4px;color:var(--text3)">Phase 2에서 Supabase 연동 예정</div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+
   <!-- ── 탭바 ── -->
   <nav class="tabbar">
     <button class="tab-btn active" onclick="switchTab('home')" id="tab-home">
@@ -444,6 +541,10 @@ textarea { resize: none; min-height: 80px; }
     <button class="tab-btn" onclick="switchTab('review')" id="tab-review">
       <span class="tab-icon">📅</span>
       <span class="tab-label">리뷰</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('setting')" id="tab-setting">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-label">설정</span>
     </button>
   </nav>
 </div>
@@ -530,6 +631,12 @@ textarea { resize: none; min-height: 80px; }
       <label class="form-label">다음에는 이렇게 해볼게</label>
       <input type="text" id="j-next" placeholder="구체적인 다음 행동...">
     </div>
+    <button class="ai-btn" onclick="getAiJournalCoaching()">
+      <span class="ai-btn-icon">🦕</span>
+      <span>AI 대응 코칭 받기</span>
+    </button>
+    <div id="ai-coaching-result"></div>
+    <div style="height:8px"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn-secondary" onclick="closeModal('modal-journal')" style="flex:1">취소</button>
       <button class="btn-primary" onclick="saveJournal()" style="flex:2">저장하고 털어내기 💪</button>
@@ -615,6 +722,7 @@ function switchTab(name) {
   if (name === 'customer') renderKanban();
   if (name === 'activity') renderActivity();
   if (name === 'review') renderReview();
+  if (name === 'setting') renderSetting();
 }
 
 // ══════════════════════════════
@@ -622,6 +730,7 @@ function switchTab(name) {
 // ══════════════════════════════
 function renderHome() {
   document.getElementById('home-date-full').textContent = fullDateStr();
+  refreshAiInsight();
 
 
   const customers = load(KEYS.customers);
@@ -842,10 +951,16 @@ function openCustomerDetail(id) {
       ${memos.length === 0 ? '<div style="color:var(--text3);font-size:13px">메모가 없어요</div>' :
         memos.slice().reverse().map(m => `<div class="memo-item"><div class="memo-date">${m.date}</div><div class="memo-text">${m.text}</div></div>`).join('')}
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
       <input type="text" id="new-memo-input" placeholder="새 메모 추가..." style="flex:1;padding:10px 12px;font-size:14px">
       <button onclick="addMemo('${id}')" style="background:var(--accent);border:none;border-radius:10px;padding:0 16px;color:white;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">추가</button>
     </div>
+    <button class="ai-btn" onclick="generateCustomerMessage('${id}')">
+      <span class="ai-btn-icon">🦕</span>
+      <span>AI 팔로업 메시지 생성</span>
+    </button>
+    <div id="ai-message-result-${id}"></div>
+    <div style="height:12px"></div>
     <div style="display:flex;gap:8px">
       <button class="btn-secondary" onclick="closeModal('modal-customer-detail')" style="flex:1">닫기</button>
       <button class="btn-primary" onclick="openEditCustomer('${id}')" style="flex:2">편집</button>
@@ -1059,9 +1174,337 @@ function showToast(msg) {
 }
 
 // ══════════════════════════════
+// 설정
+// ══════════════════════════════
+const DEFAULT_STAGES = ['잠재','접촉','미팅','성사','휴면'];
+const DEFAULT_ACTIVITY_ITEMS = [
+  { key: '신규연락', icon: '📞', label: '신규 연락', on: true },
+  { key: '팔로업', icon: '🔄', label: '팔로업 연락', on: true },
+  { key: '미팅', icon: '🤝', label: '미팅', on: true },
+  { key: '성사', icon: '✅', label: '성사', on: true },
+  { key: 'SNS', icon: '📱', label: 'SNS 활동', on: true },
+  { key: '샘플제공', icon: '🎁', label: '샘플 제공', on: true },
+  { key: '제품배송', icon: '📦', label: '제품 배송', on: true },
+];
+
+function getSettings() {
+  return loadObj('diary_settings', {
+    alarmTime: '08:00',
+    defaultGoals: { 신규연락:5, 팔로업:10, 미팅:2, 성사:1 },
+    activityItems: DEFAULT_ACTIVITY_ITEMS,
+    stageNames: ['잠재','접촉','미팅','성사','휴면'],
+  });
+}
+
+function renderSetting() {
+  const s = getSettings();
+
+  // 알림 시간
+  document.getElementById('setting-alarm-time').value = s.alarmTime || '08:00';
+
+  // 일일 목표
+  const goalKeys = ['신규연락','팔로업','미팅','성사'];
+  const icons = { 신규연락:'📞', 팔로업:'🔄', 미팅:'🤝', 성사:'✅' };
+  document.getElementById('default-goals-setting').innerHTML = goalKeys.map(k =>
+    `<div class="goal-input-row">
+      <div class="goal-input-label">${icons[k]} ${k}</div>
+      <input type="number" class="goal-input" id="dgoal-${k}" value="${(s.defaultGoals||{})[k]||0}" min="0">
+    </div>`
+  ).join('');
+
+  // 활동 항목
+  const items = s.activityItems || DEFAULT_ACTIVITY_ITEMS;
+  document.getElementById('activity-items-setting').innerHTML = items.map((item, i) =>
+    `<div class="setting-row" style="padding:8px 0">
+      <div style="display:flex;align-items:center;gap:10px;flex:1">
+        <span style="font-size:20px">${item.icon}</span>
+        <span style="font-size:14px;font-weight:600">${item.label}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <label style="position:relative;display:inline-block;width:44px;height:24px">
+          <input type="checkbox" ${item.on!==false?'checked':''} onchange="toggleActivityItem(${i},this.checked)" style="opacity:0;width:0;height:0">
+          <span style="position:absolute;inset:0;background:${item.on!==false?'var(--accent)':'var(--bg3)'};border-radius:12px;transition:0.2s;cursor:pointer">
+            <span style="position:absolute;left:${item.on!==false?'22px':'2px'};top:2px;width:20px;height:20px;background:white;border-radius:50%;transition:0.2s"></span>
+          </span>
+        </label>
+      </div>
+    </div>`
+  ).join('');
+
+  // 고객 단계 이름
+  const stageNames = s.stageNames || DEFAULT_STAGES;
+  const stageColors = ['#B2BEC3','#74B9FF','#FDCB6E','#55EFC4','#636E72'];
+  document.getElementById('stage-names-setting').innerHTML = stageNames.map((name, i) =>
+    `<div class="goal-input-row">
+      <div class="goal-input-label" style="color:${stageColors[i]};font-weight:700">${i+1}단계</div>
+      <input type="text" id="stage-name-${i}" value="${name}" style="flex:1;padding:8px 12px;font-size:14px">
+    </div>`
+  ).join('');
+}
+
+function saveSettings() {
+  const s = getSettings();
+  s.alarmTime = document.getElementById('setting-alarm-time').value;
+  save('diary_settings', s);
+  scheduleAlarm(s.alarmTime);
+}
+
+function saveDefaultGoals() {
+  const s = getSettings();
+  const keys = ['신규연락','팔로업','미팅','성사'];
+  s.defaultGoals = {};
+  keys.forEach(k => { const el = document.getElementById('dgoal-'+k); if(el) s.defaultGoals[k] = parseInt(el.value)||0; });
+  save('diary_settings', s);
+  // goals에도 반영
+  save(KEYS.goals, s.defaultGoals);
+  showToast('목표 기본값 저장됨 🎯');
+}
+
+function toggleActivityItem(idx, on) {
+  const s = getSettings();
+  if (s.activityItems && s.activityItems[idx]) {
+    s.activityItems[idx].on = on;
+    save('diary_settings', s);
+    showToast(on ? '항목 활성화됨' : '항목 비활성화됨');
+  }
+}
+
+function addActivityItem() {
+  const name = document.getElementById('new-activity-name').value.trim();
+  const icon = document.getElementById('new-activity-icon').value.trim() || '📌';
+  if (!name) { showToast('항목 이름을 입력하세요'); return; }
+  const s = getSettings();
+  const items = s.activityItems || DEFAULT_ACTIVITY_ITEMS;
+  if (items.length >= 10) { showToast('최대 10개까지 가능해요'); return; }
+  items.push({ key: name, icon, label: name, on: true });
+  s.activityItems = items;
+  save('diary_settings', s);
+  document.getElementById('new-activity-name').value = '';
+  document.getElementById('new-activity-icon').value = '';
+  renderSetting();
+  showToast('항목 추가됨 ✅');
+}
+
+function saveStageNames() {
+  const s = getSettings();
+  s.stageNames = [0,1,2,3,4].map(i => {
+    const el = document.getElementById('stage-name-'+i);
+    return el ? el.value.trim() || DEFAULT_STAGES[i] : DEFAULT_STAGES[i];
+  });
+  save('diary_settings', s);
+  showToast('단계 이름 저장됨 ✅');
+  renderKanban();
+}
+
+function requestNotification() {
+  if (!('Notification' in window)) { showToast('이 브라우저는 알림을 지원하지 않아요'); return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') showToast('알림 허용됨 🔔');
+    else showToast('알림이 거부됐어요. 브라우저 설정에서 허용해주세요');
+  });
+}
+
+function scheduleAlarm(timeStr) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const target = new Date(); target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  const ms = target - now;
+  setTimeout(() => {
+    const customers = load(KEYS.customers);
+    const urgentCount = customers.filter(c => {
+      if (c.stage === '성사' || c.stage === '휴면') return false;
+      const diff = dayDiff(c.followUp);
+      return diff !== null && diff <= 0;
+    }).length;
+    if (urgentCount > 0) {
+      new Notification('AI 다이어리 🦕', { body: `오늘 연락할 고객 ${urgentCount}명이 있어요!`, icon: './icon-192.png' });
+    }
+    scheduleAlarm(timeStr); // 다음날 재예약
+  }, ms);
+}
+
+function backupData() {
+  const backup = {
+    version: 1,
+    date: todayStr(),
+    customers: load(KEYS.customers),
+    activities: load(KEYS.activities),
+    goals: loadObj(KEYS.goals, {}),
+    journal: load(KEYS.journal),
+    settings: getSettings(),
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ai-diary-backup-${todayStr()}.json`;
+  a.click();
+  showToast('백업 파일 다운로드됨 💾');
+}
+
+function restoreData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!confirm(`${data.date || '?'} 백업 데이터로 복원할까요?\n현재 데이터는 덮어씌워집니다.`)) return;
+      if (data.customers) save(KEYS.customers, data.customers);
+      if (data.activities) save(KEYS.activities, data.activities);
+      if (data.goals) save(KEYS.goals, data.goals);
+      if (data.journal) save(KEYS.journal, data.journal);
+      if (data.settings) save('diary_settings', data.settings);
+      showToast('복원 완료! 🎉');
+      renderHome();
+    } catch { showToast('파일을 읽을 수 없어요'); }
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData() {
+  if (!confirm('정말 모든 데이터를 삭제할까요?\n고객, 활동, 목표 전부 사라져요.')) return;
+  [KEYS.customers, KEYS.activities, KEYS.goals, KEYS.journal, 'diary_settings'].forEach(k => localStorage.removeItem(k));
+  showToast('초기화 완료');
+  renderHome();
+}
+
+// ══════════════════════════════
+// AI 기능
+// ══════════════════════════════
+const AI_API = 'https://blogtool.wellstar.life/api/diary-ai';
+
+async function callDiaryAI(type, payload) {
+  const res = await fetch(AI_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, ...payload })
+  });
+  if (!res.ok) throw new Error('API 오류');
+  const data = await res.json();
+  return data.result;
+}
+
+// ── 1. 홈 AI 인사이트 ──
+async function refreshAiInsight() {
+  const el = document.getElementById('ai-insight-text');
+  const btn = document.getElementById('ai-refresh-btn');
+  el.innerHTML = '<span class="ai-loading"></span> 분석 중...';
+  btn.style.pointerEvents = 'none';
+
+  try {
+    // 로컬 데이터 분석
+    const customers = load(KEYS.customers);
+    const activities = load(KEYS.activities);
+    const today = todayStr();
+    const weekStart = getWeekStart();
+    const weekStart_d = new Date(weekStart);
+    const prevWeekStart = new Date(weekStart_d); prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+
+    // 이번 주 / 저번 주 집계
+    const thisWeek = { 신규연락:0, 팔로업:0, 미팅:0, 성사:0 };
+    const lastWeek = { 신규연락:0, 팔로업:0, 미팅:0, 성사:0 };
+    activities.forEach(a => {
+      const d = new Date(a.date);
+      const target = d >= weekStart_d ? thisWeek : d >= prevWeekStart ? lastWeek : null;
+      if (target) Object.keys(target).forEach(k => { target[k] += a[k]||0; });
+    });
+
+    // 긴급 고객 수
+    const urgentCount = customers.filter(c => {
+      if (c.stage==='성사'||c.stage==='휴면') return false;
+      const diff = dayDiff(c.followUp);
+      return diff !== null && diff <= 0;
+    }).length;
+
+    // 전체 고객 수
+    const totalCustomers = customers.length;
+    const stageMap = {};
+    customers.forEach(c => { stageMap[c.stage] = (stageMap[c.stage]||0)+1; });
+
+    const analysisData = { thisWeek, lastWeek, urgentCount, totalCustomers, stageMap, today };
+
+    const result = await callDiaryAI('insight', { analysisData });
+    el.innerHTML = result;
+  } catch(e) {
+    // API 실패 시 로컬 분석으로 대체
+    el.innerHTML = generateLocalInsight();
+  }
+  btn.style.pointerEvents = 'auto';
+}
+
+function generateLocalInsight() {
+  const customers = load(KEYS.customers);
+  const activities = load(KEYS.activities);
+  const weekStart_d = new Date(getWeekStart());
+  const prevStart = new Date(weekStart_d); prevStart.setDate(prevStart.getDate()-7);
+
+  const thisW = activities.filter(a => new Date(a.date) >= weekStart_d).reduce((s,a) => s+(a['신규연락']||0)+(a['팔로업']||0), 0);
+  const lastW = activities.filter(a => { const d=new Date(a.date); return d>=prevStart && d<weekStart_d; }).reduce((s,a) => s+(a['신규연락']||0)+(a['팔로업']||0), 0);
+  const urgent = customers.filter(c => c.stage!=='성사'&&c.stage!=='휴면'&&dayDiff(c.followUp)!==null&&dayDiff(c.followUp)<=0).length;
+
+  const insights = [];
+  if (urgent > 0) insights.push(`🔴 팔로업이 밀린 고객이 <b>${urgent}명</b>이에요. 오늘 꼭 연락해보세요!`);
+  if (thisW > lastW) insights.push(`📈 이번 주 활동이 저번 주보다 <b>${thisW-lastW}회 더 많아요</b>. 좋은 흐름이에요!`);
+  else if (lastW > 0 && thisW < lastW) insights.push(`📉 이번 주 활동이 저번 주보다 <b>${lastW-thisW}회 적어요</b>. 조금 더 힘내봐요!`);
+  if (insights.length === 0) insights.push(`💡 고객을 추가하고 팔로업 날짜를 설정하면 AI가 맞춤 인사이트를 드려요!`);
+
+  return insights.join('<br>');
+}
+
+// ── 2. 고객 맞춤 메시지 생성 ──
+async function generateCustomerMessage(customerId) {
+  const customers = load(KEYS.customers);
+  const c = customers.find(x => x.id === customerId);
+  if (!c) return;
+
+  const el = document.getElementById('ai-message-result-' + customerId);
+  if (!el) return;
+  el.innerHTML = '<span class="ai-loading"></span> AI가 메시지를 작성 중이에요...';
+
+  try {
+    const result = await callDiaryAI('message', {
+      customer: { name: c.name, stage: c.stage, note: c.note, memos: c.memos?.slice(-3)||[], followUp: c.followUp }
+    });
+    el.innerHTML = `<div class="ai-result">${result}<br><br>
+      <button onclick="copyText(\`${result.replace(/`/g,"'")}\`)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit">📋 복사</button>
+    </div>`;
+  } catch {
+    el.innerHTML = '<div class="ai-result" style="color:var(--red)">잠시 후 다시 시도해주세요</div>';
+  }
+}
+
+// ── 3. 거절 대응 AI 코칭 ──
+async function getAiJournalCoaching() {
+  const situation = selectedSituation;
+  const feeling = document.getElementById('j-feeling').value.trim();
+  if (!situation && !feeling) { showToast('상황이나 느낌을 먼저 입력하세요'); return; }
+
+  const el = document.getElementById('ai-coaching-result');
+  if (!el) return;
+  el.innerHTML = '<span class="ai-loading"></span> AI 코치가 조언을 준비 중이에요...';
+
+  try {
+    const result = await callDiaryAI('coaching', { situation, feeling });
+    el.innerHTML = `<div class="ai-result">${result}</div>`;
+  } catch {
+    el.innerHTML = '<div class="ai-result" style="color:var(--red)">잠시 후 다시 시도해주세요</div>';
+  }
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('복사됨 📋'));
+}
+
+// ══════════════════════════════
 // 초기화
 // ══════════════════════════════
 renderHome();
+
+// 알림 스케줄 시작
+const _s = getSettings();
+if (_s.alarmTime) scheduleAlarm(_s.alarmTime);
 
 // 서비스워커 등록
 if ('serviceWorker' in navigator) {
