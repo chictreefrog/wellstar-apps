@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>나의 AI 명함</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg: #0D0D1A;
+  --bg2: #13131F;
+  --card: #1A1A2E;
+  --card2: #1E1E35;
+  --border: rgba(255,255,255,0.08);
+  --accent: #FF6B35;
+  --text: #F0F0F8;
+  --text2: #9999BB;
+  --text3: #5555AA;
+  --tab-h: 60px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
+
+#app { height: 100%; display: flex; flex-direction: column; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); display: none; }
+.screen.active { display: block; }
+
+/* 탭바 */
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--tab-h) + var(--safe-bottom)); background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: var(--safe-bottom); }
+.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text3); border: none; background: none; font-family: 'Noto Sans KR', sans-serif; transition: color 0.2s; }
+.tab-btn.active { color: var(--accent); }
+.tab-btn .tab-icon { font-size: 22px; }
+.tab-btn .tab-label { font-size: 10px; font-weight: 500; }
+
+/* 헤더 */
+.page-header { position: sticky; top: 0; z-index: 50; background: var(--bg2); padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+.page-header .subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* 공통 */
+.section-title { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 1px; padding: 16px 20px 8px; text-transform: uppercase; }
+.form-group { margin-bottom: 14px; padding: 0 16px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+input, textarea, select { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 15px; padding: 12px 14px; width: 100%; outline: none; transition: border-color 0.2s; }
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: none; min-height: 72px; }
+
+/* 프로필 사진 업로드 */
+.photo-upload { display: flex; align-items: center; gap: 16px; padding: 0 16px; margin-bottom: 16px; }
+.photo-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); flex-shrink: 0; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; }
+.photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.photo-upload-btn { flex: 1; }
+.btn-upload { background: var(--card2); border: 1px dashed rgba(255,107,53,0.5); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; width: 100%; }
+
+/* 테마 선택 */
+.theme-list { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 8px; scrollbar-width: none; }
+.theme-list::-webkit-scrollbar { display: none; }
+.theme-btn { flex-shrink: 0; width: 56px; height: 56px; border-radius: 12px; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s; position: relative; }
+.theme-btn.selected { border-color: var(--accent); }
+.theme-btn::after { content: ''; position: absolute; inset: 0; border-radius: 9px; }
+
+/* SNS 링크 */
+.sns-list { padding: 0 16px; }
+.sns-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sns-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.sns-item input { flex: 1; }
+
+/* 도구 링크 토글 */
+.tool-toggle-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.tool-toggle-item { display: flex; align-items: center; justify-content: space-between; background: var(--card2); border-radius: 10px; padding: 12px 14px; }
+.tool-toggle-left { display: flex; align-items: center; gap: 10px; }
+.tool-toggle-icon { font-size: 20px; }
+.tool-toggle-name { font-size: 14px; font-weight: 600; }
+.tool-toggle-url { font-size: 11px; color: var(--text3); }
+.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+.toggle-slider.off { background: var(--card); }
+.toggle-slider.on { background: var(--accent); }
+.toggle-knob { position: absolute; top: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.2s; }
+.toggle-knob.off { left: 2px; }
+.toggle-knob.on { left: 22px; }
+
+/* 저장 버튼 */
+.btn-primary { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 14px 20px; font-size: 15px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; transition: opacity 0.15s; }
+.btn-primary:active { opacity: 0.8; }
+.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; transition: background 0.15s; }
+
+/* ── 카드 미리보기 ── */
+.card-preview-wrap { padding: 20px 16px; }
+.business-card {
+  border-radius: 20px; padding: 28px 24px; position: relative; overflow: hidden;
+  min-height: 200px; margin-bottom: 16px;
+}
+.card-bg-deco { position: absolute; inset: 0; z-index: 0; }
+.card-content { position: relative; z-index: 1; }
+.card-profile { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.card-avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 28px; overflow: hidden; }
+.card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.card-name { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+.card-title { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+.card-intro { font-size: 13px; line-height: 1.6; opacity: 0.9; margin-bottom: 14px; }
+.card-divider { height: 1px; background: rgba(255,255,255,0.15); margin-bottom: 12px; }
+.card-contacts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.card-contact-item { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.9; }
+.card-sns { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.card-sns-chip { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+.card-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.card-tool-chip { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 4px 10px; font-size: 11px; }
+.card-brand { position: absolute; bottom: 14px; right: 18px; font-size: 11px; opacity: 0.5; z-index: 1; }
+
+/* QR 섹션 */
+.qr-section { background: var(--card); border-radius: 16px; padding: 20px; margin: 0 16px 16px; text-align: center; }
+.qr-section-title { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 16px; }
+#qr-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+#qr-wrap canvas { border-radius: 12px; }
+.qr-sub { font-size: 12px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+.save-btns { display: flex; gap: 10px; }
+
+/* 토스트 */
+.toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; border: 1px solid var(--border); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── 편집 화면 ── -->
+  <div id="screen-edit" class="screen active">
+    <div class="page-header">
+      <h1>나의 AI 명함</h1>
+      <div class="subtitle">한 번 만들면 QR로 바로 공유</div>
+    </div>
+
+    <!-- 프로필 사진 -->
+    <div class="section-title">프로필 사진</div>
+    <div class="photo-upload">
+      <div class="photo-preview" id="photo-preview-wrap">
+        <span id="photo-placeholder">😊</span>
+      </div>
+      <div class="photo-upload-btn">
+        <label class="btn-upload">
+          📷 사진 선택하기
+          <input type="file" accept="image/*" onchange="handlePhoto(event)" style="display:none">
+        </label>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;padding:0 4px">정방형 이미지를 권장해요</div>
+      </div>
+    </div>
+
+    <!-- 기본 정보 -->
+    <div class="section-title">기본 정보</div>
+    <div class="form-group">
+      <label class="form-label">이름 *</label>
+      <input type="text" id="f-name" placeholder="홍길동" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">직함</label>
+      <input type="text" id="f-title" placeholder="옆집디노 파트너 · 건강 전문가" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">전화번호</label>
+      <input type="tel" id="f-phone" placeholder="010-0000-0000" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">이메일</label>
+      <input type="email" id="f-email" placeholder="hello@example.com" oninput="updatePreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">한 줄 소개</label>
+      <textarea id="f-intro" placeholder="당신의 건강한 삶을 응원하는 웰니스 파트너입니다 🌿" oninput="updatePreview()"></textarea>
+    </div>
+
+    <!-- 카드 테마 -->
+    <div class="section-title">카드 테마</div>
+    <div class="theme-list" id="theme-list"></div>
+
+    <!-- SNS 링크 -->
+    <div class="section-title">SNS 링크</div>
+    <div class="sns-list">
+      <div class="sns-item"><div class="sns-icon">📸</div><input type="url" id="f-insta" placeholder="인스타그램 링크" oninput="updatePreview()"></div>
+      <div class="sns-item"><div class="sns-icon">💬</div><input type="url" id="f-kakao" placeholder="카카오톡 오픈채팅 링크" oninput="updatePreview()"></div>
+      <div class="sns-item"><div class="sns-icon">▶️</div><input type="url" id="f-youtube" placeholder="유튜브 링크" oninput="updatePreview()"></div>
+      <div class="sns-item"><div class="sns-icon">🧵</div><input type="url" id="f-blog" placeholder="블로그/스레드 링크" oninput="updatePreview()"></div>
+    </div>
+
+    <!-- 옆집디노 도구 링크 -->
+    <div class="section-title" style="margin-top:8px">내 도구 링크</div>
+    <div class="tool-toggle-list" id="tool-toggle-list"></div>
+
+    <!-- 저장 -->
+    <div style="padding:20px 16px 8px">
+      <button class="btn-primary" onclick="saveAndPreview()">✅ 저장하고 카드 보기</button>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+
+  <!-- ── 카드/QR 화면 ── -->
+  <div id="screen-card" class="screen">
+    <div class="page-header">
+      <h1>내 명함 카드</h1>
+      <div class="subtitle">QR을 저장해서 공유하세요</div>
+    </div>
+
+    <div class="card-preview-wrap">
+      <div class="business-card" id="business-card">
+        <div class="card-bg-deco" id="card-bg-deco"></div>
+        <div class="card-content">
+          <div class="card-profile">
+            <div class="card-avatar" id="card-avatar"><span>😊</span></div>
+            <div>
+              <div class="card-name" id="card-display-name">이름</div>
+              <div class="card-title" id="card-display-title"></div>
+            </div>
+          </div>
+          <div class="card-intro" id="card-display-intro"></div>
+          <div class="card-divider"></div>
+          <div class="card-contacts" id="card-display-contacts"></div>
+          <div class="card-sns" id="card-display-sns"></div>
+          <div class="card-tools" id="card-display-tools"></div>
+        </div>
+        <div class="card-brand">🦕 옆집디노</div>
+      </div>
+    </div>
+
+    <!-- QR 코드 -->
+    <div class="qr-section">
+      <div class="qr-section-title">📱 QR 코드</div>
+      <div id="qr-wrap"></div>
+      <div class="qr-sub">QR을 스캔하면 내 명함 정보가 바로 보여요<br>캡처해서 카카오톡, 인스타에 공유해보세요</div>
+      <div class="save-btns">
+        <button class="btn-secondary" onclick="saveQR()" style="flex:1">📱 QR 저장</button>
+        <button class="btn-primary" onclick="shareCard()" style="flex:1">📤 공유하기</button>
+      </div>
+    </div>
+
+    <div style="padding:0 16px 8px">
+      <button class="btn-secondary" onclick="switchTab('edit')">✏️ 명함 편집하기</button>
+    </div>
+
+    <!-- 브랜딩 -->
+    <div style="text-align:center;padding:20px 20px 8px;color:var(--text3)">
+      <a href="https://wellstar.life" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 18px">
+        <span style="font-size:20px">🦕</span>
+        <div style="text-align:left">
+          <div style="font-size:14px;font-weight:900;color:var(--text)">옆집디노</div>
+          <div style="font-size:11px;color:var(--text3)">wellstar.life</div>
+        </div>
+      </a>
+      <div style="font-size:11px;margin-top:10px;color:var(--text3)">AI 세일즈 시스템으로 영업 성공을 이끌어요</div>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+
+  <!-- 탭바 -->
+  <nav class="tabbar">
+    <button class="tab-btn active" onclick="switchTab('edit')" id="tab-edit">
+      <span class="tab-icon">✏️</span>
+      <span class="tab-label">편집</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('card')" id="tab-card">
+      <span class="tab-icon">💳</span>
+      <span class="tab-label">카드/QR</span>
+    </button>
+  </nav>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════
+// 데이터
+// ══════════════════════════════
+const STORAGE_KEY = 'namecard_data';
+
+const THEMES = [
+  { id: 'dark-orange', label: '다크 오렌지', bg: 'linear-gradient(135deg,#1A1A2E,#2D1A0E)', text: '#F0F0F8', accent: '#FF6B35' },
+  { id: 'deep-purple', label: '딥 퍼플', bg: 'linear-gradient(135deg,#1A1A2E,#2D1A45)', text: '#F0F0F8', accent: '#A29BFE' },
+  { id: 'ocean-blue', label: '오션 블루', bg: 'linear-gradient(135deg,#0D1B2A,#1A3A5C)', text: '#F0F0F8', accent: '#74B9FF' },
+  { id: 'forest-green', label: '포레스트', bg: 'linear-gradient(135deg,#0D1A0D,#1A3A2A)', text: '#F0F0F8', accent: '#55EFC4' },
+  { id: 'rose-gold', label: '로즈골드', bg: 'linear-gradient(135deg,#2A1A1A,#3A1A2A)', text: '#F0F0F8', accent: '#FD79A8' },
+  { id: 'midnight', label: '미드나잇', bg: 'linear-gradient(135deg,#0A0A0F,#1A1A2E)', text: '#F0F0F8', accent: '#FFD700' },
+];
+
+const TOOLS = [
+  { key: 'saju', icon: '🔮', name: '사주 성공진단', url: 'https://wellstar.life/saju/' },
+  { key: 'planner', icon: '📅', name: '5분법칙 플래너', url: 'https://app.wellstar.life/planner/' },
+  { key: 'diary', icon: '📊', name: 'AI 다이어리', url: 'https://app.wellstar.life/diary/' },
+  { key: 'quiz', icon: '🎯', name: '영업 스타일 진단', url: 'https://app.wellstar.life/quiz/' },
+];
+
+let data = {
+  name: '', title: '', phone: '', email: '', intro: '',
+  photo: '', theme: 'dark-orange',
+  sns: { insta: '', kakao: '', youtube: '', blog: '' },
+  tools: { saju: false, planner: false, diary: false, quiz: false }
+};
+
+let selectedTheme = 'dark-orange';
+let toolToggles = { saju: false, planner: false, diary: false, quiz: false };
+
+// ══════════════════════════════
+// 초기화
+// ══════════════════════════════
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      data = { ...data, ...parsed };
+      selectedTheme = data.theme || 'dark-orange';
+      toolToggles = { ...toolToggles, ...(data.tools || {}) };
+    } catch {}
+  }
+  renderThemes();
+  renderToolToggles();
+  fillForm();
+  renderCard();
+  generateQR();
+}
+
+function fillForm() {
+  document.getElementById('f-name').value = data.name || '';
+  document.getElementById('f-title').value = data.title || '';
+  document.getElementById('f-phone').value = data.phone || '';
+  document.getElementById('f-email').value = data.email || '';
+  document.getElementById('f-intro').value = data.intro || '';
+  document.getElementById('f-insta').value = (data.sns || {}).insta || '';
+  document.getElementById('f-kakao').value = (data.sns || {}).kakao || '';
+  document.getElementById('f-youtube').value = (data.sns || {}).youtube || '';
+  document.getElementById('f-blog').value = (data.sns || {}).blog || '';
+  if (data.photo) {
+    const wrap = document.getElementById('photo-preview-wrap');
+    wrap.innerHTML = `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  }
+}
+
+// ══════════════════════════════
+// 테마
+// ══════════════════════════════
+function renderThemes() {
+  document.getElementById('theme-list').innerHTML = THEMES.map(t =>
+    `<div class="theme-btn ${selectedTheme === t.id ? 'selected' : ''}"
+      style="background:${t.bg}" onclick="selectTheme('${t.id}')"
+      title="${t.label}"></div>`
+  ).join('');
+}
+
+function selectTheme(id) {
+  selectedTheme = id;
+  renderThemes();
+  renderCard();
+}
+
+// ══════════════════════════════
+// 도구 토글
+// ══════════════════════════════
+function renderToolToggles() {
+  document.getElementById('tool-toggle-list').innerHTML = TOOLS.map(t =>
+    `<div class="tool-toggle-item">
+      <div class="tool-toggle-left">
+        <div class="tool-toggle-icon">${t.icon}</div>
+        <div>
+          <div class="tool-toggle-name">${t.name}</div>
+          <div class="tool-toggle-url">${t.url}</div>
+        </div>
+      </div>
+      <div class="toggle-switch" onclick="toggleTool('${t.key}')">
+        <div class="toggle-slider ${toolToggles[t.key] ? 'on' : 'off'}"></div>
+        <div class="toggle-knob ${toolToggles[t.key] ? 'on' : 'off'}"></div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function toggleTool(key) {
+  toolToggles[key] = !toolToggles[key];
+  renderToolToggles();
+  renderCard();
+}
+
+// ══════════════════════════════
+// 프로필 사진
+// ══════════════════════════════
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    data.photo = ev.target.result;
+    const wrap = document.getElementById('photo-preview-wrap');
+    wrap.innerHTML = `<img src="${data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    renderCard();
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════
+// 폼 데이터 읽기
+// ══════════════════════════════
+function readForm() {
+  data.name = document.getElementById('f-name').value.trim();
+  data.title = document.getElementById('f-title').value.trim();
+  data.phone = document.getElementById('f-phone').value.trim();
+  data.email = document.getElementById('f-email').value.trim();
+  data.intro = document.getElementById('f-intro').value.trim();
+  data.sns = {
+    insta: document.getElementById('f-insta').value.trim(),
+    kakao: document.getElementById('f-kakao').value.trim(),
+    youtube: document.getElementById('f-youtube').value.trim(),
+    blog: document.getElementById('f-blog').value.trim(),
+  };
+  data.theme = selectedTheme;
+  data.tools = { ...toolToggles };
+}
+
+function updatePreview() {
+  readForm();
+  renderCard();
+}
+
+// ══════════════════════════════
+// 카드 렌더링
+// ══════════════════════════════
+function renderCard() {
+  const theme = THEMES.find(t => t.id === selectedTheme) || THEMES[0];
+
+  // 배경
+  document.getElementById('card-bg-deco').style.background = theme.bg;
+  document.getElementById('business-card').style.color = theme.text;
+
+  // 아바타
+  const avatar = document.getElementById('card-avatar');
+  avatar.innerHTML = data.photo
+    ? `<img src="${data.photo}">`
+    : `<span style="font-size:28px">😊</span>`;
+
+  // 이름/직함
+  document.getElementById('card-display-name').textContent = data.name || '이름';
+  document.getElementById('card-display-name').style.color = theme.text;
+  document.getElementById('card-display-title').textContent = data.title || '';
+
+  // 소개
+  const intro = document.getElementById('card-display-intro');
+  intro.textContent = data.intro || '';
+  intro.style.display = data.intro ? 'block' : 'none';
+
+  // 연락처
+  const contacts = [];
+  if (data.phone) contacts.push(`<div class="card-contact-item"><span>📞</span><span>${data.phone}</span></div>`);
+  if (data.email) contacts.push(`<div class="card-contact-item"><span>📧</span><span>${data.email}</span></div>`);
+  document.getElementById('card-display-contacts').innerHTML = contacts.join('');
+  document.getElementById('card-display-contacts').style.display = contacts.length ? 'flex' : 'none';
+
+  // SNS
+  const sns = [];
+  const snsLabels = { insta: '📸 인스타', kakao: '💬 카카오', youtube: '▶️ 유튜브', blog: '🧵 블로그' };
+  Object.entries(data.sns || {}).forEach(([k, v]) => {
+    if (v) sns.push(`<div class="card-sns-chip" style="background:rgba(255,255,255,0.12);color:${theme.text}">${snsLabels[k]}</div>`);
+  });
+  document.getElementById('card-display-sns').innerHTML = sns.join('');
+  document.getElementById('card-display-sns').style.display = sns.length ? 'flex' : 'none';
+
+  // 도구
+  const tools = TOOLS.filter(t => toolToggles[t.key]);
+  document.getElementById('card-display-tools').innerHTML = tools.map(t =>
+    `<div class="card-tool-chip" style="color:${theme.text};border-color:rgba(255,255,255,0.2)">${t.icon} ${t.name}</div>`
+  ).join('');
+  document.getElementById('card-display-tools').style.display = tools.length ? 'flex' : 'none';
+}
+
+// ══════════════════════════════
+// QR 코드 생성
+// ══════════════════════════════
+function generateQR() {
+  const wrap = document.getElementById('qr-wrap');
+  wrap.innerHTML = '';
+
+  // vCard 형식으로 QR 내용 생성
+  const lines = ['BEGIN:VCARD', 'VERSION:3.0'];
+  if (data.name) lines.push(`FN:${data.name}`);
+  if (data.title) lines.push(`TITLE:${data.title}`);
+  if (data.phone) lines.push(`TEL:${data.phone}`);
+  if (data.email) lines.push(`EMAIL:${data.email}`);
+  if (data.intro) lines.push(`NOTE:${data.intro}`);
+  if ((data.sns || {}).insta) lines.push(`URL:${data.sns.insta}`);
+  lines.push('END:VCARD');
+  const vcard = lines.join('\n');
+
+  try {
+    new QRCode(wrap, {
+      text: vcard,
+      width: 180,
+      height: 180,
+      colorDark: '#1A1A2E',
+      colorLight: '#FFFFFF',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    wrap.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px">QR 생성 중...</div>';
+  }
+}
+
+// ══════════════════════════════
+// 저장 / 공유
+// ══════════════════════════════
+function saveAndPreview() {
+  readForm();
+  if (!data.name) { showToast('이름을 입력하세요'); return; }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  renderCard();
+  generateQR();
+  switchTab('card');
+  showToast('저장됐어요! 🎉');
+}
+
+function saveQR() {
+  const canvas = document.querySelector('#qr-wrap canvas');
+  if (!canvas) { showToast('QR 코드를 먼저 생성해주세요'); return; }
+  const link = document.createElement('a');
+  link.download = `${data.name || '명함'}-QR.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('QR 코드 저장됨 📱');
+}
+
+function shareCard() {
+  const canvas = document.querySelector('#qr-wrap canvas');
+  const text = `${data.name || ''}${data.title ? ' · ' + data.title : ''}\n${data.phone || ''}\n${data.intro || ''}\n\n🦕 옆집디노 AI 세일즈 시스템\nwellstar.life`;
+  if (navigator.share) {
+    navigator.share({ text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('명함 정보 복사됨 📋'));
+  }
+}
+
+// ══════════════════════════════
+// 탭 전환
+// ══════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'card') { renderCard(); generateQR(); }
+}
+
+// ══════════════════════════════
+// 토스트
+// ══════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════
+// 서비스워커
+// ══════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+init();
+</script>
+</body>
+</html>
