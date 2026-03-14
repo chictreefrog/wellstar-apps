@@ -1,0 +1,13 @@
+{
+  "name": "나의 영업 스타일 진단",
+  "short_name": "영업 스타일",
+  "description": "10가지 질문으로 알아보는 나만의 영업 DNA",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0D0D1A",
+  "theme_color": "#0D0D1A",
+  "icons": [
+    { "src": "https://app.wellstar.life/planner/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://app.wellstar.life/planner/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

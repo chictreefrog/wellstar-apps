@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>나의 영업 스타일 진단</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D0D1A;
+  --bg2: #13131F;
+  --card: #1A1A2E;
+  --border: rgba(255,255,255,0.07);
+  --text: #F0F0F8;
+  --text2: #9999BB;
+  --text3: #5555AA;
+  --accent: #FF6B35;
+  --accent2: #FF9A6C;
+  --purple: #7B5EA7;
+  --gold: #FFD700;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
+
+/* ── 파티클 배경 ── */
+#particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.particle { position: absolute; border-radius: 50%; opacity: 0; animation: float linear infinite; }
+@keyframes float {
+  0% { opacity: 0; transform: translateY(100vh) scale(0); }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-20px) scale(1.2); }
+}
+
+/* ── 레이아웃 ── */
+#app { position: relative; z-index: 1; min-height: 100%; display: flex; flex-direction: column; }
+.screen { display: none; flex: 1; flex-direction: column; align-items: center; padding: 24px 20px 40px; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ── 인트로 ── */
+.intro-hero { text-align: center; padding: 60px 0 32px; }
+.intro-emoji { font-size: 64px; animation: pulse 2s ease-in-out infinite; display: block; margin-bottom: 20px; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.intro-badge { display: inline-block; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.4); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 16px; }
+.intro-title { font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1.3; margin-bottom: 12px; }
+.intro-title span { color: var(--accent); }
+.intro-sub { font-size: 15px; color: var(--text2); line-height: 1.7; margin-bottom: 32px; }
+
+.type-preview { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 36px; max-width: 360px; }
+.type-chip { padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid; }
+
+.info-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; margin-bottom: 36px; }
+.info-card { background: var(--card); border-radius: 12px; padding: 14px 10px; text-align: center; border: 1px solid var(--border); }
+.info-card .ic-num { font-size: 22px; font-weight: 900; color: var(--accent); font-family: 'Bebas Neue', sans-serif; }
+.info-card .ic-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* ── 버튼 ── */
+.btn-start { background: linear-gradient(135deg, #FF6B35, #FF9A6C); color: white; border: none; border-radius: 16px; padding: 18px 48px; font-size: 18px; font-weight: 900; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; max-width: 360px; box-shadow: 0 8px 32px rgba(255,107,53,0.4); transition: transform 0.15s, box-shadow 0.15s; letter-spacing: -0.5px; }
+.btn-start:active { transform: scale(0.97); box-shadow: 0 4px 16px rgba(255,107,53,0.3); }
+
+/* ── 퀴즈 화면 ── */
+.quiz-header { width: 100%; max-width: 400px; margin-bottom: 24px; }
+.progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.progress-num { font-size: 13px; color: var(--text2); font-weight: 600; }
+.progress-pct { font-size: 13px; color: var(--accent); font-weight: 700; }
+.progress-bar-wrap { height: 6px; background: var(--card); border-radius: 3px; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #FF6B35, #FF9A6C); border-radius: 3px; transition: width 0.4s ease; }
+
+.question-card { background: var(--card); border-radius: 20px; padding: 28px 24px; width: 100%; max-width: 400px; border: 1px solid var(--border); margin-bottom: 20px; }
+.q-number { font-size: 12px; color: var(--accent); font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
+.q-text { font-size: 18px; font-weight: 700; line-height: 1.5; letter-spacing: -0.5px; }
+
+.options-wrap { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+.option-btn {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 16px 20px; text-align: left; cursor: pointer; width: 100%;
+  font-family: 'Noto Sans KR', sans-serif; color: var(--text); font-size: 15px; font-weight: 500;
+  transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+}
+.option-btn:active { transform: scale(0.98); }
+.option-btn.selected { border-color: var(--accent); background: rgba(255,107,53,0.12); color: var(--text); }
+.option-btn.correct { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+.opt-label { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; color: var(--text2); transition: all 0.2s; }
+.option-btn.selected .opt-label { background: var(--accent); border-color: var(--accent); color: white; }
+
+.btn-next { background: linear-gradient(135deg, #FF6B35, #FF9A6C); color: white; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; max-width: 400px; margin-top: 8px; opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
+.btn-next.enabled { opacity: 1; pointer-events: auto; }
+
+/* ── 로딩 ── */
+.loading-screen { justify-content: center; }
+.loading-wrap { text-align: center; }
+.loading-emoji { font-size: 72px; animation: spin-slow 3s linear infinite; display: block; margin-bottom: 24px; }
+@keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.loading-title { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+.loading-sub { font-size: 14px; color: var(--text2); }
+.loading-dots span { animation: blink 1.4s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity: 0; } 40% { opacity: 1; } }
+
+/* ── 결과 화면 ── */
+.result-hero { text-align: center; padding: 40px 0 20px; width: 100%; max-width: 400px; }
+.result-type-badge { display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 16px; }
+.result-emoji { font-size: 80px; display: block; margin-bottom: 16px; animation: bounce 1s ease-out; }
+@keyframes bounce { 0% { transform: scale(0); opacity:0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity:1; } }
+.result-type-name { font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+.result-tagline { font-size: 15px; color: var(--text2); font-style: italic; }
+
+.result-card { background: var(--card); border-radius: 18px; padding: 22px; width: 100%; max-width: 400px; border: 1px solid var(--border); margin-bottom: 14px; }
+.result-card-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 12px; }
+.result-desc { font-size: 15px; line-height: 1.8; color: var(--text); }
+
+.strength-list { display: flex; flex-direction: column; gap: 8px; }
+.strength-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.strength-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.tool-list { display: flex; flex-direction: column; gap: 10px; }
+.tool-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+.tool-item:active { background: rgba(255,107,53,0.1); }
+.tool-icon { font-size: 24px; width: 40px; text-align: center; flex-shrink: 0; }
+.tool-info { flex: 1; }
+.tool-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.tool-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.tool-arrow { font-size: 14px; color: var(--text3); }
+
+/* 이메일 수집 */
+.email-card { background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(123,94,167,0.1)); border: 1px solid rgba(255,107,53,0.3); border-radius: 18px; padding: 24px; width: 100%; max-width: 400px; margin-bottom: 14px; text-align: center; }
+.email-card-title { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.email-card-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+.email-input-wrap { display: flex; gap: 8px; }
+.email-input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; outline: none; }
+.email-input:focus { border-color: var(--accent); }
+.btn-email { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 12px 18px; font-size: 14px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; white-space: nowrap; }
+
+.btn-share { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; max-width: 400px; color: var(--text); margin-bottom: 10px; }
+.btn-retry { background: none; border: none; color: var(--text3); font-size: 14px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; text-decoration: underline; padding: 8px; }
+
+.score-bar-wrap { margin-bottom: 10px; }
+.score-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.score-bar-track { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+</style>
+</head>
+<body>
+<div id="particles"></div>
+<div id="app">
+
+  <!-- ── 인트로 ── -->
+  <div id="screen-intro" class="screen active">
+    <div class="intro-hero">
+      <span class="intro-emoji">🎯</span>
+      <div class="intro-badge">SALES STYLE TEST</div>
+      <h1 class="intro-title">나는 어떤<br><span>영업 스타일</span>인가?</h1>
+      <p class="intro-sub">10가지 질문으로 알아보는<br>나만의 영업 DNA 진단</p>
+    </div>
+
+    <div class="type-preview">
+      <div class="type-chip" style="color:#FF6B35;border-color:rgba(255,107,53,0.4)">🔥 불꽃 개척자</div>
+      <div class="type-chip" style="color:#74B9FF;border-color:rgba(116,185,255,0.4)">🌊 공감 파도</div>
+      <div class="type-chip" style="color:#FDCB6E;border-color:rgba(253,203,110,0.4)">🦁 천생 리더</div>
+      <div class="type-chip" style="color:#A29BFE;border-color:rgba(162,155,254,0.4)">💡 전략형 설계사</div>
+      <div class="type-chip" style="color:#55EFC4;border-color:rgba(85,239,196,0.4)">🌱 신뢰 농부</div>
+      <div class="type-chip" style="color:#FD79A8;border-color:rgba(253,121,168,0.4)">📱 디지털 인플루언서</div>
+      <div class="type-chip" style="color:#E17055;border-color:rgba(225,112,85,0.4)">🎯 집중형 스나이퍼</div>
+      <div class="type-chip" style="color:#FFD700;border-color:rgba(255,215,0,0.4)">✨ 스토리텔러</div>
+    </div>
+
+    <div class="info-cards">
+      <div class="info-card"><div class="ic-num">10</div><div class="ic-label">문항</div></div>
+      <div class="info-card"><div class="ic-num">5분</div><div class="ic-label">소요시간</div></div>
+      <div class="info-card"><div class="ic-num">8</div><div class="ic-label">유형</div></div>
+    </div>
+
+    <button class="btn-start" onclick="startQuiz()">진단 시작하기 →</button>
+  </div>
+
+  <!-- ── 퀴즈 ── -->
+  <div id="screen-quiz" class="screen">
+    <div class="quiz-header">
+      <div class="progress-info">
+        <span class="progress-num" id="q-progress-num">1 / 10</span>
+        <span class="progress-pct" id="q-progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="q-progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <div class="q-number" id="q-number">Q1</div>
+      <div class="q-text" id="q-text"></div>
+    </div>
+
+    <div class="options-wrap" id="options-wrap"></div>
+    <button class="btn-next" id="btn-next" onclick="nextQuestion()">다음 →</button>
+  </div>
+
+  <!-- ── 로딩 ── -->
+  <div id="screen-loading" class="screen loading-screen">
+    <div class="loading-wrap">
+      <span class="loading-emoji">🔮</span>
+      <div class="loading-title">영업 DNA 분석 중</div>
+      <div class="loading-sub">당신의 스타일을 찾고 있어요<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></div>
+    </div>
+  </div>
+
+  <!-- ── 결과 ── -->
+  <div id="screen-result" class="screen">
+    <div class="result-hero">
+      <div class="result-type-badge" id="result-badge"></div>
+      <span class="result-emoji" id="result-emoji"></span>
+      <div class="result-type-name" id="result-name"></div>
+      <div class="result-tagline" id="result-tagline"></div>
+    </div>
+
+    <!-- 유형 설명 -->
+    <div class="result-card" style="width:100%;max-width:400px">
+      <div class="result-card-title">📊 나의 영업 스타일</div>
+      <div class="result-desc" id="result-desc"></div>
+    </div>
+
+    <!-- 강점 -->
+    <div class="result-card" style="width:100%;max-width:400px">
+      <div class="result-card-title">💪 나의 강점</div>
+      <div class="strength-list" id="result-strengths"></div>
+    </div>
+
+    <!-- 점수 분포 -->
+    <div class="result-card" style="width:100%;max-width:400px">
+      <div class="result-card-title">📈 나의 영업 DNA 분포</div>
+      <div id="score-bars"></div>
+    </div>
+
+    <!-- 이메일 수집 -->
+    <div class="email-card" id="email-section">
+      <div class="email-card-title">📩 상세 리포트 받기</div>
+      <div class="email-card-sub">강점 심층 분석 + 맞춤 성장 전략을<br>이메일로 무료 발송해드려요</div>
+      <div class="email-input-wrap">
+        <input type="email" class="email-input" id="result-email" placeholder="이메일 주소 입력">
+        <button class="btn-email" onclick="sendReport()">받기</button>
+      </div>
+    </div>
+
+    <!-- 추천 도구 -->
+    <div class="result-card" style="width:100%;max-width:400px">
+      <div class="result-card-title">🛠️ 나에게 딱 맞는 도구</div>
+      <div class="tool-list" id="result-tools"></div>
+    </div>
+
+    <button class="btn-share" onclick="shareResult()">📤 결과 공유하기</button>
+    <button class="btn-retry" onclick="retryQuiz()">다시 진단하기</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+// 파티클
+// ══════════════════════════════
+(function() {
+  const wrap = document.getElementById('particles');
+  const colors = ['#FF6B35','#7B5EA7','#74B9FF','#FFD700','#55EFC4'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 2;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s`;
+    wrap.appendChild(p);
+  }
+})();
+
+// ══════════════════════════════
+// 타입 데이터
+// ══════════════════════════════
+const TYPES = {
+  A: {
+    key: 'A', emoji: '🔥', name: '불꽃 개척자',
+    tagline: '아무도 안 간 길을 먼저 간다',
+    color: '#FF6B35', bg: 'rgba(255,107,53,0.15)',
+    desc: '당신은 누구보다 행동이 빠른 영업의 선봉장이에요. 새로운 고객, 새로운 시장을 개척하는 데서 짜릿함을 느끼고, 거절에도 굴하지 않는 강한 멘탈을 가졌어요. 에너지와 열정으로 주변을 움직이는 타입이에요.',
+    strengths: ['🚀 누구보다 빠른 실행력', '💪 거절에 흔들리지 않는 멘탈', '⚡ 새로운 도전을 즐기는 용기', '🎯 목표를 향한 강한 추진력'],
+    tools: ['planner', 'diary', 'quiz']
+  },
+  B: {
+    key: 'B', emoji: '🌊', name: '공감 파도',
+    tagline: '마음을 움직여 사람을 모은다',
+    color: '#74B9FF', bg: 'rgba(116,185,255,0.15)',
+    desc: '당신은 사람의 감정을 읽고 공감하는 능력이 탁월해요. 고객이 먼저 마음을 여는 건 당신의 따뜻함 때문이에요. 억지로 설득하지 않아도 자연스럽게 신뢰를 쌓아가는 타고난 소통 전문가예요.',
+    strengths: ['❤️ 탁월한 공감 능력', '🤝 자연스러운 신뢰 구축', '👂 경청과 이해의 달인', '🌈 긍정적인 에너지 전달'],
+    tools: ['diary', 'planner', 'quiz']
+  },
+  C: {
+    key: 'C', emoji: '🦁', name: '천생 리더',
+    tagline: '팀이 있어야 진짜 빛난다',
+    color: '#FDCB6E', bg: 'rgba(253,203,110,0.15)',
+    desc: '당신은 혼자보다 팀으로 클 때 진가가 발휘되는 리더형이에요. 팀원을 키우고 성장시키는 데서 보람을 느끼며, 시스템을 만들어 지속 성장을 이끄는 타입이에요. 팀이 클수록 당신도 커져요.',
+    strengths: ['👑 타고난 팀 리더십', '📈 팀원 성장 코칭 능력', '🏗️ 시스템 구축 능력', '🎯 목표 공유와 동기부여'],
+    tools: ['diary', 'planner', 'quiz']
+  },
+  D: {
+    key: 'D', emoji: '💡', name: '전략형 설계사',
+    tagline: '데이터와 논리로 클로징한다',
+    color: '#A29BFE', bg: 'rgba(162,155,254,0.15)',
+    desc: '당신은 감보다 분석으로 움직이는 영업 전략가예요. 고객의 패턴을 파악하고, 최적의 타이밍에 최적의 접근을 설계해요. 즉흥보다는 준비된 전략으로 성과를 만드는 타입이에요.',
+    strengths: ['🧠 치밀한 분석력', '📊 데이터 기반 의사결정', '🗺️ 체계적인 전략 설계', '⏰ 최적 타이밍 포착'],
+    tools: ['diary', 'planner', 'quiz']
+  },
+  E: {
+    key: 'E', emoji: '🌱', name: '신뢰 농부',
+    tagline: '천천히 깊게, 관계가 자산이다',
+    color: '#55EFC4', bg: 'rgba(85,239,196,0.15)',
+    desc: '당신은 빠른 성과보다 깊은 관계를 선택하는 장기전의 고수예요. 한 번 맺은 인연을 소중히 하고, 고객이 먼저 소개해주는 선순환을 만들어내요. 꾸준함이 최고의 무기인 타입이에요.',
+    strengths: ['🤲 깊은 신뢰 관계 구축', '♻️ 탁월한 재구매/소개 유도', '🌿 장기적 관점의 영업 전략', '💝 고객 감동 서비스'],
+    tools: ['diary', 'planner', 'quiz']
+  },
+  F: {
+    key: 'F', emoji: '📱', name: '디지털 인플루언서',
+    tagline: '온라인에서 팬을 만든다',
+    color: '#FD79A8', bg: 'rgba(253,121,168,0.15)',
+    desc: '당신은 온라인 세계가 가장 편한 디지털 네이티브 영업인이에요. SNS와 콘텐츠로 스스로를 브랜딩하고, 자는 동안에도 팬이 생기는 구조를 만들어요. 온라인 영향력이 오프라인 성과로 이어지는 타입이에요.',
+    strengths: ['📲 SNS 콘텐츠 기획력', '🌐 온라인 브랜딩 능력', '📸 자기 표현의 달인', '💫 팬덤 형성 능력'],
+    tools: ['planner', 'diary', 'quiz']
+  },
+  G: {
+    key: 'G', emoji: '🎯', name: '집중형 스나이퍼',
+    tagline: '한 명을 제대로 공략한다',
+    color: '#E17055', bg: 'rgba(225,112,85,0.15)',
+    desc: '당신은 넓게 뿌리는 것보다 한 명에게 깊이 집중하는 정밀 영업인이에요. 고객 한 명 한 명을 깊이 연구하고, 그 사람에게 딱 맞는 방식으로 접근해요. 성공률이 높은 고품질 영업 스타일이에요.',
+    strengths: ['🎯 집중력과 디테일', '🔍 고객 분석 깊이', '💎 고품질 클로징 능력', '🤝 1:1 관계의 달인'],
+    tools: ['diary', 'planner', 'quiz']
+  },
+  H: {
+    key: 'H', emoji: '✨', name: '스토리텔러',
+    tagline: '내 이야기로 사람을 움직인다',
+    color: '#FFD700', bg: 'rgba(255,215,0,0.15)',
+    desc: '당신은 숫자보다 이야기로 마음을 움직이는 영업 스토리텔러예요. 내 경험과 고객의 변화 이야기를 생생하게 전달해 감동을 주고, 그 감동이 구매 결정으로 이어지게 해요.',
+    strengths: ['📖 생생한 스토리텔링', '🎭 감동을 주는 표현력', '💬 설득력 있는 언어 구사', '🌟 브랜드 스토리 창조'],
+    tools: ['planner', 'diary', 'quiz']
+  }
+};
+
+const TOOL_INFO = {
+  planner: { icon: '📅', name: '5분법칙 플래너', desc: '하루를 전략적으로 설계하는 타임블로킹', url: 'https://app.wellstar.life/planner/' },
+  diary: { icon: '📊', name: 'AI 다이어리', desc: '고객 관리부터 성과 분석까지', url: 'https://app.wellstar.life/diary/' },
+  quiz: { icon: '🎯', name: '사주 성공진단', desc: '나의 타고난 사업 스타일 분석', url: 'https://wellstar.life/saju/' },
+};
+
+// ══════════════════════════════
+// 문항 데이터
+// ══════════════════════════════
+const QUESTIONS = [
+  {
+    text: '새로운 고객을 만날 때, 나는 주로 어떻게 행동하나요?',
+    options: [
+      { text: '바로 연락해서 만남부터 잡는다', type: 'A' },
+      { text: 'SNS나 콘텐츠로 먼저 나를 알린다', type: 'F' },
+      { text: '지인 소개나 신뢰 관계를 통해 접근한다', type: 'E' },
+      { text: '그 사람을 충분히 파악한 후 전략적으로 접근한다', type: 'D' },
+    ]
+  },
+  {
+    text: '거절을 당했을 때 나의 반응은?',
+    options: [
+      { text: '털고 바로 다음 사람에게 간다', type: 'A' },
+      { text: '왜 거절했는지 분석해서 다음을 준비한다', type: 'D' },
+      { text: '힘들지만 감정을 나누고 다시 도전한다', type: 'B' },
+      { text: '장기적으로 관계를 유지하며 기회를 기다린다', type: 'E' },
+    ]
+  },
+  {
+    text: '나의 가장 큰 강점은?',
+    options: [
+      { text: '처음 보는 사람과 금방 친해지는 것', type: 'B' },
+      { text: '팀원들을 이끌고 동기부여하는 것', type: 'C' },
+      { text: '상황을 분석하고 전략을 세우는 것', type: 'D' },
+      { text: '내 경험을 생생하게 전달하는 것', type: 'H' },
+    ]
+  },
+  {
+    text: '영업할 때 가장 중요하다고 생각하는 것은?',
+    options: [
+      { text: '일단 실행하는 행동력과 추진력', type: 'A' },
+      { text: '고객의 마음을 읽는 진심과 공감', type: 'B' },
+      { text: '팀워크와 성장하는 시스템', type: 'C' },
+      { text: '치밀하게 준비된 전략', type: 'D' },
+    ]
+  },
+  {
+    text: '나는 어떤 방식으로 나를 알리는 게 편한가요?',
+    options: [
+      { text: '직접 발로 뛰며 사람을 만난다', type: 'A' },
+      { text: '진심 어린 대화와 소개로 알려진다', type: 'E' },
+      { text: 'SNS와 콘텐츠로 온라인에서 알린다', type: 'F' },
+      { text: '내 성공 스토리를 공유해서 알린다', type: 'H' },
+    ]
+  },
+  {
+    text: '10년 후 성공한 나의 모습은?',
+    options: [
+      { text: '수백 명의 팀을 이끄는 카리스마 리더', type: 'C' },
+      { text: '온라인에서 영향력 있는 인플루언서', type: 'F' },
+      { text: '고객이 먼저 소개해주는 믿음직한 전문가', type: 'E' },
+      { text: '내 스토리로 수많은 사람에게 영감을 주는 사람', type: 'H' },
+    ]
+  },
+  {
+    text: '친구들이 나를 어떻게 표현할까요?',
+    options: [
+      { text: '추진력 있고 도전적인 사람', type: 'A' },
+      { text: '따뜻하고 공감 잘하는 사람', type: 'B' },
+      { text: '꼼꼼하고 믿음직한 사람', type: 'D' },
+      { text: '재미있고 이야기 잘하는 사람', type: 'H' },
+    ]
+  },
+  {
+    text: '영업 성과를 높이기 위해 나는?',
+    options: [
+      { text: '더 많은 새 고객을 찾아다닌다', type: 'A' },
+      { text: '한 명 한 명을 깊이 분석해 집중 공략한다', type: 'G' },
+      { text: 'SNS 콘텐츠를 열심히 올려 팬을 늘린다', type: 'F' },
+      { text: '팀원을 키워 함께 성장한다', type: 'C' },
+    ]
+  },
+  {
+    text: '나에게 영업이란?',
+    options: [
+      { text: '새로운 도전이자 짜릿한 모험', type: 'A' },
+      { text: '사람과 사람을 연결하는 따뜻한 일', type: 'B' },
+      { text: '내 이야기를 나누고 공감받는 일', type: 'H' },
+      { text: '목표를 향해 집중하는 전략 게임', type: 'G' },
+    ]
+  },
+  {
+    text: '고객과 처음 만나는 자리에서 나는?',
+    options: [
+      { text: '에너지 넘치게 먼저 분위기를 이끈다', type: 'A' },
+      { text: '상대방의 이야기를 먼저 충분히 듣는다', type: 'B' },
+      { text: '데이터와 사례를 준비해서 논리적으로 설명한다', type: 'D' },
+      { text: '내 성공 경험을 생생하게 이야기한다', type: 'H' },
+    ]
+  },
+];
+
+// ══════════════════════════════
+// 퀴즈 로직
+// ══════════════════════════════
+let currentQ = 0;
+let answers = [];
+let scores = { A:0, B:0, C:0, D:0, E:0, F:0, G:0, H:0 };
+let selectedOption = null;
+
+function startQuiz() {
+  currentQ = 0;
+  answers = [];
+  scores = { A:0, B:0, C:0, D:0, E:0, F:0, G:0, H:0 };
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  const pct = Math.round(currentQ / QUESTIONS.length * 100);
+
+  document.getElementById('q-progress-num').textContent = `${currentQ + 1} / ${QUESTIONS.length}`;
+  document.getElementById('q-progress-pct').textContent = `${pct}%`;
+  document.getElementById('q-progress-bar').style.width = pct + '%';
+  document.getElementById('q-number').textContent = `Q${currentQ + 1}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const labels = ['A', 'B', 'C', 'D'];
+  document.getElementById('options-wrap').innerHTML = q.options.map((opt, i) =>
+    `<button class="option-btn" onclick="selectOption(${i})" id="opt-${i}">
+      <div class="opt-label">${labels[i]}</div>
+      <span>${opt.text}</span>
+    </button>`
+  ).join('');
+
+  selectedOption = null;
+  const btn = document.getElementById('btn-next');
+  btn.classList.remove('enabled');
+  btn.textContent = currentQ === QUESTIONS.length - 1 ? '결과 보기 🎯' : '다음 →';
+}
+
+function selectOption(idx) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('opt-' + idx).classList.add('selected');
+  selectedOption = idx;
+  document.getElementById('btn-next').classList.add('enabled');
+}
+
+function nextQuestion() {
+  if (selectedOption === null) return;
+  const type = QUESTIONS[currentQ].options[selectedOption].type;
+  scores[type]++;
+  answers.push(selectedOption);
+
+  if (currentQ < QUESTIONS.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    showLoading();
+  }
+}
+
+function showLoading() {
+  showScreen('loading');
+  setTimeout(showResult, 2200);
+}
+
+function showResult() {
+  // 최고 타입 찾기
+  const topType = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+  const type = TYPES[topType];
+
+  showScreen('result');
+
+  // 배지
+  const badge = document.getElementById('result-badge');
+  badge.textContent = 'MY SALES TYPE';
+  badge.style.background = type.bg;
+  badge.style.color = type.color;
+  badge.style.border = `1px solid ${type.color}44`;
+
+  document.getElementById('result-emoji').textContent = type.emoji;
+  document.getElementById('result-name').textContent = type.name;
+  document.getElementById('result-name').style.color = type.color;
+  document.getElementById('result-tagline').textContent = '"' + type.tagline + '"';
+  document.getElementById('result-desc').textContent = type.desc;
+
+  // 강점
+  document.getElementById('result-strengths').innerHTML = type.strengths.map(s =>
+    `<div class="strength-item">
+      <div class="strength-dot" style="background:${type.color}"></div>
+      <span style="font-size:14px">${s}</span>
+    </div>`
+  ).join('');
+
+  // 점수 분포
+  const maxScore = Math.max(...Object.values(scores));
+  const typeColors = { A:'#FF6B35',B:'#74B9FF',C:'#FDCB6E',D:'#A29BFE',E:'#55EFC4',F:'#FD79A8',G:'#E17055',H:'#FFD700' };
+  document.getElementById('score-bars').innerHTML = Object.entries(TYPES).map(([k, t]) => {
+    const pct = maxScore > 0 ? Math.round(scores[k] / maxScore * 100) : 0;
+    return `<div class="score-bar-wrap">
+      <div class="score-bar-label"><span>${t.emoji} ${t.name}</span><span style="color:${typeColors[k]}">${scores[k]}점</span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:0%;background:${typeColors[k]}" data-pct="${pct}"></div></div>
+    </div>`;
+  }).join('');
+
+  // 애니메이션
+  setTimeout(() => {
+    document.querySelectorAll('.score-bar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }, 300);
+
+  // 추천 도구
+  document.getElementById('result-tools').innerHTML = type.tools.map(key => {
+    const t = TOOL_INFO[key];
+    return `<a class="tool-item" href="${t.url}" target="_blank">
+      <div class="tool-icon">${t.icon}</div>
+      <div class="tool-info">
+        <div class="tool-name">${t.name}</div>
+        <div class="tool-desc">${t.desc}</div>
+      </div>
+      <div class="tool-arrow">→</div>
+    </a>`;
+  }).join('');
+
+  window._resultType = topType;
+}
+
+async function sendReport() {
+  const email = document.getElementById('result-email').value.trim();
+  if (!email || !email.includes('@')) { alert('올바른 이메일을 입력해주세요'); return; }
+  const btn = document.querySelector('.btn-email');
+  btn.textContent = '전송 중...';
+  btn.disabled = true;
+
+  try {
+    await fetch('https://blogtool.wellstar.life/api/quiz-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, type: window._resultType, scores })
+    });
+    document.getElementById('email-section').innerHTML = `
+      <div style="text-align:center;padding:8px">
+        <div style="font-size:32px;margin-bottom:8px">📩</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:4px">발송 완료!</div>
+        <div style="font-size:13px;color:var(--text2)">${email}로 상세 리포트를 보냈어요</div>
+      </div>`;
+  } catch {
+    btn.textContent = '받기';
+    btn.disabled = false;
+    alert('잠시 후 다시 시도해주세요');
+  }
+}
+
+function shareResult() {
+  const type = TYPES[window._resultType];
+  const text = `나의 영업 스타일 진단 결과\n\n${type.emoji} ${type.name}\n"${type.tagline}"\n\n나도 진단해보기 👉 app.wellstar.life/quiz/`;
+  if (navigator.share) {
+    navigator.share({ text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('복사됐어요! 붙여넣기해서 공유하세요 📋'));
+  }
+}
+
+function retryQuiz() {
+  showScreen('intro');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// 서비스워커
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
