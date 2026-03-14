@@ -1,7 +1,7 @@
 {
-  "name": "영업 다이어리",
-  "short_name": "영업 다이어리",
-  "description": "NM 영업자를 위한 고객 관리 & 활동 트래커",
+  "name": "AI 다이어리",
+  "short_name": "AI 다이어리",
+  "description": "당신의 영업 성공을 이끌어주는 트래커",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0F0F1E",
