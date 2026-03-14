@@ -30,7 +30,27 @@
   --gray: #636E72;
   --tab-h: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --font-size-base: 15px;
 }
+
+/* 라이트 테마 */
+body.light-theme {
+  --bg: #F5F5FA;
+  --bg2: #FFFFFF;
+  --bg3: #EEEEف5;
+  --card: #FFFFFF;
+  --card2: #F0F0F8;
+  --border: rgba(0,0,0,0.08);
+  --text: #1A1A2E;
+  --text2: #555577;
+  --text3: #8888AA;
+}
+body.light-theme { background: var(--bg); }
+
+/* 폰트 크기 */
+body.font-small { --font-size-base: 13px; }
+body.font-medium { --font-size-base: 15px; }
+body.font-large { --font-size-base: 17px; }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow: hidden; }
 
@@ -452,6 +472,26 @@ textarea { resize: none; min-height: 80px; }
     <div class="page-header">
       <h1>⚙️ 설정</h1>
       <div class="subtitle">AI 다이어리 커스터마이징</div>
+    </div>
+
+    <!-- 화면 설정 -->
+    <div class="section-title">🎨 화면 설정</div>
+    <div class="card">
+      <div class="setting-row">
+        <div><div class="setting-label">테마</div><div class="setting-sub">다크 / 라이트 선택</div></div>
+        <div style="display:flex;gap:8px">
+          <button id="btn-theme-dark" onclick="setTheme('dark')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--accent);color:white">🌙 다크</button>
+          <button id="btn-theme-light" onclick="setTheme('light')" style="padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--bg3);color:var(--text2)">☀️ 라이트</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">글자 크기</div><div class="setting-sub">작게 / 보통 / 크게</div></div>
+        <div style="display:flex;gap:6px">
+          <button id="btn-font-small" onclick="setFontSize('small')" style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--bg3);color:var(--text2)">작게</button>
+          <button id="btn-font-medium" onclick="setFontSize('medium')" style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--accent);color:white">보통</button>
+          <button id="btn-font-large" onclick="setFontSize('large')" style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--bg3);color:var(--text2)">크게</button>
+        </div>
+      </div>
     </div>
 
     <!-- 알림 설정 -->
@@ -1174,6 +1214,38 @@ function showToast(msg) {
 }
 
 // ══════════════════════════════
+// 테마 & 폰트 크기
+// ══════════════════════════════
+function setTheme(theme) {
+  document.body.classList.toggle('light-theme', theme === 'light');
+  localStorage.setItem('diary_theme', theme);
+  document.getElementById('btn-theme-dark').style.background = theme === 'dark' ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('btn-theme-dark').style.color = theme === 'dark' ? 'white' : 'var(--text2)';
+  document.getElementById('btn-theme-light').style.background = theme === 'light' ? 'var(--accent)' : 'var(--bg3)';
+  document.getElementById('btn-theme-light').style.color = theme === 'light' ? 'white' : 'var(--text2)';
+}
+
+function setFontSize(size) {
+  document.body.classList.remove('font-small', 'font-medium', 'font-large');
+  document.body.classList.add('font-' + size);
+  localStorage.setItem('diary_fontsize', size);
+  ['small','medium','large'].forEach(s => {
+    const btn = document.getElementById('btn-font-' + s);
+    if (btn) {
+      btn.style.background = s === size ? 'var(--accent)' : 'var(--bg3)';
+      btn.style.color = s === size ? 'white' : 'var(--text2)';
+    }
+  });
+}
+
+function applyStoredAppearance() {
+  const theme = localStorage.getItem('diary_theme') || 'dark';
+  const fontSize = localStorage.getItem('diary_fontsize') || 'medium';
+  setTheme(theme);
+  setFontSize(fontSize);
+}
+
+// ══════════════════════════════
 // 설정
 // ══════════════════════════════
 const DEFAULT_STAGES = ['잠재','접촉','미팅','성사','휴면'];
@@ -1500,6 +1572,7 @@ function copyText(text) {
 // ══════════════════════════════
 // 초기화
 // ══════════════════════════════
+applyStoredAppearance();
 renderHome();
 
 // 알림 스케줄 시작
