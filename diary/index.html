@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1A1A2E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>영업 다이어리</title>
+<title>AI 다이어리</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -347,8 +347,8 @@ textarea { resize: none; min-height: 80px; }
   <!-- ── 홈 ── -->
   <div id="screen-home" class="screen active">
     <div class="page-header">
-      <h1>🏠 영업 다이어리</h1>
-      <div class="subtitle" id="home-date-sub"></div>
+      <h1>AI 다이어리</h1>
+      <div class="subtitle">당신의 영업 성공을 이끌어주는 트래커</div>
     </div>
     <div class="home-greeting">
       <div class="date-line" id="home-date-full"></div>
@@ -622,7 +622,7 @@ function switchTab(name) {
 // ══════════════════════════════
 function renderHome() {
   document.getElementById('home-date-full').textContent = fullDateStr();
-  document.getElementById('home-date-sub').textContent = todayStr();
+
 
   const customers = load(KEYS.customers);
   const today = todayStr();
