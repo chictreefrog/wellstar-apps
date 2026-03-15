@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>수입 시뮬레이터</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D0D1A;
+  --bg2: #13131F;
+  --card: #1A1A2E;
+  --card2: #1E1E35;
+  --border: rgba(255,255,255,0.08);
+  --accent: #FF6B35;
+  --text: #F0F0F8;
+  --text2: #9999BB;
+  --text3: #5555AA;
+  --green: #27AE60;
+  --gold: #FFD700;
+  --tab-h: 60px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
+#app { height: 100%; display: flex; flex-direction: column; }
+.screen { flex: 1; overflow-y: auto; padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); display: none; }
+.screen.active { display: block; }
+
+/* 탭바 */
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--tab-h) + var(--safe-bottom)); background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: var(--safe-bottom); }
+.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text3); border: none; background: none; font-family: 'Noto Sans KR', sans-serif; transition: color 0.2s; }
+.tab-btn.active { color: var(--accent); }
+.tab-btn .tab-icon { font-size: 20px; }
+.tab-btn .tab-label { font-size: 10px; font-weight: 500; }
+
+/* 헤더 */
+.page-header { position: sticky; top: 0; z-index: 50; background: var(--bg2); padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+.page-header h1 { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+.page-header .subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* 공통 */
+.section-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 1px; padding: 16px 20px 8px; }
+.card { background: var(--card); border-radius: 14px; padding: 16px; margin: 0 16px 12px; }
+.card-label { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+input, select { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 15px; padding: 11px 14px; width: 100%; outline: none; transition: border-color 0.2s; }
+input:focus, select:focus { border-color: var(--accent); }
+select option { background: var(--bg2); }
+.btn-primary { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 14px 20px; font-size: 15px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; transition: opacity 0.15s; }
+.btn-primary:active { opacity: 0.8; }
+.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; }
+
+/* 업종 선택 */
+.industry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 16px; }
+.industry-btn { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.industry-btn.selected { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+.industry-btn .ind-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+.industry-btn .ind-name { font-size: 14px; font-weight: 700; }
+.industry-btn .ind-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+/* 슬라이더 */
+.slider-group { margin-bottom: 16px; }
+.slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.slider-label { font-size: 13px; font-weight: 600; color: var(--text2); }
+.slider-value { font-size: 16px; font-weight: 900; color: var(--accent); font-family: 'Bebas Neue', sans-serif; }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: var(--card2); outline: none; border: none; padding: 0; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+
+/* 수입 결과 카드 */
+.income-result { background: linear-gradient(135deg, #1A1A2E, #2D1A0E); border: 1px solid rgba(255,107,53,0.3); border-radius: 18px; padding: 24px; margin: 0 16px 12px; }
+.income-main { text-align: center; margin-bottom: 20px; }
+.income-label { font-size: 12px; color: var(--text2); letter-spacing: 1px; margin-bottom: 8px; }
+.income-amount { font-size: 48px; font-weight: 900; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: -1px; }
+.income-unit { font-size: 16px; color: var(--text2); }
+.income-year { font-size: 14px; color: var(--text2); margin-top: 4px; }
+.income-breakdown { display: flex; flex-direction: column; gap: 8px; }
+.breakdown-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.breakdown-item:last-child { border-bottom: none; }
+.breakdown-name { font-size: 13px; color: var(--text2); }
+.breakdown-amount { font-size: 14px; font-weight: 700; color: var(--text); }
+
+/* AI 플랜 */
+.ai-plan-section { margin: 0 16px 12px; }
+.ai-plan-card { background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(123,94,167,0.1)); border: 1px solid rgba(255,107,53,0.3); border-radius: 16px; padding: 20px; }
+.ai-plan-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+.ai-plan-content { font-size: 14px; line-height: 1.8; color: var(--text); }
+.ai-plan-item { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; }
+.ai-plan-icon { font-size: 18px; flex-shrink: 0; }
+.ai-plan-text { font-size: 13px; line-height: 1.6; }
+.ai-plan-text strong { color: var(--accent); }
+.ai-loading { display: flex; align-items: center; gap: 10px; color: var(--text2); font-size: 14px; }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 목표 역산 탭 */
+.target-input-wrap { padding: 16px; }
+.target-amount-display { text-align: center; padding: 24px 0; }
+.target-label { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+.target-amount { font-size: 56px; font-weight: 900; color: var(--gold); font-family: 'Bebas Neue', sans-serif; }
+.target-unit { font-size: 18px; color: var(--text2); }
+.preset-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+.preset-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--card2); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
+.preset-btn.selected { background: rgba(255,215,0,0.15); border-color: var(--gold); color: var(--gold); }
+
+/* 달성 기간 */
+.timeline-bar { display: flex; gap: 6px; margin: 12px 0; }
+.timeline-item { flex: 1; text-align: center; }
+.timeline-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin: 0 auto 4px; }
+.timeline-circle.done { background: var(--green); color: white; }
+.timeline-circle.active { background: var(--accent); color: white; }
+.timeline-circle.future { background: var(--card2); color: var(--text3); }
+.timeline-month { font-size: 10px; color: var(--text2); }
+.timeline-label { font-size: 9px; color: var(--text3); }
+
+/* 다이어리 연동 */
+.diary-connect-card { background: linear-gradient(135deg, rgba(39,174,96,0.1), rgba(39,174,96,0.05)); border: 1px solid rgba(39,174,96,0.3); border-radius: 14px; padding: 16px; margin: 0 16px 16px; display: flex; align-items: center; gap: 14px; }
+.diary-connect-icon { font-size: 32px; flex-shrink: 0; }
+.diary-connect-text { flex: 1; }
+.diary-connect-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.diary-connect-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.btn-connect { background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; white-space: nowrap; }
+
+/* 토스트 */
+.toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; border: 1px solid var(--border); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 브랜딩 */
+.brand-footer { text-align: center; padding: 16px 20px 8px; color: var(--text3); font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── 시뮬레이터 탭 ── -->
+  <div id="screen-sim" class="screen active">
+    <div class="page-header">
+      <h1>💰 수입 시뮬레이터</h1>
+      <div class="subtitle">내 활동량으로 예상 수입 계산</div>
+    </div>
+
+    <!-- 업종 선택 -->
+    <div class="section-title">업종 선택</div>
+    <div class="industry-grid">
+      <div class="industry-btn selected" onclick="selectIndustry('nm')" id="ind-nm">
+        <span class="ind-icon">🌐</span>
+        <div class="ind-name">네트워크마케팅</div>
+        <div class="ind-desc">NM / 다단계</div>
+      </div>
+      <div class="industry-btn" onclick="selectIndustry('insurance')" id="ind-insurance">
+        <span class="ind-icon">🛡️</span>
+        <div class="ind-name">보험 영업</div>
+        <div class="ind-desc">생명/손해보험</div>
+      </div>
+      <div class="industry-btn" onclick="selectIndustry('direct')" id="ind-direct">
+        <span class="ind-icon">🚪</span>
+        <div class="ind-name">방문판매</div>
+        <div class="ind-desc">렌탈/방판/대리점</div>
+      </div>
+      <div class="industry-btn" onclick="selectIndustry('custom')" id="ind-custom">
+        <span class="ind-icon">✏️</span>
+        <div class="ind-name">직접 입력</div>
+        <div class="ind-desc">기타 모든 업종</div>
+      </div>
+    </div>
+
+    <!-- 활동 입력 -->
+    <div class="card" id="activity-inputs">
+      <div class="card-label">활동량 입력</div>
+      <div id="input-fields"></div>
+    </div>
+
+    <!-- 계산 버튼 -->
+    <div style="padding:0 16px;margin-bottom:12px">
+      <button class="btn-primary" onclick="calculate()">📊 예상 수입 계산하기</button>
+    </div>
+
+    <!-- 결과 -->
+    <div id="result-section" style="display:none">
+      <div class="income-result">
+        <div class="income-main">
+          <div class="income-label">예상 월 수입</div>
+          <div>
+            <span class="income-amount" id="result-monthly">0</span>
+            <span class="income-unit">만원</span>
+          </div>
+          <div class="income-year" id="result-yearly"></div>
+        </div>
+        <div class="income-breakdown" id="result-breakdown"></div>
+      </div>
+
+      <!-- 다이어리 연동 -->
+      <div class="diary-connect-card">
+        <div class="diary-connect-icon">📊</div>
+        <div class="diary-connect-text">
+          <div class="diary-connect-title">AI 다이어리에 목표 저장</div>
+          <div class="diary-connect-sub">이 수입을 목표로 다이어리에 연동해요</div>
+        </div>
+        <button class="btn-connect" onclick="saveToDiary()">저장</button>
+      </div>
+    </div>
+
+    <!-- 브랜딩 -->
+    <div class="brand-footer">🦕 옆집디노 · wellstar.life</div>
+  </div>
+
+  <!-- ── 역산 플래너 탭 ── -->
+  <div id="screen-plan" class="screen">
+    <div class="page-header">
+      <h1>🎯 목표 역산 플래너</h1>
+      <div class="subtitle">목표 수입 → AI가 플랜 설계</div>
+    </div>
+
+    <!-- 목표 금액 설정 -->
+    <div class="card">
+      <div class="card-label">목표 월 수입</div>
+      <div class="target-amount-display">
+        <div class="target-label">나는 매달 얼마를 벌고 싶은가?</div>
+        <div>
+          <span class="target-amount" id="target-display">300</span>
+          <span class="target-unit">만원</span>
+        </div>
+      </div>
+      <div class="slider-group">
+        <input type="range" id="target-slider" min="50" max="3000" step="50" value="300" oninput="updateTarget(this.value)">
+      </div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="setTarget(100)">100만</button>
+        <button class="preset-btn" onclick="setTarget(300)">300만</button>
+        <button class="preset-btn selected" onclick="setTarget(500)">500만</button>
+        <button class="preset-btn" onclick="setTarget(1000)">1000만</button>
+        <button class="preset-btn" onclick="setTarget(2000)">2000만</button>
+      </div>
+    </div>
+
+    <!-- 업종 선택 -->
+    <div class="card">
+      <div class="card-label">업종</div>
+      <select id="plan-industry" onchange="clearPlan()">
+        <option value="nm">네트워크마케팅 (NM)</option>
+        <option value="insurance">보험 영업</option>
+        <option value="direct">방문판매</option>
+        <option value="custom">기타 (범용)</option>
+      </select>
+    </div>
+
+    <!-- AI 플랜 생성 -->
+    <div style="padding:0 16px;margin-bottom:16px">
+      <button class="btn-primary" onclick="generatePlan()">🦕 AI 플랜 생성하기</button>
+    </div>
+
+    <!-- AI 플랜 결과 -->
+    <div class="ai-plan-section" id="plan-result" style="display:none">
+      <div class="ai-plan-card">
+        <div class="ai-plan-title">
+          <span>🦕</span>
+          <span id="plan-title">AI 맞춤 플랜</span>
+        </div>
+        <div id="plan-content"></div>
+      </div>
+
+      <!-- 달성 타임라인 -->
+      <div class="card" style="margin-top:12px">
+        <div class="card-label">예상 달성 타임라인</div>
+        <div class="timeline-bar" id="timeline-bar"></div>
+      </div>
+
+      <!-- 다이어리 연동 -->
+      <div class="diary-connect-card" style="margin-top:0">
+        <div class="diary-connect-icon">📊</div>
+        <div class="diary-connect-text">
+          <div class="diary-connect-title">AI 다이어리에 플랜 저장</div>
+          <div class="diary-connect-sub">이 목표와 플랜을 다이어리 목표에 저장해요</div>
+        </div>
+        <button class="btn-connect" onclick="savePlanToDiary()">저장</button>
+      </div>
+    </div>
+
+    <div class="brand-footer">🦕 옆집디노 · wellstar.life</div>
+  </div>
+
+  <!-- 탭바 -->
+  <nav class="tabbar">
+    <button class="tab-btn active" onclick="switchTab('sim')" id="tab-sim">
+      <span class="tab-icon">💰</span>
+      <span class="tab-label">수입 계산</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('plan')" id="tab-plan">
+      <span class="tab-icon">🎯</span>
+      <span class="tab-label">목표 플래너</span>
+    </button>
+  </nav>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════
+// 업종별 설정
+// ══════════════════════════════
+const INDUSTRIES = {
+  nm: {
+    name: '네트워크마케팅',
+    fields: [
+      { key: 'personal_pv', label: '내 월 판매량 (PV)', min: 0, max: 500, step: 10, default: 100, unit: 'PV', hint: '1PV ≈ 3,000원' },
+      { key: 'pv_rate', label: '판매 수당율', min: 3, max: 25, step: 1, default: 12, unit: '%' },
+      { key: 'team_count', label: '팀원 수', min: 0, max: 100, step: 1, default: 5, unit: '명' },
+      { key: 'team_pv', label: '팀원 1인 평균 판매량', min: 0, max: 200, step: 10, default: 50, unit: 'PV' },
+      { key: 'team_rate', label: '팀 수당율', min: 0, max: 10, step: 0.5, default: 3, unit: '%' },
+    ],
+    calculate: (v) => {
+      const pvPrice = 3000;
+      const personal = (v.personal_pv * pvPrice * v.pv_rate / 100) / 10000;
+      const team = (v.team_count * v.team_pv * pvPrice * v.team_rate / 100) / 10000;
+      return {
+        total: personal + team,
+        breakdown: [
+          { name: '개인 판매 수당', amount: personal },
+          { name: '팀 수당', amount: team },
+        ]
+      };
+    }
+  },
+  insurance: {
+    name: '보험 영업',
+    fields: [
+      { key: 'contracts', label: '월 신규 계약 건수', min: 0, max: 30, step: 1, default: 5, unit: '건' },
+      { key: 'avg_premium', label: '평균 초회 보험료', min: 5, max: 100, step: 5, default: 30, unit: '만원' },
+      { key: 'first_rate', label: '초회 수수료율', min: 10, max: 100, step: 5, default: 50, unit: '%' },
+      { key: 'maintain_income', label: '유지 수수료 (월)', min: 0, max: 500, step: 10, default: 50, unit: '만원' },
+      { key: 'team_override', label: '팀장 오버라이드 수당', min: 0, max: 300, step: 10, default: 0, unit: '만원' },
+    ],
+    calculate: (v) => {
+      const first = v.contracts * v.avg_premium * v.first_rate / 100;
+      const maintain = v.maintain_income;
+      const team = v.team_override;
+      return {
+        total: first + maintain + team,
+        breakdown: [
+          { name: '초회 수수료', amount: first },
+          { name: '유지 수수료', amount: maintain },
+          { name: '팀장 오버라이드', amount: team },
+        ]
+      };
+    }
+  },
+  direct: {
+    name: '방문판매',
+    fields: [
+      { key: 'sales', label: '월 매출', min: 0, max: 5000, step: 100, default: 500, unit: '만원' },
+      { key: 'margin', label: '마진율', min: 5, max: 50, step: 1, default: 20, unit: '%' },
+      { key: 'team_sales', label: '팀 매출', min: 0, max: 10000, step: 100, default: 0, unit: '만원' },
+      { key: 'team_margin', label: '팀 수당율', min: 0, max: 15, step: 0.5, default: 3, unit: '%' },
+      { key: 'bonus', label: '성과 보너스', min: 0, max: 500, step: 10, default: 0, unit: '만원' },
+    ],
+    calculate: (v) => {
+      const personal = v.sales * v.margin / 100;
+      const team = v.team_sales * v.team_margin / 100;
+      const bonus = v.bonus;
+      return {
+        total: personal + team + bonus,
+        breakdown: [
+          { name: '개인 판매 마진', amount: personal },
+          { name: '팀 수당', amount: team },
+          { name: '성과 보너스', amount: bonus },
+        ]
+      };
+    }
+  },
+  custom: {
+    name: '직접 입력',
+    fields: [
+      { key: 'income1', label: '수입 항목 1', min: 0, max: 1000, step: 10, default: 100, unit: '만원' },
+      { key: 'income2', label: '수입 항목 2', min: 0, max: 1000, step: 10, default: 50, unit: '만원' },
+      { key: 'income3', label: '수입 항목 3', min: 0, max: 1000, step: 10, default: 0, unit: '만원' },
+      { key: 'income4', label: '수입 항목 4', min: 0, max: 1000, step: 10, default: 0, unit: '만원' },
+    ],
+    calculate: (v) => {
+      const items = [v.income1, v.income2, v.income3, v.income4];
+      return {
+        total: items.reduce((a,b) => a+b, 0),
+        breakdown: [
+          { name: '항목 1', amount: v.income1 },
+          { name: '항목 2', amount: v.income2 },
+          { name: '항목 3', amount: v.income3 },
+          { name: '항목 4', amount: v.income4 },
+        ]
+      };
+    }
+  }
+};
+
+// ══════════════════════════════
+// 상태
+// ══════════════════════════════
+let currentIndustry = 'nm';
+let fieldValues = {};
+let currentResult = null;
+let targetAmount = 300;
+let currentPlan = null;
+
+// ══════════════════════════════
+// 초기화
+// ══════════════════════════════
+function init() {
+  selectIndustry('nm');
+  updateTarget(300);
+}
+
+// ══════════════════════════════
+// 업종 선택
+// ══════════════════════════════
+function selectIndustry(id) {
+  currentIndustry = id;
+  document.querySelectorAll('.industry-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('ind-' + id).classList.add('selected');
+  renderFields();
+  document.getElementById('result-section').style.display = 'none';
+}
+
+function renderFields() {
+  const ind = INDUSTRIES[currentIndustry];
+  fieldValues = {};
+  ind.fields.forEach(f => fieldValues[f.key] = f.default);
+
+  document.getElementById('input-fields').innerHTML = ind.fields.map(f => `
+    <div class="slider-group">
+      <div class="slider-header">
+        <span class="slider-label">${f.label}${f.hint ? ' <span style="font-size:11px;color:var(--text3)">'+f.hint+'</span>' : ''}</span>
+        <span class="slider-value" id="val-${f.key}">${f.default}${f.unit}</span>
+      </div>
+      <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.default}"
+        oninput="updateField('${f.key}', this.value, '${f.unit}')">
+    </div>
+  `).join('');
+}
+
+function updateField(key, val, unit) {
+  fieldValues[key] = parseFloat(val);
+  const el = document.getElementById('val-' + key);
+  if (el) el.textContent = parseFloat(val) + unit;
+}
+
+// ══════════════════════════════
+// 계산
+// ══════════════════════════════
+function calculate() {
+  const ind = INDUSTRIES[currentIndustry];
+  const result = ind.calculate(fieldValues);
+  currentResult = result;
+
+  const monthly = Math.round(result.total * 10) / 10;
+  const yearly = Math.round(monthly * 12);
+
+  document.getElementById('result-monthly').textContent = formatNum(monthly);
+  document.getElementById('result-yearly').textContent = `연간 약 ${formatNum(yearly)}만원`;
+
+  const breakdown = result.breakdown.filter(b => b.amount > 0);
+  document.getElementById('result-breakdown').innerHTML = breakdown.map(b => `
+    <div class="breakdown-item">
+      <span class="breakdown-name">${b.name}</span>
+      <span class="breakdown-amount">${formatNum(Math.round(b.amount * 10)/10)}만원</span>
+    </div>
+  `).join('');
+
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function formatNum(n) {
+  return n.toLocaleString('ko-KR');
+}
+
+// ══════════════════════════════
+// 목표 역산
+// ══════════════════════════════
+function updateTarget(val) {
+  targetAmount = parseInt(val);
+  document.getElementById('target-display').textContent = formatNum(targetAmount);
+  document.getElementById('target-slider').value = val;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function setTarget(val) {
+  targetAmount = val;
+  document.getElementById('target-display').textContent = formatNum(val);
+  document.getElementById('target-slider').value = val;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.textContent) === val || b.textContent === val + '만');
+  });
+}
+
+function clearPlan() {
+  document.getElementById('plan-result').style.display = 'none';
+}
+
+async function generatePlan() {
+  const industry = document.getElementById('plan-industry').value;
+  const indName = INDUSTRIES[industry].name;
+  const planResult = document.getElementById('plan-result');
+  const planContent = document.getElementById('plan-content');
+
+  planResult.style.display = 'block';
+  planContent.innerHTML = `<div class="ai-loading"><div class="spinner"></div>AI가 ${formatNum(targetAmount)}만원 달성 플랜을 설계 중이에요...</div>`;
+  document.getElementById('plan-title').textContent = `월 ${formatNum(targetAmount)}만원 달성 플랜`;
+  planResult.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    const res = await fetch('https://blogtool.wellstar.life/api/income-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetAmount, industry, industryName: indName })
+    });
+
+    if (!res.ok) throw new Error('API 오류');
+    const data = await res.json();
+    renderPlan(data.plan);
+    currentPlan = data.plan;
+  } catch {
+    // 로컬 폴백
+    renderPlan(generateLocalPlan(targetAmount, industry));
+    currentPlan = generateLocalPlan(targetAmount, industry);
+  }
+
+  // 타임라인
+  renderTimeline(targetAmount);
+}
+
+function generateLocalPlan(target, industry) {
+  const plans = {
+    nm: [
+      { icon: '👥', title: '팀 구성 목표', content: `월 ${Math.ceil(target/100)}명 신규 추천 → ${Math.ceil(target/30)}명 활성 팀원 목표` },
+      { icon: '📞', title: '일일 활동량', content: `하루 <strong>${Math.ceil(target/50)}명</strong> 신규 접촉 + <strong>${Math.ceil(target/30)}명</strong> 팔로업` },
+      { icon: '💎', title: '개인 판매 목표', content: `월 <strong>${Math.ceil(target*3)}PV</strong> 달성 → 예상 개인 수당 ${Math.round(target*0.3)}만원` },
+      { icon: '📈', title: '승급 전략', content: `${Math.ceil(target/200)}개월 내 다음 직급 승급 목표 → 수당율 상승으로 수입 자동 증가` },
+    ],
+    insurance: [
+      { icon: '📋', title: '월 계약 목표', content: `월 <strong>${Math.ceil(target/30)}건</strong> 신규 계약 체결 목표` },
+      { icon: '📞', title: '일일 활동량', content: `하루 <strong>${Math.ceil(target/20)}명</strong> 고객 상담 + 주 <strong>${Math.ceil(target/50)}건</strong> 소개 요청` },
+      { icon: '🔄', title: '유지율 관리', content: `기존 고객 월 1회 연락 → 유지 수수료 ${Math.round(target*0.3)}만원 목표` },
+      { icon: '👥', title: '팀 구성', content: `팀원 ${Math.ceil(target/100)}명 육성 → 오버라이드 수당 추가 확보` },
+    ],
+    direct: [
+      { icon: '🎯', title: '월 매출 목표', content: `월 매출 <strong>${Math.ceil(target/0.2)}만원</strong> 달성 (마진율 20% 기준)` },
+      { icon: '🚪', title: '일일 방문 목표', content: `하루 <strong>${Math.ceil(target/15)}가구</strong> 방문 + 전환율 30% 목표` },
+      { icon: '📦', title: '상품 구성', content: `고단가 상품 월 ${Math.ceil(target/50)}건 + 소모품 재구매 고객 ${Math.ceil(target/10)}명 확보` },
+      { icon: '🌱', title: '고객 관리', content: `기존 고객 월 1회 방문 → 재구매율 40% 목표 → 안정적 수입 기반 구축` },
+    ],
+    custom: [
+      { icon: '🎯', title: '목표 분해', content: `월 ${formatNum(target)}만원 = 주 ${Math.round(target/4)}만원 = 일 ${Math.round(target/22)}만원` },
+      { icon: '📞', title: '핵심 활동', content: `하루 <strong>${Math.ceil(target/30)}건</strong> 영업 활동 → 전환율 20% 기준 월 목표 달성` },
+      { icon: '📈', title: '성장 전략', content: `1개월: 기반 구축 → 2개월: 목표의 50% → 3개월: 목표 100% 달성` },
+      { icon: '💡', title: '차별화 포인트', content: `AI 다이어리로 고객 추적 → 팔로업 자동화 → 성사율 향상` },
+    ]
+  };
+  return plans[industry] || plans.custom;
+}
+
+function renderPlan(plan) {
+  const planContent = document.getElementById('plan-content');
+  if (Array.isArray(plan)) {
+    planContent.innerHTML = plan.map(item => `
+      <div class="ai-plan-item">
+        <div class="ai-plan-icon">${item.icon}</div>
+        <div class="ai-plan-text"><strong>${item.title}</strong><br>${item.content}</div>
+      </div>
+    `).join('');
+  } else {
+    planContent.innerHTML = `<div class="ai-plan-content">${plan}</div>`;
+  }
+}
+
+function renderTimeline(target) {
+  const months = target <= 100 ? 1 : target <= 300 ? 2 : target <= 500 ? 3 : target <= 1000 ? 6 : 12;
+  const now = new Date();
+  const items = Array.from({length: Math.min(months + 2, 6)}, (_, i) => {
+    const d = new Date(now); d.setMonth(d.getMonth() + i);
+    const label = i === 0 ? '시작' : i === months ? '달성!' : `${Math.round(target * i / months)}만`;
+    const type = i === 0 ? 'done' : i === months ? 'active' : 'future';
+    return { month: `${d.getMonth()+1}월`, label, type };
+  });
+  document.getElementById('timeline-bar').innerHTML = items.map(item => `
+    <div class="timeline-item">
+      <div class="timeline-circle ${item.type}">${item.type === 'active' ? '🎯' : item.type === 'done' ? '✓' : item.month.replace('월','')}</div>
+      <div class="timeline-month">${item.month}</div>
+      <div class="timeline-label">${item.label}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════
+// 다이어리 연동
+// ══════════════════════════════
+function saveToDiary() {
+  if (!currentResult) return;
+  const monthly = Math.round(currentResult.total * 10) / 10;
+  const goals = JSON.parse(localStorage.getItem('diary_goals') || '{}');
+  goals.income_target = monthly;
+  goals.industry = currentIndustry;
+  localStorage.setItem('diary_goals', JSON.stringify(goals));
+  showToast('AI 다이어리에 목표 저장됨 📊');
+}
+
+function savePlanToDiary() {
+  const goals = JSON.parse(localStorage.getItem('diary_goals') || '{}');
+  goals.income_target = targetAmount;
+  goals.income_plan = currentPlan;
+  goals.industry = document.getElementById('plan-industry').value;
+  localStorage.setItem('diary_goals', JSON.stringify(goals));
+  showToast('플랜이 AI 다이어리에 저장됨 🎯');
+}
+
+// ══════════════════════════════
+// 탭 전환
+// ══════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ══════════════════════════════
+// 토스트
+// ══════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+init();
+</script>
+</body>
+</html>
