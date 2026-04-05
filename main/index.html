@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a14">
+<title>옆집디노 AI 세일즈 시스템</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a14;
+  --bg-card: #14142a;
+  --bg-card-hover: #1a1a38;
+  --bg-input: #1e1e38;
+  --border: #252548;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0cc;
+  --text-muted: #6a6a88;
+  --accent-orange: #ffa500;
+  --accent-green: #00d296;
+  --accent-blue: #64b4ff;
+  --accent-red: #ff4646;
+  --accent-purple: #8878c8;
+  --accent-pink: #ff6eb4;
+  --nav-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ==================== LIGHT THEME ==================== */
+body.light-theme {
+  --bg-primary: #f5f5fa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f5;
+  --bg-input: #eeeef4;
+  --border: #dddde8;
+  --text-primary: #1a1a2e;
+  --text-secondary: #555570;
+  --text-muted: #8888a0;
+  --accent-orange: #e89500;
+  --accent-green: #00b880;
+  --accent-blue: #4a9ae8;
+  --accent-red: #e83e3e;
+  --accent-purple: #7060b8;
+  --accent-pink: #e060a0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%;
+  background: var(--bg-primary);
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==================== APP CONTAINER ==================== */
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ==================== MAIN CONTENT ==================== */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== BOTTOM NAV ==================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: calc(var(--nav-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(10, 10, 20, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item.active { color: var(--accent-orange); }
+.nav-item .nav-icon { font-size: 22px; line-height: 1; }
+.nav-item .nav-label { font-size: 10px; font-weight: 600; letter-spacing: -0.3px; }
+.nav-item .nav-badge {
+  position: absolute;
+  top: 2px; right: 8px;
+  width: 8px; height: 8px;
+  background: var(--accent-red);
+  border-radius: 50%;
+  border: 2px solid var(--bg-primary);
+}
+
+/* ==================== HOME TAB ==================== */
+.home-header {
+  padding: 20px 20px 0;
+}
+.greeting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.greeting-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.greeting-emoji { font-size: 14px; margin-bottom: 2px; color: var(--text-secondary); }
+.greeting-name { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+.greeting-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-purple), #6a5acd);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 50px;
+  margin-top: 6px;
+}
+.dino-avatar {
+  width: 48px; height: 48px;
+  background: var(--accent-green);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+/* AI Insight Card */
+.insight-card {
+  margin: 16px 20px;
+  background: linear-gradient(135deg, #1a1040, #14142a);
+  border: 1px solid var(--accent-purple);
+  border-radius: 16px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.insight-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, rgba(136,120,200,0.15), transparent);
+  border-radius: 50%;
+}
+.insight-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.insight-text {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.insight-quote {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Quick Menu */
+.quick-section {
+  padding: 0 20px;
+  margin-top: 8px;
+}
+.quick-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.quick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.quick-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: block;
+}
+.quick-card:active { transform: scale(0.97); background: var(--bg-card-hover); }
+.quick-card-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+}
+.quick-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.quick-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Today's Tasks */
+.section-block {
+  padding: 0 20px;
+  margin-top: 24px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.section-header h3 {
+  font-size: 17px;
+  font-weight: 800;
+}
+.section-header .more-link {
+  font-size: 13px;
+  color: var(--accent-orange);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.task-item:active { background: var(--bg-card-hover); }
+.task-check {
+  width: 22px; height: 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.task-check.done {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #000;
+  font-size: 12px;
+  font-weight: 900;
+}
+.task-info { flex: 1; }
+.task-title { font-size: 14px; font-weight: 600; }
+.task-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.task-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+.tag-followup { background: rgba(100,180,255,0.15); color: var(--accent-blue); }
+.tag-meeting { background: rgba(255,165,0,0.15); color: var(--accent-orange); }
+.tag-new { background: rgba(0,210,150,0.15); color: var(--accent-green); }
+
+/* Follow-up Alert */
+.followup-alert {
+  margin: 16px 20px;
+  background: linear-gradient(135deg, #1a1018, #1a0a18);
+  border: 1px solid rgba(255,110,180,0.3);
+  border-radius: 14px;
+  padding: 16px;
+}
+.followup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.followup-header .alert-icon {
+  font-size: 16px;
+}
+.followup-header span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-pink);
+}
+.followup-header .count {
+  background: var(--accent-pink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 50px;
+  margin-left: auto;
+}
+.followup-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.followup-item:last-child { border-bottom: none; }
+.followup-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.followup-name { font-size: 13px; font-weight: 600; flex: 1; }
+.followup-days { font-size: 12px; color: var(--accent-red); font-weight: 600; }
+
+/* ==================== TOOLS TAB ==================== */
+.tools-header {
+  padding: 20px 20px 0;
+}
+.tools-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.tools-title-row h2 { font-size: 22px; font-weight: 900; }
+.tools-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.tools-search {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 4px;
+  transition: border-color 0.2s;
+}
+.tools-search:focus { border-color: var(--accent-orange); }
+.tools-search-wrap {
+  position: relative;
+}
+.tools-search-wrap::before {
+  content: '🔍';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+}
+.tool-count {
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.tool-count strong { color: var(--accent-orange); }
+
+.tool-category {
+  padding: 0 20px;
+  margin-top: 20px;
+}
+.tool-category-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tool-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.tool-list-item:active { background: var(--bg-card-hover); transform: scale(0.98); }
+.tool-icon-box {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.tool-info { flex: 1; }
+.tool-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.tool-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.tool-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 50px;
+  flex-shrink: 0;
+}
+.badge-hot { background: var(--accent-red); color: #fff; }
+.badge-new { background: var(--accent-blue); color: #fff; }
+.badge-free { background: var(--accent-green); color: #000; }
+.badge-soon { background: var(--bg-input); color: var(--text-muted); }
+.badge-ai { background: var(--accent-orange); color: #000; }
+
+/* ==================== DIARY TAB (redirect) ==================== */
+.diary-redirect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100dvh - var(--nav-height) - var(--safe-bottom) - 80px);
+  padding: 40px;
+  text-align: center;
+}
+.diary-redirect .icon { font-size: 64px; margin-bottom: 16px; }
+.diary-redirect h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.diary-redirect p { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+.diary-redirect .open-btn {
+  display: inline-block;
+  padding: 14px 40px;
+  background: var(--accent-orange);
+  color: #000;
+  font-weight: 800;
+  font-size: 16px;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.diary-redirect .open-btn:active { transform: scale(0.96); }
+
+/* ==================== MY TAB ==================== */
+.my-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 16px;
+  text-align: center;
+}
+.my-avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 44px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 20px rgba(0,210,150,0.2);
+}
+.my-name { font-size: 22px; font-weight: 900; }
+.my-email { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.my-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.my-level-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--accent-orange), #ff8c00);
+  color: #000;
+}
+.my-member-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 50px;
+  background: rgba(136,120,200,0.2);
+  color: var(--accent-purple);
+  border: 1px solid rgba(136,120,200,0.3);
+}
+
+.my-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  margin: 16px 20px;
+  background: var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.my-stat {
+  background: var(--bg-card);
+  padding: 18px 8px;
+  text-align: center;
+}
+.my-stat-num { font-size: 28px; font-weight: 900; color: var(--accent-green); }
+.my-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+
+.my-plan-card {
+  margin: 0 20px;
+  background: linear-gradient(135deg, #1a1040, #0a0a20);
+  border: 1px solid var(--accent-purple);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+}
+.my-plan-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.my-plan-name { font-size: 18px; font-weight: 900; color: var(--accent-orange); margin-bottom: 4px; }
+.my-plan-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+.my-menu {
+  margin: 16px 20px;
+}
+.my-menu-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+.my-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.my-menu-item:active { background: var(--bg-card-hover); }
+.my-menu-icon { font-size: 18px; width: 24px; text-align: center; }
+.my-menu-text { font-size: 14px; font-weight: 600; flex: 1; }
+.my-menu-arrow { color: var(--text-muted); font-size: 14px; }
+
+/* Footer */
+.app-footer {
+  padding: 32px 20px;
+  text-align: center;
+}
+.app-footer .brand { font-size: 16px; font-weight: 900; color: var(--accent-orange); }
+.app-footer .sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.app-footer .copy { font-size: 10px; color: #333; margin-top: 8px; }
+
+/* Scrollbar */
+.main-content::-webkit-scrollbar { width: 0; }
+
+/* ==================== LIGHT THEME OVERRIDES ==================== */
+body.light-theme .bottom-nav {
+  background: rgba(245, 245, 250, 0.95);
+  border-top-color: var(--border);
+}
+body.light-theme .insight-card {
+  background: linear-gradient(135deg, #f0ecff, #e8e4f8);
+  border-color: var(--accent-purple);
+}
+body.light-theme .followup-alert {
+  background: linear-gradient(135deg, #fff0f6, #ffe8f0);
+  border-color: rgba(224,96,160,0.3);
+}
+body.light-theme .my-plan-card {
+  background: linear-gradient(135deg, #f0ecff, #e8e4f8);
+  border-color: var(--accent-purple);
+}
+body.light-theme .greeting-badge {
+  background: linear-gradient(135deg, var(--accent-purple), #6a5acd);
+}
+body.light-theme .splash-overlay {
+  background: #f5f5fa;
+}
+body.light-theme .splash-text {
+  color: var(--accent-orange);
+}
+body.light-theme .app-footer .copy { color: #aaa; }
+body.light-theme .task-check { border-color: #ccc; }
+body.light-theme .followup-item { border-bottom-color: rgba(0,0,0,0.06); }
+body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
+
+/* Theme Toggle */
+.theme-toggle {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.theme-toggle:active { transform: scale(0.9); }
+
+/* Splash / onboarding overlay */
+.splash-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 999;
+  transition: opacity 0.5s, visibility 0.5s;
+}
+.splash-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-dino { font-size: 72px; animation: dinoWave 1s ease-in-out; }
+@keyframes dinoWave {
+  0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.splash-text { font-size: 24px; font-weight: 900; color: var(--accent-orange); margin-top: 16px; }
+.splash-sub { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div class="splash-overlay" id="splash">
+  <div class="splash-dino">🦕</div>
+  <div class="splash-text">옆집디노</div>
+  <div class="splash-sub">AI 세일즈 시스템</div>
+</div>
+
+<div class="app">
+  <div class="main-content" id="mainContent">
+
+    <!-- ========== HOME TAB ========== -->
+    <div class="tab-content active" id="tab-home">
+      <div class="home-header">
+        <div class="greeting-row">
+          <div>
+            <div class="greeting-emoji" id="greetingEmoji">👋 안녕하세요</div>
+            <div class="greeting-name" id="greetingName">세일즈 히어로님</div>
+            <div class="greeting-badge" id="greetingBadge">Founding Member</div>
+          </div>
+        <div class="greeting-right">
+          <div class="dino-avatar">🦕</div>
+          <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="테마 전환">🌙</button>
+        </div>
+        </div>
+      </div>
+
+      <!-- AI Insight -->
+      <div class="insight-card">
+        <div class="insight-label">💡 Today's AI 인사이트</div>
+        <div class="insight-text" id="insightText">오늘의 세일즈 한마디</div>
+        <div class="insight-quote" id="insightQuote"></div>
+      </div>
+
+      <!-- Follow-up Alert -->
+      <div class="followup-alert" id="followupAlert" style="display:none;">
+        <div class="followup-header">
+          <span class="alert-icon">🔔</span>
+          <span>팔로업 고객</span>
+          <span class="count" id="followupCount">0</span>
+        </div>
+        <div id="followupList"></div>
+      </div>
+
+      <!-- Today's Tasks -->
+      <div class="section-block">
+        <div class="section-header">
+          <h3>📋 오늘 할 일</h3>
+          <a class="more-link" onclick="switchTab('diary')">다이어리 →</a>
+        </div>
+        <div id="todayTasks">
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
+            </div>
+            <div class="task-info">
+              <div class="task-title">신규 연락 3명</div>
+              <div class="task-meta">매일 목표</div>
+            </div>
+            <span class="task-tag tag-new">신규</span>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
+            </div>
+            <div class="task-info">
+              <div class="task-title">김지영님 팔로업</div>
+              <div class="task-meta">D+3일 · 접촉 단계</div>
+            </div>
+            <span class="task-tag tag-followup">팔로업</span>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
+            </div>
+            <div class="task-info">
+              <div class="task-title">박민수님 미팅</div>
+              <div class="task-meta">오후 2시 · 카페</div>
+            </div>
+            <span class="task-tag tag-meeting">미팅</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Menu -->
+      <div class="quick-section" style="margin-top:24px;">
+        <div class="quick-title">빠른 메뉴</div>
+        <div class="quick-grid">
+          <a class="quick-card" href="https://wellstar.life/saju/" target="_blank">
+            <span class="quick-card-icon">🔮</span>
+            <div class="quick-card-name">사주 진단</div>
+            <div class="quick-card-desc">나의 성공 DNA 찾기</div>
+          </a>
+          <a class="quick-card" onclick="switchTab('diary')">
+            <span class="quick-card-icon">📓</span>
+            <div class="quick-card-name">AI 다이어리</div>
+            <div class="quick-card-desc">오늘 활동 기록하기</div>
+          </a>
+          <a class="quick-card" href="/chatbot/" target="_blank">
+            <span class="quick-card-icon">🤖</span>
+            <div class="quick-card-name">세일즈 코치</div>
+            <div class="quick-card-desc">AI 실시간 코칭</div>
+          </a>
+          <a class="quick-card" href="/quiz/" target="_blank">
+            <span class="quick-card-icon">📊</span>
+            <div class="quick-card-name">영업 스타일</div>
+            <div class="quick-card-desc">나의 영업 유형은?</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="section-block" style="margin-top:24px;">
+        <div class="section-header">
+          <h3>최근 활동</h3>
+          <a class="more-link" onclick="switchTab('diary')">전체보기 →</a>
+        </div>
+        <div id="recentActivity">
+          <div class="task-item">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,210,150,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
+            <div class="task-info">
+              <div class="task-title">이수현님 성사</div>
+              <div class="task-meta">어제 · 제품 구매</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div style="width:36px;height:36px;border-radius:50%;background:rgba(100,180,255,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📞</div>
+            <div class="task-info">
+              <div class="task-title">신규 연락 5명 완료</div>
+              <div class="task-meta">어제 · 목표 달성</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-footer">
+        <div class="brand">옆집디노</div>
+        <div class="sub">AI 세일즈 시스템</div>
+        <div class="copy">© 2025 NextDoorDino. All rights reserved.</div>
+      </div>
+    </div>
+
+    <!-- ========== TOOLS TAB ========== -->
+    <div class="tab-content" id="tab-tools">
+      <div class="tools-header">
+        <div class="tools-title-row">
+          <h2>🧰 AI 도구 모음</h2>
+        </div>
+        <div class="tools-subtitle">나만의 세일즈 무기를 활용하세요</div>
+        <div class="tools-search-wrap">
+          <input type="text" class="tools-search" placeholder="도구 검색..." id="toolSearch" oninput="filterTools()">
+        </div>
+        <div class="tool-count">사용 가능한 도구 <strong id="toolCountNum">7</strong>개</div>
+      </div>
+
+      <!-- 인기 도구 -->
+      <div class="tool-category" id="cat-popular">
+        <div class="tool-category-title">🔥 인기 도구</div>
+        <a class="tool-list-item" href="https://wellstar.life/saju/" target="_blank" data-name="사주 기반 성공 DNA 진단">
+          <div class="tool-icon-box" style="background:rgba(136,120,200,0.15);">🔮</div>
+          <div class="tool-info"><div class="tool-name">사주 기반 성공 DNA 진단</div><div class="tool-desc">나만의 성공 스타일과 맞춤 전략</div></div>
+          <span class="tool-badge badge-hot">HOT</span>
+        </a>
+        <a class="tool-list-item" href="/quiz/" target="_blank" data-name="영업 스타일 진단 퀴즈">
+          <div class="tool-icon-box" style="background:rgba(0,210,150,0.15);">📊</div>
+          <div class="tool-info"><div class="tool-name">영업 스타일 진단 퀴즈</div><div class="tool-desc">나는 어떤 영업 타입? 8가지 유형</div></div>
+          <span class="tool-badge badge-free">FREE</span>
+        </a>
+        <a class="tool-list-item" href="https://wellstar.life/branding-coach/" target="_blank" data-name="블로그 브랜딩 코치">
+          <div class="tool-icon-box" style="background:rgba(100,180,255,0.15);">✍️</div>
+          <div class="tool-info"><div class="tool-name">블로그 브랜딩 코치</div><div class="tool-desc">AI가 찾아주는 나만의 블로그 브랜드</div></div>
+          <span class="tool-badge badge-free">FREE</span>
+        </a>
+      </div>
+
+      <!-- 영업 도구 -->
+      <div class="tool-category" id="cat-sales">
+        <div class="tool-category-title">💼 영업 도구</div>
+        <a class="tool-list-item" href="/simulator/" target="_blank" data-name="수입 시뮬레이터">
+          <div class="tool-icon-box" style="background:rgba(255,165,0,0.15);">💰</div>
+          <div class="tool-info"><div class="tool-name">수입 시뮬레이터</div><div class="tool-desc">매주 N명이면 수입은?</div></div>
+          <span class="tool-badge badge-new">NEW</span>
+        </a>
+        <a class="tool-list-item" href="/card/" target="_blank" data-name="나의 AI 명함">
+          <div class="tool-icon-box" style="background:rgba(255,110,180,0.15);">💳</div>
+          <div class="tool-info"><div class="tool-name">나의 AI 명함</div><div class="tool-desc">QR코드 디지털 명함 만들기</div></div>
+          <span class="tool-badge badge-new">NEW</span>
+        </a>
+        <a class="tool-list-item" href="/chatbot/" target="_blank" data-name="AI 세일즈 코치">
+          <div class="tool-icon-box" style="background:rgba(255,165,0,0.15);">🤖</div>
+          <div class="tool-info"><div class="tool-name">AI 세일즈 코치</div><div class="tool-desc">"30초 만에 YES" 실시간 코칭</div></div>
+          <span class="tool-badge badge-ai">AI</span>
+        </a>
+        <a class="tool-list-item tool-coming" data-name="세일즈 롤플레이">
+          <div class="tool-icon-box" style="background:rgba(255,70,70,0.15);">🎭</div>
+          <div class="tool-info"><div class="tool-name">세일즈 롤플레이</div><div class="tool-desc">AI 고객한테 거절당해봐!</div></div>
+          <span class="tool-badge badge-soon">곧 출시</span>
+        </a>
+      </div>
+
+      <!-- 생산성 도구 -->
+      <div class="tool-category" id="cat-productivity">
+        <div class="tool-category-title">⚡ 생산성 도구</div>
+        <a class="tool-list-item" href="/planner/" target="_blank" data-name="5분법칙 플래너">
+          <div class="tool-icon-box" style="background:rgba(0,210,150,0.15);">⏰</div>
+          <div class="tool-info"><div class="tool-name">5분법칙 플래너</div><div class="tool-desc">매일 아침 5분으로 하루를 바꿔요</div></div>
+          <span class="tool-badge badge-free">FREE</span>
+        </a>
+        <a class="tool-list-item tool-coming" data-name="SNS 캡션 생성기">
+          <div class="tool-icon-box" style="background:rgba(136,120,200,0.15);">📱</div>
+          <div class="tool-info"><div class="tool-name">SNS 캡션 생성기</div><div class="tool-desc">AI가 만드는 바이럴 캡션</div></div>
+          <span class="tool-badge badge-soon">곧 출시</span>
+        </a>
+        <a class="tool-list-item tool-coming" data-name="30일 포스팅 캘린더">
+          <div class="tool-icon-box" style="background:rgba(100,180,255,0.15);">📅</div>
+          <div class="tool-info"><div class="tool-name">30일 포스팅 캘린더</div><div class="tool-desc">한 달 콘텐츠 한번에 기획</div></div>
+          <span class="tool-badge badge-soon">곧 출시</span>
+        </a>
+      </div>
+
+      <p style="text-align:center;padding:20px;color:var(--accent-purple);font-size:13px;">...계속 추가됩니다 🦕</p>
+
+      <div class="app-footer">
+        <div class="brand">옆집디노</div>
+        <div class="sub">AI 세일즈 시스템</div>
+        <div class="copy">© 2025 NextDoorDino. All rights reserved.</div>
+      </div>
+    </div>
+
+    <!-- ========== DIARY TAB ========== -->
+    <div class="tab-content" id="tab-diary">
+      <div class="diary-redirect">
+        <div class="icon">📓</div>
+        <h2>AI 다이어리</h2>
+        <p>고객 관리, 활동 기록, AI 인사이트까지<br>당신의 영업 성공을 이끌어주는 트래커</p>
+        <a class="open-btn" href="/diary/" target="_blank">AI 다이어리 열기</a>
+      </div>
+    </div>
+
+    <!-- ========== MY TAB ========== -->
+    <div class="tab-content" id="tab-my">
+      <div class="my-header">
+        <div class="my-avatar">🦕</div>
+        <div class="my-name" id="myName">세일즈 히어로</div>
+        <div class="my-email" id="myEmail">user@wellstar.life</div>
+        <div class="my-badges">
+          <span class="my-member-badge" id="myMemberBadge">파운딩 멤버</span>
+          <span class="my-level-badge" id="myLevelBadge">Lv.1</span>
+        </div>
+      </div>
+
+      <div class="my-stats">
+        <div class="my-stat">
+          <div class="my-stat-num" id="statTools">7</div>
+          <div class="my-stat-label">사용 도구</div>
+        </div>
+        <div class="my-stat">
+          <div class="my-stat-num" id="statDiary">0</div>
+          <div class="my-stat-label">다이어리</div>
+        </div>
+        <div class="my-stat">
+          <div class="my-stat-num" id="statStreak">0</div>
+          <div class="my-stat-label">연속일</div>
+        </div>
+      </div>
+
+      <div class="my-plan-card">
+        <div class="my-plan-label">현재 구독</div>
+        <div class="my-plan-name">디노 AI 세일즈 시스템</div>
+        <div class="my-plan-detail">전체 도구 이용 가능 · 프리미엄 특별가</div>
+      </div>
+
+      <div class="my-menu">
+        <div class="my-menu-title">내 정보</div>
+        <div class="my-menu-item" onclick="toggleTheme()">
+          <span class="my-menu-icon">🎨</span>
+          <span class="my-menu-text">테마 전환 (밝게/어둡게)</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+        <div class="my-menu-item" onclick="editProfile()">
+          <span class="my-menu-icon">👤</span>
+          <span class="my-menu-text">프로필 수정</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+        <div class="my-menu-item" onclick="openSettings()">
+          <span class="my-menu-icon">🔔</span>
+          <span class="my-menu-text">알림 설정</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+
+        <div class="my-menu-title">지원</div>
+        <div class="my-menu-item" onclick="window.open('http://pf.kakao.com/_txixmrK/chat','_blank')">
+          <span class="my-menu-icon">💬</span>
+          <span class="my-menu-text">카카오톡 문의</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+        <div class="my-menu-item" onclick="shareApp()">
+          <span class="my-menu-icon">📤</span>
+          <span class="my-menu-text">앱 공유하기</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+      </div>
+
+      <div class="app-footer">
+        <div class="brand">옆집디노</div>
+        <div class="sub">AI 세일즈 시스템 v1.0</div>
+        <div class="copy">© 2025 NextDoorDino. All rights reserved.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home')" data-tab="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">홈</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('tools')" data-tab="tools">
+      <span class="nav-icon">🧰</span>
+      <span class="nav-label">도구</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('diary')" data-tab="diary">
+      <span class="nav-icon">📓</span>
+      <span class="nav-label">다이어리</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('my')" data-tab="my">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">MY</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ==================== TAB NAVIGATION ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById('mainContent').scrollTop = 0;
+  localStorage.setItem('dino_last_tab', tab);
+}
+
+// ==================== SPLASH ====================
+setTimeout(() => {
+  document.getElementById('splash').classList.add('hidden');
+}, 1200);
+
+// ==================== GREETING ====================
+function updateGreeting() {
+  const hour = new Date().getHours();
+  const el = document.getElementById('greetingEmoji');
+  if (hour < 6) el.textContent = '🌙 좋은 밤이에요';
+  else if (hour < 12) el.textContent = '☀️ 좋은 아침이에요';
+  else if (hour < 18) el.textContent = '🌤️ 좋은 오후예요';
+  else el.textContent = '🌅 좋은 저녁이에요';
+
+  const name = localStorage.getItem('dino_user_name') || '세일즈 히어로';
+  document.getElementById('greetingName').textContent = name + '님';
+  document.getElementById('myName').textContent = name;
+}
+
+// ==================== AI INSIGHTS ====================
+const INSIGHTS = [
+  { text: '"고객의 아니요는 끝이 아니라,\n더 좋은 질문을 할 기회예요."', quote: '— 30초 만에 YES' },
+  { text: '"오늘 3명에게 연락하면,\n1주일 후 1명이 고객이 됩니다."', quote: '— 세일즈 법칙' },
+  { text: '"거절을 두려워하지 마세요.\n거절은 성공까지의 거리를 줄여줍니다."', quote: '— 옆집디노 코치' },
+  { text: '"상대방의 문제를 먼저 해결하면,\n판매는 자연스럽게 따라옵니다."', quote: '— 관계 영업의 기술' },
+  { text: '"꾸준함이 재능을 이깁니다.\n매일 조금씩, 그게 비밀이에요."', quote: '— 성공하는 영업인의 습관' },
+  { text: '"첫 만남에서 팔지 마세요.\n관계를 먼저 쌓으세요."', quote: '— 신뢰 기반 세일즈' },
+  { text: '"SNS에 하루 1개 게시물.\n6개월 후 당신은 전문가입니다."', quote: '— 디지털 세일즈 전략' },
+  { text: '"팔로업은 귀찮은 게 아니라,\n고객을 향한 관심의 표현이에요."', quote: '— 옆집디노 코치' },
+];
+
+function showRandomInsight() {
+  const today = new Date().toDateString();
+  let idx = 0;
+  for (let i = 0; i < today.length; i++) idx += today.charCodeAt(i);
+  idx = idx % INSIGHTS.length;
+  const insight = INSIGHTS[idx];
+  document.getElementById('insightText').textContent = insight.text;
+  document.getElementById('insightQuote').textContent = insight.quote;
+}
+
+// ==================== FOLLOW-UP ALERTS ====================
+function loadFollowups() {
+  // Read from diary localStorage if available
+  try {
+    const customers = JSON.parse(localStorage.getItem('diary_customers') || '[]');
+    const today = new Date();
+    const followups = customers.filter(c => {
+      if (!c.followupDate) return false;
+      const fDate = new Date(c.followupDate);
+      const diffDays = Math.floor((today - fDate) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    }).slice(0, 3);
+
+    if (followups.length > 0) {
+      document.getElementById('followupAlert').style.display = 'block';
+      document.getElementById('followupCount').textContent = followups.length;
+      const colors = ['#ff6eb4','#64b4ff','#ffa500','#00d296'];
+      document.getElementById('followupList').innerHTML = followups.map((c, i) => {
+        const diffDays = Math.floor((today - new Date(c.followupDate)) / (1000 * 60 * 60 * 24));
+        return `<div class="followup-item">
+          <div class="followup-avatar" style="background:${colors[i%4]}22;color:${colors[i%4]}">${(c.name||'?')[0]}</div>
+          <span class="followup-name">${c.name||'이름없음'}</span>
+          <span class="followup-days">D+${diffDays}일</span>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {}
+}
+
+// ==================== TOOL SEARCH ====================
+function filterTools() {
+  const query = document.getElementById('toolSearch').value.toLowerCase().trim();
+  const items = document.querySelectorAll('.tool-list-item');
+  let visible = 0;
+  items.forEach(item => {
+    const name = (item.getAttribute('data-name') || '').toLowerCase();
+    const show = !query || name.includes(query);
+    item.style.display = show ? 'flex' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('toolCountNum').textContent = visible;
+}
+
+// ==================== MY PAGE ====================
+function editProfile() {
+  const name = prompt('이름을 입력하세요:', localStorage.getItem('dino_user_name') || '');
+  if (name && name.trim()) {
+    localStorage.setItem('dino_user_name', name.trim());
+    updateGreeting();
+    document.getElementById('myName').textContent = name.trim();
+  }
+}
+
+function openSettings() {
+  alert('알림 설정은 준비 중입니다.\n곧 업데이트됩니다!');
+}
+
+function shareApp() {
+  if (navigator.share) {
+    navigator.share({
+      title: '옆집디노 AI 세일즈 시스템',
+      text: 'AI가 매일 당신의 세일즈를 코칭해요! 50가지 도구로 성장하세요.',
+      url: window.location.origin
+    });
+  } else {
+    const url = window.location.origin;
+    navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다!'));
+  }
+}
+
+// ==================== THEME ====================
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('dino_theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+  document.querySelector('meta[name="theme-color"]').content = isLight ? '#f5f5fa' : '#0a0a14';
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('dino_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-theme');
+    document.getElementById('themeBtn').textContent = '☀️';
+    document.querySelector('meta[name="theme-color"]').content = '#f5f5fa';
+  }
+}
+
+// ==================== INIT ====================
+function init() {
+  applyTheme();
+  updateGreeting();
+  showRandomInsight();
+  loadFollowups();
+
+  // Restore last tab
+  const lastTab = localStorage.getItem('dino_last_tab');
+  if (lastTab && lastTab !== 'home') {
+    switchTab(lastTab);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

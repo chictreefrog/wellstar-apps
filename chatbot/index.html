@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a14">
+<title>AI 세일즈 코치 - 옆집디노</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a14;
+  --bg-card: #14142a;
+  --bg-card-hover: #1a1a38;
+  --bg-input: #1e1e38;
+  --border: #252548;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0cc;
+  --text-muted: #6a6a88;
+  --accent-orange: #ffa500;
+  --accent-green: #00d296;
+  --accent-blue: #64b4ff;
+  --accent-red: #ff4646;
+  --accent-purple: #8878c8;
+  --accent-pink: #ff6eb4;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body.light-theme {
+  --bg-primary: #f5f5fa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f5;
+  --bg-input: #eeeef4;
+  --border: #dddde8;
+  --text-primary: #1a1a2e;
+  --text-secondary: #555570;
+  --text-muted: #8888a0;
+  --accent-orange: #e89500;
+  --accent-green: #00b880;
+  --accent-blue: #4a9ae8;
+  --accent-red: #e83e3e;
+  --accent-purple: #7060b8;
+  --accent-pink: #e060a0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%;
+  background: var(--bg-primary);
+  font-family: 'Noto Sans KR', -apple-system, sans-serif;
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ==================== HEADER ==================== */
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10, 10, 20, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 10;
+  flex-shrink: 0;
+}
+body.light-theme .chat-header {
+  background: rgba(245, 245, 250, 0.95);
+}
+.header-back {
+  width: 36px; height: 36px;
+  border: none; background: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.header-back:active { background: var(--bg-card); }
+.header-avatar {
+  width: 36px; height: 36px;
+  background: var(--accent-orange);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.header-info { flex: 1; }
+.header-name { font-size: 15px; font-weight: 700; }
+.header-status { font-size: 11px; color: var(--accent-green); font-weight: 600; }
+.header-actions { display: flex; gap: 4px; }
+.header-btn {
+  width: 36px; height: 36px;
+  border: none; background: none;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.header-btn:active { background: var(--bg-card); }
+
+/* ==================== SCENARIO CHIPS ==================== */
+.scenario-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.scenario-bar::-webkit-scrollbar { display: none; }
+.scenario-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.scenario-chip:active { transform: scale(0.95); }
+.scenario-chip.active {
+  background: var(--accent-orange);
+  color: #000;
+  border-color: var(--accent-orange);
+}
+
+/* ==================== CHAT AREA ==================== */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-area::-webkit-scrollbar { width: 0; }
+
+/* Welcome card */
+.welcome-card {
+  background: linear-gradient(135deg, #1a1040, #14142a);
+  border: 1px solid var(--accent-purple);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+body.light-theme .welcome-card {
+  background: linear-gradient(135deg, #f0ecff, #e8e4f8);
+}
+.welcome-emoji { font-size: 48px; margin-bottom: 12px; }
+.welcome-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.welcome-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* Message bubbles */
+.msg { display: flex; gap: 8px; max-width: 88%; animation: msgIn 0.3s ease; }
+.msg-ai { align-self: flex-start; }
+.msg-user { align-self: flex-end; flex-direction: row-reverse; }
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-avatar {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-ai .msg-avatar { background: var(--accent-orange); }
+
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.msg-ai .msg-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top-left-radius: 4px;
+}
+.msg-user .msg-bubble {
+  background: var(--accent-orange);
+  color: #000;
+  border-top-right-radius: 4px;
+}
+.msg-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding: 0 4px;
+}
+.msg-ai .msg-time { text-align: left; }
+.msg-user .msg-time { text-align: right; }
+
+/* Markdown in AI bubbles */
+.msg-ai .msg-bubble strong { color: var(--accent-orange); }
+.msg-ai .msg-bubble em { color: var(--accent-purple); font-style: normal; }
+.msg-ai .msg-bubble code {
+  background: rgba(255,255,255,0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+body.light-theme .msg-ai .msg-bubble code {
+  background: rgba(0,0,0,0.06);
+}
+
+/* Typing indicator */
+.typing { display: flex; gap: 8px; align-self: flex-start; max-width: 88%; }
+.typing .msg-avatar { background: var(--accent-orange); }
+.typing-dots {
+  display: flex; gap: 4px; align-items: center;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+}
+.typing-dot {
+  width: 7px; height: 7px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Quick replies */
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: flex-start;
+  padding-left: 40px;
+}
+.quick-btn {
+  padding: 8px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--accent-blue);
+  background: rgba(100,180,255,0.08);
+  color: var(--accent-blue);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.quick-btn:active {
+  background: var(--accent-blue);
+  color: #000;
+  transform: scale(0.95);
+}
+
+/* ==================== INPUT BAR ==================== */
+.input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 16px calc(10px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  background: rgba(10, 10, 20, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  flex-shrink: 0;
+}
+body.light-theme .input-bar {
+  background: rgba(245, 245, 250, 0.95);
+}
+.input-wrap {
+  flex: 1;
+  position: relative;
+}
+.input-field {
+  width: 100%;
+  min-height: 42px;
+  max-height: 120px;
+  padding: 10px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 21px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+}
+.input-field:focus { border-color: var(--accent-orange); }
+.input-field::placeholder { color: var(--text-muted); }
+
+.input-btn {
+  width: 42px; height: 42px;
+  border: none;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.input-btn:active { transform: scale(0.9); }
+
+.mic-btn {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.mic-btn.recording {
+  background: var(--accent-red);
+  color: #fff;
+  border-color: var(--accent-red);
+  animation: micPulse 1s infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,70,70,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255,70,70,0); }
+}
+
+.send-btn {
+  background: var(--accent-orange);
+  color: #000;
+}
+.send-btn:disabled {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+/* ==================== MENU MODAL ==================== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  padding-bottom: calc(20px + var(--safe-bottom));
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--text-muted);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.modal-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.modal-item:active { background: var(--bg-card-hover); }
+.modal-icon { font-size: 20px; width: 28px; text-align: center; }
+.modal-item.danger { color: var(--accent-red); }
+
+/* ==================== HISTORY PANEL ==================== */
+.history-panel {
+  position: fixed; inset: 0;
+  background: var(--bg-primary);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.history-panel.show { display: flex; }
+.history-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.history-header h2 { font-size: 18px; font-weight: 800; flex: 1; }
+.history-close {
+  width: 36px; height: 36px;
+  border: none; background: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.history-list {
+  flex: 1; overflow-y: auto; padding: 12px 16px;
+}
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.history-item:active { background: var(--bg-card-hover); transform: scale(0.98); }
+.history-item-icon { font-size: 24px; }
+.history-item-info { flex: 1; }
+.history-item-title { font-size: 14px; font-weight: 600; }
+.history-item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.history-empty {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-muted); font-size: 14px;
+}
+
+/* Scrollbar */
+.chat-area::-webkit-scrollbar, .history-list::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="chat-header">
+    <button class="header-back" onclick="goBack()" title="뒤로">←</button>
+    <div class="header-avatar">🤖</div>
+    <div class="header-info">
+      <div class="header-name">AI 세일즈 코치</div>
+      <div class="header-status">● 온라인</div>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="toggleHistory()" title="대화 기록">📋</button>
+      <button class="header-btn" onclick="toggleMenu()" title="메뉴">⋮</button>
+    </div>
+  </div>
+
+  <!-- Scenario Chips -->
+  <div class="scenario-bar" id="scenarioBar">
+    <button class="scenario-chip active" data-scenario="general" onclick="selectScenario(this)">💬 자유 대화</button>
+    <button class="scenario-chip" data-scenario="mindset" onclick="selectScenario(this)">🛡️ 마음 다지기</button>
+    <button class="scenario-chip" data-scenario="rapport" onclick="selectScenario(this)">🚪 관계 열기</button>
+    <button class="scenario-chip" data-scenario="objection" onclick="selectScenario(this)">🧹 거절 대응</button>
+    <button class="scenario-chip" data-scenario="closing" onclick="selectScenario(this)">🤝 클로징</button>
+    <button class="scenario-chip" data-scenario="team" onclick="selectScenario(this)">🌱 팀 빌딩</button>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="chat-area" id="chatArea">
+    <div class="welcome-card" id="welcomeCard">
+      <div class="welcome-emoji">🦕</div>
+      <div class="welcome-title">옆집디노 AI 세일즈 코치</div>
+      <div class="welcome-desc">"30초 만에 YES" 101가지 공식으로<br>당신의 세일즈를 실시간 코칭합니다</div>
+    </div>
+  </div>
+
+  <!-- Input Bar -->
+  <div class="input-bar">
+    <button class="input-btn mic-btn" id="micBtn" onclick="toggleVoice()" title="음성 입력">🎤</button>
+    <div class="input-wrap">
+      <textarea class="input-field" id="inputField" placeholder="고민을 말해주세요..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+    </div>
+    <button class="input-btn send-btn" id="sendBtn" onclick="sendMessage()" disabled title="전송">▶</button>
+  </div>
+</div>
+
+<!-- Menu Modal -->
+<div class="modal-overlay" id="menuModal" onclick="closeMenu(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-item" onclick="toggleTheme();closeMenuForce();">
+      <span class="modal-icon" id="themeIcon">🌙</span>
+      <span>테마 전환</span>
+    </div>
+    <div class="modal-item" onclick="toggleHistory();closeMenuForce();">
+      <span class="modal-icon">📋</span>
+      <span>대화 기록</span>
+    </div>
+    <div class="modal-item" onclick="startNewChat();closeMenuForce();">
+      <span class="modal-icon">✨</span>
+      <span>새 대화 시작</span>
+    </div>
+    <div class="modal-item danger" onclick="clearAllData();closeMenuForce();">
+      <span class="modal-icon">🗑️</span>
+      <span>전체 기록 삭제</span>
+    </div>
+  </div>
+</div>
+
+<!-- History Panel -->
+<div class="history-panel" id="historyPanel">
+  <div class="history-header">
+    <h2>📋 대화 기록</h2>
+    <button class="history-close" onclick="toggleHistory()">✕</button>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<script>
+// ==================== STATE ====================
+let currentScenario = 'general';
+let conversationHistory = []; // {role, content} for API
+let conversations = []; // all saved conversations
+let currentConvId = null;
+let isStreaming = false;
+
+const SCENARIO_LABELS = {
+  general: '💬 자유 대화',
+  mindset: '🛡️ 마음 다지기',
+  rapport: '🚪 관계 열기',
+  objection: '🧹 거절 대응',
+  closing: '🤝 클로징',
+  team: '🌱 팀 빌딩'
+};
+
+const QUICK_REPLIES = {
+  general: ['"비싸다"고 하면?', '첫 미팅 어떻게?', '거절이 두려워요', '자신감이 없어요'],
+  mindset: ['거절당한 후 멘탈 회복', '자존감이 떨어져요', '포기하고 싶어요', '매일 동기부여 방법'],
+  rapport: ['자연스럽게 대화 시작하기', '경계심 허무는 법', 'SNS로 먼저 접근', '오랜만에 연락하기'],
+  objection: ['"비싸요"', '"다단계 아니야?"', '"생각해볼게"', '"관심 없어요"', '"시간이 없어"'],
+  closing: ['자연스러운 계약 유도', '결정 못하는 고객', '마지막 한마디', '"한번 써봐" 제안법'],
+  team: ['파트너 모집 대화법', '신규 파트너 온보딩', '팀원 동기부여', '성과 안나는 팀원']
+};
+
+// ==================== INIT ====================
+function init() {
+  applyTheme();
+  loadConversations();
+  showInitialQuickReplies();
+
+  const input = document.getElementById('inputField');
+  input.addEventListener('input', () => {
+    document.getElementById('sendBtn').disabled = !input.value.trim();
+  });
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('dino_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-theme');
+    document.getElementById('themeIcon').textContent = '☀️';
+    document.querySelector('meta[name="theme-color"]').content = '#f5f5fa';
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('dino_theme', isLight ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = isLight ? '☀️' : '🌙';
+  document.querySelector('meta[name="theme-color"]').content = isLight ? '#f5f5fa' : '#0a0a14';
+}
+
+// ==================== NAVIGATION ====================
+function goBack() {
+  if (document.referrer && document.referrer.includes(location.origin)) {
+    history.back();
+  } else {
+    location.href = '/main/';
+  }
+}
+
+// ==================== SCENARIOS ====================
+function selectScenario(el) {
+  document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentScenario = el.dataset.scenario;
+
+  // Save setting
+  const settings = getSettings();
+  settings.lastScenario = currentScenario;
+  localStorage.setItem('chatbot_settings', JSON.stringify(settings));
+
+  // Show quick replies for new scenario
+  removeQuickReplies();
+  if (conversationHistory.length === 0) {
+    showInitialQuickReplies();
+  }
+}
+
+function showInitialQuickReplies() {
+  const replies = QUICK_REPLIES[currentScenario] || QUICK_REPLIES.general;
+  addQuickReplies(replies);
+}
+
+// ==================== MESSAGES ====================
+function addMessage(role, content, skipSave) {
+  const chatArea = document.getElementById('chatArea');
+  const welcomeCard = document.getElementById('welcomeCard');
+  if (welcomeCard) welcomeCard.style.display = 'none';
+
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `msg msg-${role === 'user' ? 'user' : 'ai'}`;
+
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+  if (role === 'user') {
+    msgDiv.innerHTML = `
+      <div>
+        <div class="msg-bubble">${escapeHtml(content)}</div>
+        <div class="msg-time">${timeStr}</div>
+      </div>`;
+  } else {
+    msgDiv.innerHTML = `
+      <div class="msg-avatar">🤖</div>
+      <div>
+        <div class="msg-bubble">${formatMarkdown(content)}</div>
+        <div class="msg-time">${timeStr}</div>
+      </div>`;
+  }
+
+  chatArea.appendChild(msgDiv);
+  scrollToBottom();
+
+  if (!skipSave) {
+    conversationHistory.push({ role, content });
+    saveCurrentConversation();
+  }
+}
+
+function addQuickReplies(replies) {
+  removeQuickReplies();
+  const chatArea = document.getElementById('chatArea');
+  const wrap = document.createElement('div');
+  wrap.className = 'quick-replies';
+  wrap.id = 'quickReplies';
+  replies.forEach(text => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.textContent = text;
+    btn.onclick = () => {
+      document.getElementById('inputField').value = text;
+      document.getElementById('sendBtn').disabled = false;
+      sendMessage();
+    };
+    wrap.appendChild(btn);
+  });
+  chatArea.appendChild(wrap);
+  scrollToBottom();
+}
+
+function removeQuickReplies() {
+  const el = document.getElementById('quickReplies');
+  if (el) el.remove();
+}
+
+function showTyping() {
+  const chatArea = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typingIndicator';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="typing-dots">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  const chatArea = document.getElementById('chatArea');
+  requestAnimationFrame(() => {
+    chatArea.scrollTop = chatArea.scrollHeight;
+  });
+}
+
+// ==================== SEND MESSAGE ====================
+async function sendMessage() {
+  const input = document.getElementById('inputField');
+  const text = input.value.trim();
+  if (!text || isStreaming) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  removeQuickReplies();
+
+  addMessage('user', text);
+
+  isStreaming = true;
+  showTyping();
+
+  try {
+    const apiHistory = conversationHistory.slice(-20).map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      content: m.content
+    }));
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        scenario: currentScenario,
+        history: apiHistory.slice(0, -1) // exclude current message (already in 'message')
+      })
+    });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+    const data = await res.json();
+    hideTyping();
+
+    addMessage('assistant', data.reply);
+
+    if (data.quickReplies && data.quickReplies.length > 0) {
+      addQuickReplies(data.quickReplies);
+    }
+  } catch (err) {
+    hideTyping();
+    addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏');
+    console.error('Chat API error:', err);
+  } finally {
+    isStreaming = false;
+  }
+}
+
+// ==================== INPUT ====================
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ==================== VOICE INPUT ====================
+let recognition = null;
+let isRecording = false;
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('이 브라우저에서는 음성 입력을 지원하지 않습니다.');
+    return;
+  }
+
+  if (isRecording) {
+    stopVoice();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ko-KR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  const input = document.getElementById('inputField');
+  const micBtn = document.getElementById('micBtn');
+
+  recognition.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add('recording');
+    input.placeholder = '듣고 있어요...';
+  };
+
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    input.value = transcript;
+    document.getElementById('sendBtn').disabled = !transcript.trim();
+    autoResize(input);
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    input.placeholder = '고민을 말해주세요...';
+    // Auto-restart for Galaxy phones
+    if (isRecording) {
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+
+  recognition.onerror = (e) => {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    input.placeholder = '고민을 말해주세요...';
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.error('Speech error:', e.error);
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    console.error('Speech start error:', e);
+  }
+}
+
+function stopVoice() {
+  if (recognition) {
+    isRecording = false;
+    recognition.stop();
+  }
+}
+
+// ==================== CONVERSATIONS / STORAGE ====================
+function getSettings() {
+  try {
+    return JSON.parse(localStorage.getItem('chatbot_settings') || '{}');
+  } catch { return {}; }
+}
+
+function loadConversations() {
+  try {
+    conversations = JSON.parse(localStorage.getItem('chatbot_conversations') || '[]');
+  } catch { conversations = []; }
+}
+
+function saveCurrentConversation() {
+  if (conversationHistory.length === 0) return;
+
+  if (!currentConvId) {
+    currentConvId = Date.now().toString();
+  }
+
+  const existing = conversations.findIndex(c => c.id === currentConvId);
+  const convData = {
+    id: currentConvId,
+    scenario: currentScenario,
+    messages: conversationHistory,
+    updatedAt: new Date().toISOString(),
+    preview: conversationHistory.find(m => m.role === 'user')?.content?.slice(0, 40) || ''
+  };
+
+  if (existing >= 0) {
+    conversations[existing] = convData;
+  } else {
+    conversations.unshift(convData);
+  }
+
+  // FIFO: max 50
+  if (conversations.length > 50) conversations = conversations.slice(0, 50);
+
+  localStorage.setItem('chatbot_conversations', JSON.stringify(conversations));
+}
+
+function startNewChat() {
+  conversationHistory = [];
+  currentConvId = null;
+  const chatArea = document.getElementById('chatArea');
+  chatArea.innerHTML = '';
+
+  // Re-add welcome card
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome-card';
+  welcome.id = 'welcomeCard';
+  welcome.innerHTML = `
+    <div class="welcome-emoji">🦕</div>
+    <div class="welcome-title">옆집디노 AI 세일즈 코치</div>
+    <div class="welcome-desc">"30초 만에 YES" 101가지 공식으로<br>당신의 세일즈를 실시간 코칭합니다</div>`;
+  chatArea.appendChild(welcome);
+
+  showInitialQuickReplies();
+}
+
+function loadConversation(id) {
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+
+  currentConvId = conv.id;
+  currentScenario = conv.scenario || 'general';
+  conversationHistory = conv.messages || [];
+
+  // Update scenario chip
+  document.querySelectorAll('.scenario-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.scenario === currentScenario);
+  });
+
+  // Rebuild chat
+  const chatArea = document.getElementById('chatArea');
+  chatArea.innerHTML = '';
+  conversationHistory.forEach(m => addMessage(m.role, m.content, true));
+
+  toggleHistory();
+}
+
+function clearAllData() {
+  if (!confirm('모든 대화 기록을 삭제할까요?')) return;
+  conversations = [];
+  localStorage.removeItem('chatbot_conversations');
+  startNewChat();
+}
+
+// ==================== HISTORY PANEL ====================
+function toggleHistory() {
+  const panel = document.getElementById('historyPanel');
+  const isOpen = panel.classList.toggle('show');
+  if (isOpen) renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  loadConversations();
+
+  if (conversations.length === 0) {
+    list.innerHTML = '<div class="history-empty">아직 대화 기록이 없어요.<br>세일즈 코치에게 고민을 말해보세요!</div>';
+    return;
+  }
+
+  list.innerHTML = conversations.map(c => {
+    const date = new Date(c.updatedAt);
+    const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+    const icon = SCENARIO_LABELS[c.scenario]?.split(' ')[0] || '💬';
+    const label = SCENARIO_LABELS[c.scenario]?.split(' ').slice(1).join(' ') || '자유 대화';
+    return `<div class="history-item" onclick="loadConversation('${c.id}')">
+      <div class="history-item-icon">${icon}</div>
+      <div class="history-item-info">
+        <div class="history-item-title">${escapeHtml(c.preview || label)}</div>
+        <div class="history-item-meta">${label} · ${dateStr} · ${c.messages.length}개 메시지</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== MENU ====================
+function toggleMenu() {
+  document.getElementById('menuModal').classList.toggle('show');
+}
+function closeMenu(e) {
+  if (e.target === e.currentTarget) {
+    document.getElementById('menuModal').classList.remove('show');
+  }
+}
+function closeMenuForce() {
+  document.getElementById('menuModal').classList.remove('show');
+}
+
+// ==================== UTILS ====================
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>')
+    .replace(/^### (.+)$/gm, '<strong style="font-size:15px;display:block;margin:8px 0 4px;">$1</strong>')
+    .replace(/^## (.+)$/gm, '<strong style="font-size:16px;display:block;margin:10px 0 4px;">$1</strong>')
+    .replace(/❌/g, '<span style="color:var(--accent-red)">❌</span>')
+    .replace(/✅/g, '<span style="color:var(--accent-green)">✅</span>');
+}
+
+// ==================== START ====================
+init();
+</script>
+</body>
+</html>

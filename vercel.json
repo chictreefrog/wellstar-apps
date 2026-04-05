@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/planner", "destination": "/planner/index.html" }
+    { "source": "/planner", "destination": "/planner/index.html" },
+    { "source": "/main", "destination": "/main/index.html" },
+    { "source": "/chatbot", "destination": "/chatbot/index.html" }
   ],
   "headers": [
     {
@@ -12,6 +14,32 @@
     },
     {
       "source": "/planner/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/main/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/main/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/main/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/chatbot/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/chatbot/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/chatbot/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]
