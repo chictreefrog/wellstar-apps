@@ -16,8 +16,8 @@ export default async function handler(req, res) {
   if (!GEMINI_API_KEY) return res.status(500).json({ error: 'API key not configured' });
 
   const FILE_STORE = process.env.GEMINI_FILE_STORE; // e.g. "fileSearchStores/xxx"
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+  const SUPABASE_URL = process.env.DINO_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.DINO_SUPABASE_KEY;
 
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const systemPrompt = buildSystemPrompt(scenario);
