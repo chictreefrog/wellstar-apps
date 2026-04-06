@@ -238,6 +238,44 @@ body.light-theme .msg-ai .msg-bubble code {
   background: rgba(0,0,0,0.06);
 }
 
+/* Citations */
+.msg-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+body.light-theme .msg-citations { border-top-color: rgba(0,0,0,0.06); }
+.citation-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 50px;
+  background: rgba(136,120,200,0.12);
+  color: var(--accent-purple);
+  white-space: nowrap;
+}
+
+/* Feedback buttons */
+.msg-feedback {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.feedback-btn {
+  font-size: 16px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.feedback-btn:active { transform: scale(0.9); }
+.feedback-btn.selected { border-color: var(--accent-orange); background: rgba(255,165,0,0.1); }
+
 /* Typing indicator */
 .typing { display: flex; gap: 8px; align-self: flex-start; max-width: 88%; }
 .typing .msg-avatar { background: var(--accent-orange); }
@@ -626,7 +664,7 @@ function showInitialQuickReplies() {
 }
 
 // ==================== MESSAGES ====================
-function addMessage(role, content, skipSave) {
+function addMessage(role, content, skipSave, citations) {
   const chatArea = document.getElementById('chatArea');
   const welcomeCard = document.getElementById('welcomeCard');
   if (welcomeCard) welcomeCard.style.display = 'none';
@@ -636,6 +674,7 @@ function addMessage(role, content, skipSave) {
 
   const now = new Date();
   const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const msgId = 'msg-' + Date.now();
 
   if (role === 'user') {
     msgDiv.innerHTML = `
@@ -644,10 +683,25 @@ function addMessage(role, content, skipSave) {
         <div class="msg-time">${timeStr}</div>
       </div>`;
   } else {
+    let citationsHtml = '';
+    if (citations && citations.length > 0) {
+      const tags = citations.map(c => {
+        const label = c.source ? `📖 ${c.source}` : '📖 책 참조';
+        return `<span class="citation-tag">${escapeHtml(label)}</span>`;
+      }).join('');
+      citationsHtml = `<div class="msg-citations">${tags}</div>`;
+    }
+
+    const feedbackHtml = `<div class="msg-feedback" id="fb-${msgId}">
+      <button class="feedback-btn" onclick="sendFeedback('${msgId}', 1, this)" title="도움이 됐어요">👍</button>
+      <button class="feedback-btn" onclick="sendFeedback('${msgId}', -1, this)" title="아쉬워요">👎</button>
+    </div>`;
+
     msgDiv.innerHTML = `
       <div class="msg-avatar">🤖</div>
       <div>
-        <div class="msg-bubble">${formatMarkdown(content)}</div>
+        <div class="msg-bubble">${formatMarkdown(content)}${citationsHtml}</div>
+        ${feedbackHtml}
         <div class="msg-time">${timeStr}</div>
       </div>`;
   }
@@ -659,6 +713,17 @@ function addMessage(role, content, skipSave) {
     conversationHistory.push({ role, content });
     saveCurrentConversation();
   }
+}
+
+function sendFeedback(msgId, score, btn) {
+  // 버튼 선택 표시
+  const container = document.getElementById('fb-' + msgId);
+  if (!container) return;
+  container.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // TODO: Supabase effectiveness_score 업데이트 (Phase 2에서 연동)
+  console.log('Feedback:', msgId, score > 0 ? 'positive' : 'negative');
 }
 
 function addQuickReplies(replies) {
@@ -752,14 +817,14 @@ async function sendMessage() {
     const data = await res.json();
     hideTyping();
 
-    addMessage('assistant', data.reply);
+    addMessage('assistant', data.reply, false, data.citations);
 
     if (data.quickReplies && data.quickReplies.length > 0) {
       addQuickReplies(data.quickReplies);
     }
   } catch (err) {
     hideTyping();
-    addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏');
+    addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏', false, []);
     console.error('Chat API error:', err);
   } finally {
     isStreaming = false;
