@@ -1,6 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
+const { GoogleGenAI } = require('@google/genai');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 인라인 명시적 CORS 헤더 (cors.js import 사용 안 함 — 기존 교훈)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
