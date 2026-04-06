@@ -119,19 +119,29 @@ body.light-theme .chat-header {
 /* ==================== SCENARIO CHIPS ==================== */
 .scenario-bar {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   padding: 10px 16px;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 16px;
 }
 .scenario-bar::-webkit-scrollbar { display: none; }
-.scenario-chip {
+.scenario-bar::after {
+  content: '';
   flex-shrink: 0;
+  width: 8px;
+}
+.scenario-chip {
+  flex: 0 0 auto;
   padding: 7px 14px;
   border-radius: 50px;
+  scroll-snap-align: start;
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-secondary);
