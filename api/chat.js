@@ -89,14 +89,14 @@ module.exports = async function handler(req, res) {
 
     reply = response.text || '';
 
-    // citations 추출
+    // citations 추출 (retrievedContext 필드명 사용)
     const grounding = response.candidates?.[0]?.groundingMetadata;
     if (grounding?.groundingChunks) {
       citations = grounding.groundingChunks
-        .filter(c => c.retrievedChunk)
+        .filter(c => c.retrievedContext)
         .map(c => ({
-          source: c.retrievedChunk?.chunkMetadata?.source || '',
-          text: c.retrievedChunk?.text?.substring(0, 100) || '',
+          source: c.retrievedContext?.title || '',
+          text: c.retrievedContext?.text?.substring(0, 100) || '',
         }));
     }
 
