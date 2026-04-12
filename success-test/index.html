@@ -156,6 +156,7 @@ let currentQ = 0;
 const answers = [];
 
 function startTest() {
+  try { const l=JSON.parse(localStorage.getItem('dino_activity_log')||'[]'); l.unshift({app:'success-test',label:'NM 성공 확률 진단 시작',ts:Date.now()}); localStorage.setItem('dino_activity_log',JSON.stringify(l.slice(0,50))); } catch{}
   document.getElementById('startScreen').style.display = 'none';
   const wrap = document.getElementById('questionWrap');
   wrap.style.display = 'flex';

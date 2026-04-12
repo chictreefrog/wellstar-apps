@@ -797,6 +797,7 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text || isStreaming) return;
 
+  try { const l=JSON.parse(localStorage.getItem('dino_activity_log')||'[]'); l.unshift({app:'chatbot',label:'AI 세일즈 코치 대화',ts:Date.now()}); localStorage.setItem('dino_activity_log',JSON.stringify(l.slice(0,50))); } catch{}
   input.value = '';
   input.style.height = 'auto';
   document.getElementById('sendBtn').disabled = true;

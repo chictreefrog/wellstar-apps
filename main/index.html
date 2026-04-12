@@ -758,14 +758,8 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
       <div class="section-block" style="margin-top:24px;">
         <div class="section-header">
           <h3>최근 활동</h3>
-          <a class="more-link" onclick="switchTab('diary')">전체보기 →</a>
         </div>
-        <div id="recentActivity">
-          <div style="text-align:center;padding:24px 16px;color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6;">
-            <div style="font-size:32px;margin-bottom:8px;">🕐</div>
-            활동 기록이 아직 없어요<br>다이어리에서 활동을 기록해보세요
-          </div>
-        </div>
+        <div id="recentActivity"></div>
       </div>
 
       <div class="app-footer">
@@ -1071,6 +1065,37 @@ function filterTools() {
   document.getElementById('toolCountNum').textContent = visible;
 }
 
+// ==================== RECENT ACTIVITY ====================
+function loadRecentActivity() {
+  const logs = JSON.parse(localStorage.getItem('dino_activity_log') || '[]');
+  const el = document.getElementById('recentActivity');
+  if (!logs.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px 16px;color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6"><div style="font-size:32px;margin-bottom:8px">🕐</div>활동 기록이 아직 없어요<br>도구를 사용하면 여기에 기록됩니다</div>';
+    return;
+  }
+  el.innerHTML = logs.slice(0, 5).map(log => {
+    const icons = {planner:'⏱',chatbot:'🤖',quiz:'🧬',diary:'📒',simulator:'💰',card:'💳','success-test':'🎯','dm-generator':'💬','content-maker':'✍️',team:'👥'};
+    const icon = icons[log.app] || '📌';
+    const time = timeAgo(new Date(log.ts));
+    return `<div class="task-item"><div style="width:36px;height:36px;border-radius:50%;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${icon}</div><div class="task-info"><div class="task-title">${log.label}</div><div class="task-meta">${time}</div></div></div>`;
+  }).join('');
+}
+
+function timeAgo(date) {
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return '방금';
+  if (diff < 3600) return Math.floor(diff / 60) + '분 전';
+  if (diff < 86400) return Math.floor(diff / 3600) + '시간 전';
+  return Math.floor(diff / 86400) + '일 전';
+}
+
+// Global: 다른 앱에서 호출 가능한 활동 기록 함수
+window.dinoLogActivity = function(app, label) {
+  const logs = JSON.parse(localStorage.getItem('dino_activity_log') || '[]');
+  logs.unshift({ app, label, ts: Date.now() });
+  localStorage.setItem('dino_activity_log', JSON.stringify(logs.slice(0, 50)));
+};
+
 // ==================== MY PAGE ====================
 function editProfile() {
   const name = prompt('이름을 입력하세요:', localStorage.getItem('dino_user_name') || '');
@@ -1155,6 +1180,7 @@ function init() {
   updateGreeting();
   showRandomInsight();
   loadFollowups();
+  loadRecentActivity();
 
   // Restore last tab
   const lastTab = localStorage.getItem('dino_last_tab');
