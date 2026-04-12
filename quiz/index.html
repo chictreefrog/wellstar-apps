@@ -598,7 +598,7 @@ function showResult() {
 
 async function sendReport() {
   const email = document.getElementById('result-email').value.trim();
-  if (!email || !email.includes('@')) { alert('올바른 이메일을 입력해주세요'); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('올바른 이메일을 입력해주세요'); return; }
   const btn = document.querySelector('.btn-email');
   btn.textContent = '전송 중...';
   btn.disabled = true;

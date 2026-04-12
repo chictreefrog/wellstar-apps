@@ -720,32 +720,9 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
           <a class="more-link" onclick="switchTab('diary')">다이어리 →</a>
         </div>
         <div id="todayTasks">
-          <div class="task-item">
-            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
-            </div>
-            <div class="task-info">
-              <div class="task-title">신규 연락 3명</div>
-              <div class="task-meta">매일 목표</div>
-            </div>
-            <span class="task-tag tag-new">신규</span>
-          </div>
-          <div class="task-item">
-            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
-            </div>
-            <div class="task-info">
-              <div class="task-title">김지영님 팔로업</div>
-              <div class="task-meta">D+3일 · 접촉 단계</div>
-            </div>
-            <span class="task-tag tag-followup">팔로업</span>
-          </div>
-          <div class="task-item">
-            <div class="task-check" onclick="this.classList.toggle('done');this.innerHTML=this.classList.contains('done')?'✓':''">
-            </div>
-            <div class="task-info">
-              <div class="task-title">박민수님 미팅</div>
-              <div class="task-meta">오후 2시 · 카페</div>
-            </div>
-            <span class="task-tag tag-meeting">미팅</span>
+          <div style="text-align:center;padding:24px 16px;color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6;">
+            <div style="font-size:32px;margin-bottom:8px;">📋</div>
+            다이어리에서 고객을 등록하면<br>오늘의 할 일이 여기에 표시돼요
           </div>
         </div>
       </div>
@@ -784,19 +761,9 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
           <a class="more-link" onclick="switchTab('diary')">전체보기 →</a>
         </div>
         <div id="recentActivity">
-          <div class="task-item">
-            <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,210,150,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✅</div>
-            <div class="task-info">
-              <div class="task-title">이수현님 성사</div>
-              <div class="task-meta">어제 · 제품 구매</div>
-            </div>
-          </div>
-          <div class="task-item">
-            <div style="width:36px;height:36px;border-radius:50%;background:rgba(100,180,255,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📞</div>
-            <div class="task-info">
-              <div class="task-title">신규 연락 5명 완료</div>
-              <div class="task-meta">어제 · 목표 달성</div>
-            </div>
+          <div style="text-align:center;padding:24px 16px;color:rgba(255,255,255,0.4);font-size:14px;line-height:1.6;">
+            <div style="font-size:32px;margin-bottom:8px;">🕐</div>
+            활동 기록이 아직 없어요<br>다이어리에서 활동을 기록해보세요
           </div>
         </div>
       </div>
@@ -1105,7 +1072,7 @@ function editProfile() {
 }
 
 function openSettings() {
-  alert('알림 설정은 준비 중입니다.\n곧 업데이트됩니다!');
+  switchTab('my');
 }
 
 function shareApp() {

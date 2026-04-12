@@ -521,9 +521,9 @@ async function generatePlan() {
     renderPlan(data.plan);
     currentPlan = data.plan;
   } catch {
-    // 로컬 폴백
     renderPlan(generateLocalPlan(targetAmount, industry));
     currentPlan = generateLocalPlan(targetAmount, industry);
+    showToast('오프라인 모드로 플랜을 생성했어요');
   }
 
   // 타임라인

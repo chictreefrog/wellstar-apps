@@ -731,12 +731,12 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
       <div class="tool-rec" id="statsRec">
         <div class="tool-rec__title">💡 이런 도구도 있어요</div>
         <div class="tool-rec__cards">
-          <a class="tool-rec__card" href="/saju/" onclick="event.preventDefault();toast('🔮 준비 중이에요!')">
+          <a class="tool-rec__card" href="https://wellstar.life/saju/" target="_blank">
             <span class="tool-rec__icon">🔮</span>
             <span class="tool-rec__name">사주 성공진단</span>
             <span class="tool-rec__desc">나의 강점을 알아보세요</span>
           </a>
-          <a class="tool-rec__card" href="/sales-diary/" onclick="event.preventDefault();toast('📒 준비 중이에요!')">
+          <a class="tool-rec__card" href="/diary/">
             <span class="tool-rec__icon">📒</span>
             <span class="tool-rec__name">세일즈 다이어리</span>
             <span class="tool-rec__desc">영업 활동을 체계적으로</span>
@@ -783,7 +783,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
           <span class="tool-disc__title">옆집디노의 다른 도구들</span>
         </div>
         <div class="tool-disc__list">
-          <a class="tool-disc__item" href="/saju/" onclick="event.preventDefault();toast('🔮 준비 중이에요!')">
+          <a class="tool-disc__item" href="https://wellstar.life/saju/" target="_blank">
             <span class="tool-disc__icon">🔮</span>
             <div class="tool-disc__info">
               <span class="tool-disc__name">사주 성공진단</span>
@@ -791,7 +791,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             </div>
             <span class="tool-disc__arrow">›</span>
           </a>
-          <a class="tool-disc__item" href="/sales-diary/" onclick="event.preventDefault();toast('📒 준비 중이에요!')">
+          <a class="tool-disc__item" href="/diary/">
             <span class="tool-disc__icon">📒</span>
             <div class="tool-disc__info">
               <span class="tool-disc__name">세일즈 다이어리</span>
@@ -799,7 +799,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             </div>
             <span class="tool-disc__arrow">›</span>
           </a>
-          <a class="tool-disc__item" href="/coach/" onclick="event.preventDefault();toast('🤖 준비 중이에요!')">
+          <a class="tool-disc__item" href="/chatbot/">
             <span class="tool-disc__icon">🤖</span>
             <div class="tool-disc__info">
               <span class="tool-disc__name">AI 세일즈 코치</span>
@@ -807,7 +807,7 @@ button{cursor:pointer;-webkit-user-select:none;user-select:none}
             </div>
             <span class="tool-disc__arrow">›</span>
           </a>
-          <a class="tool-disc__item" href="/tools/" onclick="event.preventDefault();toast('🚀 준비 중이에요!')">
+          <a class="tool-disc__item" href="/main/">
             <span class="tool-disc__icon">🚀</span>
             <div class="tool-disc__info">
               <span class="tool-disc__name">전체 도구 보기</span>
@@ -1281,7 +1281,7 @@ function showGate(){
 
 function submitGate(){
   const email = $('gateEmail').value.trim();
-  if(!email || !email.includes('@')){
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     $('gateEmail').style.borderColor='var(--red)';
     $('gateEmail').placeholder='올바른 이메일을 입력해주세요';
     return;
@@ -1735,8 +1735,8 @@ function showToolTip(){
   localStorage.setItem('p_tip_shown',today);
   const tips=[
     '🔮 나의 숨겨진 강점이 궁금하다면? 사주 성공진단을 체험해보세요!',
-    '📒 매일 세일즈 활동도 관리해보세요! 세일즈 다이어리가 준비 중이에요',
-    '🤖 AI 세일즈 코치가 곧 찾아옵니다! 설정에서 다른 도구를 확인해보세요',
+    '📒 매일 세일즈 활동도 관리해보세요! 세일즈 다이어리를 사용해보세요',
+    '🤖 AI 세일즈 코치가 당신의 영업을 도와줘요! 설정에서 다른 도구를 확인해보세요',
     '🦕 옆집디노의 50개 이상 도구를 만나보세요! 설정 → 다른 도구들',
   ];
   toast(tips[Math.floor(Math.random()*tips.length)]);

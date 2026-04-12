@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     try {
       wikiHits = await searchWiki(SUPABASE_URL, SUPABASE_KEY, message, scenario);
     } catch (err) {
-      console.error('Wiki search failed (continuing without):', err.message);
+      // Wiki search failed, continuing without wiki context
     }
   }
 
@@ -101,7 +101,7 @@ module.exports = async function handler(req, res) {
     }
 
   } catch (err) {
-    console.error('Gemini API error:', err.message);
+    // Gemini API error — attempt fallback
 
     // [3단계 폴백] File Search 실패 → 시스템 프롬프트만으로 답변
     if (err.message?.includes('503') || err.message?.includes('429')) {
@@ -119,7 +119,7 @@ module.exports = async function handler(req, res) {
         });
         reply = retryRes.text || '';
       } catch (retryErr) {
-        console.error('Retry also failed:', retryErr.message);
+        // Retry also failed, returning error message to user
         reply = '죄송합니다. 잠시 서버가 바쁩니다. 잠시 후 다시 시도해주세요. 🙏';
         return res.status(200).json({ reply, citations: [], quickReplies: getQuickReplies(scenario, message) });
       }
@@ -132,13 +132,13 @@ module.exports = async function handler(req, res) {
   // [4단계] 위키 축적 — AI 답변에서 새 지식 추출 (비동기, 응답 블로킹 안 함)
   if (SUPABASE_URL && SUPABASE_KEY && reply && citations.length > 0) {
     extractAndSaveToWiki(client, SUPABASE_URL, SUPABASE_KEY, message, reply, scenario, citations)
-      .catch(err => console.error('Wiki save failed:', err.message));
+      .catch(() => {});
   }
 
   // 위키 지식 카드 usage_count 증가 (비동기)
   if (wikiHits.length > 0 && SUPABASE_URL && SUPABASE_KEY) {
     incrementUsageCount(SUPABASE_URL, SUPABASE_KEY, wikiHits.map(w => w.id))
-      .catch(err => console.error('Usage count update failed:', err.message));
+      .catch(() => {});
   }
 
   return res.status(200).json({
@@ -241,10 +241,10 @@ JSON 형식:
     });
 
     if (!saveRes.ok) {
-      console.error('Wiki save HTTP error:', saveRes.status);
+      // Wiki save HTTP error — non-blocking, skip
     }
   } catch (err) {
-    console.error('Wiki extraction/save error:', err.message);
+    // Wiki extraction/save error — non-blocking, skip
   }
 }
 

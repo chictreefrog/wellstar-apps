@@ -2,7 +2,11 @@
   "rewrites": [
     { "source": "/planner", "destination": "/planner/index.html" },
     { "source": "/main", "destination": "/main/index.html" },
-    { "source": "/chatbot", "destination": "/chatbot/index.html" }
+    { "source": "/chatbot", "destination": "/chatbot/index.html" },
+    { "source": "/quiz", "destination": "/quiz/index.html" },
+    { "source": "/diary", "destination": "/diary/index.html" },
+    { "source": "/simulator", "destination": "/simulator/index.html" },
+    { "source": "/card", "destination": "/card/index.html" }
   ],
   "headers": [
     {
@@ -40,6 +44,58 @@
     },
     {
       "source": "/chatbot/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/quiz/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/quiz/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/quiz/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/diary/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/diary/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/diary/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/simulator/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/simulator/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/simulator/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/card/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/card/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/card/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]

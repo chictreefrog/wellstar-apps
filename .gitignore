@@ -1,3 +1,6 @@
 node_modules/
 scripts/upload-results.json
 .env
+
+.vercel
+.env*.local

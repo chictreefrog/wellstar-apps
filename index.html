@@ -261,7 +261,7 @@ document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 // Email submit
 function submitHubEmail(){
   const email=document.getElementById('hubEmail').value.trim();
-  if(!email||!email.includes('@')){document.getElementById('hubEmail').style.borderColor='#FF453A';document.getElementById('hubEmail').placeholder='올바른 이메일을 입력해주세요';return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('hubEmail').style.borderColor='#FF453A';document.getElementById('hubEmail').placeholder='올바른 이메일을 입력해주세요';return;}
   const leads=JSON.parse(localStorage.getItem('hub_leads')||'[]');
   leads.push({email,date:new Date().toISOString(),source:'hub'});
   localStorage.setItem('hub_leads',JSON.stringify(leads));

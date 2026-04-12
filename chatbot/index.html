@@ -732,8 +732,9 @@ function sendFeedback(msgId, score, btn) {
   container.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 
-  // TODO: Supabase effectiveness_score 업데이트 (Phase 2에서 연동)
-  console.log('Feedback:', msgId, score > 0 ? 'positive' : 'negative');
+  const feedbackData = JSON.parse(localStorage.getItem('chatbot_feedback') || '[]');
+  feedbackData.push({ msgId, score, ts: Date.now() });
+  localStorage.setItem('chatbot_feedback', JSON.stringify(feedbackData.slice(-100)));
 }
 
 function addQuickReplies(replies) {
@@ -835,7 +836,7 @@ async function sendMessage() {
   } catch (err) {
     hideTyping();
     addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏', false, []);
-    console.error('Chat API error:', err);
+    // silent: error already shown to user via addMessage
   } finally {
     isStreaming = false;
   }
@@ -909,14 +910,14 @@ function toggleVoice() {
     micBtn.classList.remove('recording');
     input.placeholder = '고민을 말해주세요...';
     if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      console.error('Speech error:', e.error);
+      // silent: non-critical speech recognition error
     }
   };
 
   try {
     recognition.start();
   } catch(e) {
-    console.error('Speech start error:', e);
+    // silent: speech start failed, mic button will reset
   }
 }
 

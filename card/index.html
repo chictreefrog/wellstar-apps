@@ -389,6 +389,11 @@ function toggleTool(key) {
 function handlePhoto(e) {
   const file = e.target.files[0];
   if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('사진 크기는 2MB 이하로 선택해주세요');
+    e.target.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = ev => {
     data.photo = ev.target.result;
