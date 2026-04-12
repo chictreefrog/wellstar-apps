@@ -354,7 +354,7 @@ function generate() {
   const keyword = document.getElementById('keyword').value.trim() || '나의 도전';
 
   const db = CONTENT_DB[type]?.[tone];
-  if (!db) { showToast('준비 중인 조합이에요'); return; }
+  if (!db) { showToast('다른 조합을 선택해주세요'); return; }
 
   document.getElementById('genBtn').disabled = true;
   document.getElementById('loading').style.display = 'block';

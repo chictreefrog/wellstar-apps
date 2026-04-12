@@ -2130,7 +2130,7 @@ if('serviceWorker' in navigator){
   
   navigator.serviceWorker.register('sw.js', {scope: '/planner/'})
     .then(reg => {
-      console.log('SW registered:', reg.scope);
+      // SW registered
       // Check for updates immediately
       reg.update();
       // When new SW is found, activate it
@@ -2138,13 +2138,13 @@ if('serviceWorker' in navigator){
         const newSW = reg.installing;
         newSW.addEventListener('statechange', () => {
           if(newSW.state === 'activated'){
-            console.log('New SW activated, reloading...');
+            // New SW activated, reload
             window.location.reload();
           }
         });
       });
     })
-    .catch(err => console.log('SW failed:', err));
+    .catch(() => {});
 }
 
 /* ═══ CANVAS POLYFILL ═══ */

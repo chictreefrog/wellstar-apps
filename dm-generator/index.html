@@ -267,7 +267,7 @@ function generateMessage() {
 
   const msgs = MSG_DB[purpose]?.[tone];
   if (!msgs || !msgs.length) {
-    showToast('해당 조합의 메시지를 준비 중이에요');
+    showToast('다른 조합을 선택해주세요');
     return;
   }
 
