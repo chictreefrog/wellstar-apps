@@ -687,7 +687,7 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
           <div>
             <div class="greeting-emoji" id="greetingEmoji">👋 안녕하세요</div>
             <div class="greeting-name" id="greetingName">사용자님</div>
-            <div class="greeting-badge" id="greetingBadge" style="display:none"></div>
+            <div class="greeting-badge" id="greetingBadge"></div>
           </div>
         <div class="greeting-right">
           <div class="dino-avatar">🦕</div>
@@ -1129,15 +1129,23 @@ function handleAuthMenu() {
 function updateAuthUI(user, profile) {
   const text = document.getElementById('authMenuText');
   const nameEl = document.getElementById('myName');
+  const badge = document.getElementById('greetingBadge');
+  const greetingName = document.getElementById('greetingName');
   if (user && profile) {
     text.textContent = '로그아웃';
     if (profile.display_name) {
       nameEl.textContent = profile.display_name;
+      greetingName.textContent = profile.display_name + '님';
       localStorage.setItem('dino_user_name', profile.display_name);
     }
+    // 역할 뱃지
+    const roleLabels = { admin: 'Admin', leader: 'Leader', partner: 'Partner', guest: 'Guest', subscriber: 'Member' };
+    badge.textContent = roleLabels[profile.role] || 'Guest';
+    badge.style.display = '';
     DinoGuest.check(profile);
   } else {
     text.textContent = '로그인 / 팀 합류';
+    badge.style.display = 'none';
   }
 }
 
