@@ -686,8 +686,8 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
         <div class="greeting-row">
           <div>
             <div class="greeting-emoji" id="greetingEmoji">👋 안녕하세요</div>
-            <div class="greeting-name" id="greetingName">세일즈 히어로님</div>
-            <div class="greeting-badge" id="greetingBadge">Founding Member</div>
+            <div class="greeting-name" id="greetingName">사용자님</div>
+            <div class="greeting-badge" id="greetingBadge" style="display:none"></div>
           </div>
         <div class="greeting-right">
           <div class="dino-avatar">🦕</div>
@@ -868,7 +868,7 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
         <div class="icon">📓</div>
         <h2>AI 다이어리</h2>
         <p>고객 관리, 활동 기록, AI 인사이트까지<br>당신의 영업 성공을 이끌어주는 트래커</p>
-        <a class="open-btn" href="/diary/" target="_blank">AI 다이어리 열기</a>
+        <a class="open-btn" href="/diary/">AI 다이어리 열기</a>
       </div>
     </div>
 
@@ -876,7 +876,7 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
     <div class="tab-content" id="tab-my">
       <div class="my-header">
         <div class="my-avatar">🦕</div>
-        <div class="my-name" id="myName">세일즈 히어로</div>
+        <div class="my-name" id="myName">사용자</div>
         <div class="my-email" id="myEmail">user@wellstar.life</div>
         <div class="my-badges">
           <span class="my-member-badge" id="myMemberBadge">파운딩 멤버</span>
@@ -1001,7 +1001,7 @@ function updateGreeting() {
   else if (hour < 18) el.textContent = '🌤️ 좋은 오후예요';
   else el.textContent = '🌅 좋은 저녁이에요';
 
-  const name = localStorage.getItem('dino_user_name') || '세일즈 히어로';
+  const name = localStorage.getItem('dino_user_name') || '사용자';
   document.getElementById('greetingName').textContent = name + '님';
   document.getElementById('myName').textContent = name;
 }

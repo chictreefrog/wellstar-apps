@@ -374,9 +374,12 @@ textarea { resize: none; min-height: 80px; }
 <div id="app">
   <!-- ── 홈 ── -->
   <div id="screen-home" class="screen active">
-    <div class="page-header">
-      <h1>AI 다이어리</h1>
-      <div class="subtitle">당신의 영업 성공을 이끌어주는 트래커</div>
+    <div class="page-header" style="display:flex;align-items:center;gap:10px">
+      <a href="/main/" style="font-size:20px;text-decoration:none;color:var(--text2);flex-shrink:0">←</a>
+      <div>
+        <h1>AI 다이어리</h1>
+        <div class="subtitle">당신의 영업 성공을 이끌어주는 트래커</div>
+      </div>
     </div>
     <div class="home-greeting">
       <div class="date-line" id="home-date-full"></div>
@@ -387,10 +390,10 @@ textarea { resize: none; min-height: 80px; }
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:18px">🦕</span>
         <span style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px">AI 인사이트</span>
-        <button onclick="refreshAiInsight()" id="ai-refresh-btn" style="margin-left:auto;background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px">↻</button>
+        <button onclick="refreshAiInsight()" id="ai-refresh-btn" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;padding:2px">↻</button>
       </div>
-      <div id="ai-insight-text" style="font-size:14px;line-height:1.7;color:var(--text)">
-        <span style="color:var(--text3)">분석 중...</span>
+      <div id="ai-insight-text" style="font-size:14px;line-height:1.7;color:#F5F5F7">
+        <span style="color:rgba(255,255,255,0.5)">분석 중...</span>
       </div>
     </div>
 
