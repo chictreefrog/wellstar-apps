@@ -975,6 +975,7 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
 
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
+<script src="/shared/guest.js"></script>
 <script>
 // ==================== TAB NAVIGATION ====================
 function switchTab(tab) {
@@ -1134,6 +1135,7 @@ function updateAuthUI(user, profile) {
       nameEl.textContent = profile.display_name;
       localStorage.setItem('dino_user_name', profile.display_name);
     }
+    DinoGuest.check(profile);
   } else {
     text.textContent = '로그인 / 팀 합류';
   }
