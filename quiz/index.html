@@ -280,6 +280,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   </div>
 </div>
 
+<script src="/shared/supabase.js"></script>
 <script>
 // ══════════════════════════════
 // 파티클
@@ -604,6 +605,14 @@ async function sendReport() {
   btn.disabled = true;
 
   try {
+    // Save to leads DB
+    if (window.dinoSupabase) {
+      window.dinoSupabase.from('leads').insert({
+        source: 'quiz',
+        email,
+        quiz_result: { type: window._resultType, scores }
+      }).then(() => {});
+    }
     await fetch('https://blogtool.wellstar.life/api/quiz-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

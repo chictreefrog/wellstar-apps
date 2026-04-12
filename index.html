@@ -250,6 +250,7 @@ footer{border-top:1px solid var(--border);padding:32px 0;text-align:center}
   </div>
 </footer>
 
+<script src="/shared/supabase.js"></script>
 <script>
 // Stars
 (function(){const c=document.getElementById('stars');let h='';for(let i=0;i<80;i++){const sz=['s','s','s','m','m','l'][~~(Math.random()*6)];const tw=Math.random()>.7?'star--tw':'';h+=`<div class="star star--${sz} ${tw}" style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*5}s"></div>`;}c.innerHTML=h;})();
@@ -265,6 +266,10 @@ function submitHubEmail(){
   const leads=JSON.parse(localStorage.getItem('hub_leads')||'[]');
   leads.push({email,date:new Date().toISOString(),source:'hub'});
   localStorage.setItem('hub_leads',JSON.stringify(leads));
+  // Save to Supabase leads DB
+  if (window.dinoSupabase) {
+    window.dinoSupabase.from('leads').insert({ source: 'landing', email }).then(() => {});
+  }
   document.getElementById('emailRow').style.display='none';
   document.getElementById('emailOk').style.display='block';
 }

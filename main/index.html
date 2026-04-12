@@ -923,6 +923,13 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
           <span class="my-menu-arrow">›</span>
         </div>
 
+        <div class="my-menu-title">계정</div>
+        <div class="my-menu-item" id="authMenuItem" onclick="handleAuthMenu()">
+          <span class="my-menu-icon">🔑</span>
+          <span class="my-menu-text" id="authMenuText">로그인 / 팀 합류</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
+
         <div class="my-menu-title">지원</div>
         <div class="my-menu-item" onclick="window.open('http://pf.kakao.com/_txixmrK/chat','_blank')">
           <span class="my-menu-icon">💬</span>
@@ -966,6 +973,8 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
   </nav>
 </div>
 
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
 <script>
 // ==================== TAB NAVIGATION ====================
 function switchTab(tab) {
@@ -1105,6 +1114,31 @@ function applyTheme() {
   }
 }
 
+// ==================== AUTH ====================
+function handleAuthMenu() {
+  if (DinoAuth.isLoggedIn()) {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      DinoAuth.logout();
+    }
+  } else {
+    DinoAuth.showLogin();
+  }
+}
+
+function updateAuthUI(user, profile) {
+  const text = document.getElementById('authMenuText');
+  const nameEl = document.getElementById('myName');
+  if (user && profile) {
+    text.textContent = '로그아웃';
+    if (profile.display_name) {
+      nameEl.textContent = profile.display_name;
+      localStorage.setItem('dino_user_name', profile.display_name);
+    }
+  } else {
+    text.textContent = '로그인 / 팀 합류';
+  }
+}
+
 // ==================== INIT ====================
 function init() {
   applyTheme();
@@ -1117,6 +1151,10 @@ function init() {
   if (lastTab && lastTab !== 'home') {
     switchTab(lastTab);
   }
+
+  // Init auth
+  DinoAuth.init();
+  DinoAuth.onAuthChange(updateAuthUI);
 }
 
 init();
