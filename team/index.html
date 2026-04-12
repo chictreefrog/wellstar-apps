@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a14">
+<title>팀 대시보드 — AI 세일즈 시스템</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a14; --bg2: #12122a; --card: rgba(20,20,50,0.8);
+  --text: #F5F5F7; --text2: rgba(255,255,255,0.6); --text3: rgba(255,255,255,0.35);
+  --accent: #FF6B35; --accent2: #FF8F65; --green: #30D158; --red: #FF453A;
+  --blue: #0A84FF; --border: rgba(255,255,255,0.08);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Noto Sans KR',-apple-system,sans-serif; min-height:100dvh; }
+.app { max-width:480px; margin:0 auto; min-height:100dvh; display:flex; flex-direction:column; }
+.header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+.header-title { font-size:18px; font-weight:800; }
+.header-sub { font-size:12px; color:var(--text3); }
+.header-right { display:flex; gap:8px; }
+.icon-btn { width:36px; height:36px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+.content { flex:1; overflow-y:auto; padding-bottom:calc(72px + var(--safe-bottom)); }
+.tab-content { display:none; padding:16px 20px; }
+.tab-content.active { display:block; }
+
+/* Cards */
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.stat-value { font-size:28px; font-weight:900; margin-bottom:2px; }
+.stat-label { font-size:12px; color:var(--text3); }
+.stat-card.accent .stat-value { color:var(--accent); }
+.stat-card.green .stat-value { color:var(--green); }
+.stat-card.blue .stat-value { color:var(--blue); }
+
+.section-title { font-size:15px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+.section-title .badge { background:var(--accent); color:white; font-size:11px; padding:2px 6px; border-radius:6px; font-weight:600; }
+
+/* Member list */
+.member-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+.member-card:active { transform:scale(0.98); }
+.member-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--accent), var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:white; flex-shrink:0; }
+.member-info { flex:1; }
+.member-name { font-size:14px; font-weight:600; }
+.member-meta { font-size:12px; color:var(--text3); margin-top:2px; }
+.member-status { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.member-status.active { background:var(--green); }
+.member-status.warn { background:#FF9F0A; }
+.member-status.inactive { background:var(--red); }
+
+/* Announcement form */
+.form-group { margin-bottom:14px; }
+.form-label { font-size:13px; font-weight:600; color:var(--text2); margin-bottom:6px; display:block; }
+.form-input { width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,0.05); color:var(--text); font-size:14px; font-family:inherit; outline:none; }
+.form-input:focus { border-color:var(--accent); }
+textarea.form-input { min-height:100px; resize:vertical; }
+.btn { padding:14px; border-radius:12px; border:none; font-size:15px; font-weight:700; cursor:pointer; width:100%; font-family:inherit; }
+.btn-primary { background:linear-gradient(135deg, var(--accent), var(--accent2)); color:white; }
+.btn-primary:disabled { opacity:0.5; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text2); }
+
+/* Announcements list */
+.announce-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+.announce-card.pinned { border-color:rgba(255,107,53,0.3); }
+.announce-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+.announce-body { font-size:13px; color:var(--text2); line-height:1.6; }
+.announce-time { font-size:11px; color:var(--text3); margin-top:8px; }
+.pin-badge { color:var(--accent); font-size:11px; font-weight:600; }
+
+/* Schedule */
+.schedule-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:10px; display:flex; gap:12px; }
+.schedule-date { width:48px; text-align:center; flex-shrink:0; }
+.schedule-day { font-size:22px; font-weight:900; color:var(--accent); }
+.schedule-month { font-size:11px; color:var(--text3); }
+.schedule-info { flex:1; }
+.schedule-title { font-size:14px; font-weight:600; }
+.schedule-desc { font-size:12px; color:var(--text3); margin-top:2px; }
+
+/* Invite */
+.invite-box { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:center; margin-bottom:20px; }
+.invite-code { font-size:28px; font-weight:900; letter-spacing:4px; color:var(--accent); margin:12px 0; font-family:'Courier New',monospace; }
+.invite-hint { font-size:12px; color:var(--text3); }
+
+/* Empty */
+.empty { text-align:center; padding:40px 20px; color:var(--text3); font-size:14px; }
+.empty-icon { font-size:40px; margin-bottom:8px; }
+
+/* Bottom nav */
+.bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:rgba(10,10,20,0.95); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; padding-bottom:var(--safe-bottom); z-index:100; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 0; background:none; border:none; color:var(--text3); font-size:10px; cursor:pointer; font-family:inherit; }
+.nav-item.active { color:var(--accent); }
+.nav-icon { font-size:20px; }
+
+/* Login gate */
+.login-gate { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; padding:40px 20px; text-align:center; }
+.login-gate-icon { font-size:64px; margin-bottom:16px; }
+.login-gate-title { font-size:20px; font-weight:800; margin-bottom:8px; }
+.login-gate-desc { font-size:14px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="header-title" id="teamName">팀 대시보드</div>
+      <div class="header-sub" id="teamSub">로그인이 필요합니다</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="location.href='/main/'">🏠</button>
+    </div>
+  </div>
+
+  <!-- Login Gate -->
+  <div id="loginGate" class="login-gate">
+    <div class="login-gate-icon">🔐</div>
+    <div class="login-gate-title">팀에 합류하세요</div>
+    <div class="login-gate-desc">리더로부터 받은 초대 코드로<br>팀에 합류하면 모든 기능을 이용할 수 있어요</div>
+    <button class="btn btn-primary" style="max-width:280px" onclick="DinoAuth.showLogin()">로그인 / 회원가입</button>
+  </div>
+
+  <!-- Main Content (hidden until login) -->
+  <div class="content" id="mainContent" style="display:none">
+
+    <!-- ═══ HOME TAB ═══ -->
+    <div class="tab-content active" id="tab-home">
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card accent"><div class="stat-value" id="statMembers">0</div><div class="stat-label">팀원 수</div></div>
+        <div class="stat-card green"><div class="stat-value" id="statActive">0</div><div class="stat-label">오늘 활동</div></div>
+        <div class="stat-card blue"><div class="stat-value" id="statCustomers">0</div><div class="stat-label">전체 고객</div></div>
+        <div class="stat-card"><div class="stat-value" id="statLeads">0</div><div class="stat-label">리드 수집</div></div>
+      </div>
+
+      <div class="section-title">👥 팀원 현황</div>
+      <div id="memberList">
+        <div class="empty"><div class="empty-icon">👥</div>아직 팀원이 없어요<br>초대 코드를 공유해보세요</div>
+      </div>
+    </div>
+
+    <!-- ═══ ANNOUNCE TAB ═══ -->
+    <div class="tab-content" id="tab-announce">
+      <div id="announceForm" style="display:none;margin-bottom:20px">
+        <div class="section-title">📢 새 공지 작성</div>
+        <div class="form-group">
+          <label class="form-label">제목</label>
+          <input class="form-input" id="annTitle" placeholder="공지 제목">
+        </div>
+        <div class="form-group">
+          <label class="form-label">내용</label>
+          <textarea class="form-input" id="annContent" placeholder="공지 내용을 작성하세요"></textarea>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" style="flex:1" onclick="postAnnouncement()">공지 등록</button>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--text2)">
+            <input type="checkbox" id="annPin"> 고정
+          </label>
+        </div>
+      </div>
+      <div class="section-title">📋 공지사항 <span class="badge" id="annCount">0</span></div>
+      <div id="announceList">
+        <div class="empty"><div class="empty-icon">📢</div>공지사항이 없어요</div>
+      </div>
+    </div>
+
+    <!-- ═══ SCHEDULE TAB ═══ -->
+    <div class="tab-content" id="tab-schedule">
+      <div id="scheduleForm" style="display:none;margin-bottom:20px">
+        <div class="section-title">📅 새 일정 추가</div>
+        <div class="form-group">
+          <label class="form-label">일정명</label>
+          <input class="form-input" id="schTitle" placeholder="일정 제목">
+        </div>
+        <div class="form-group">
+          <label class="form-label">날짜/시간</label>
+          <input class="form-input" id="schDate" type="datetime-local">
+        </div>
+        <div class="form-group">
+          <label class="form-label">설명 (선택)</label>
+          <input class="form-input" id="schDesc" placeholder="상세 설명">
+        </div>
+        <button class="btn btn-primary" onclick="postSchedule()">일정 등록</button>
+      </div>
+      <div class="section-title">📅 팀 일정</div>
+      <div id="scheduleList">
+        <div class="empty"><div class="empty-icon">📅</div>등록된 일정이 없어요</div>
+      </div>
+    </div>
+
+    <!-- ═══ INVITE TAB ═══ -->
+    <div class="tab-content" id="tab-invite">
+      <div class="invite-box">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">팀 초대 코드</div>
+        <div class="invite-code" id="inviteCode">------</div>
+        <div class="invite-hint">이 코드를 팀원에게 공유하세요</div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="copyInviteCode()">코드 복사하기</button>
+      </div>
+
+      <div class="section-title">👥 팀원 목록 <span class="badge" id="memberCount">0/30</span></div>
+      <div id="inviteMemberList"></div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav" id="bottomNav" style="display:none">
+    <button class="nav-item active" onclick="switchTab('home')" data-tab="home">
+      <span class="nav-icon">📊</span><span>홈</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('announce')" data-tab="announce">
+      <span class="nav-icon">📢</span><span>공지</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('schedule')" data-tab="schedule">
+      <span class="nav-icon">📅</span><span>일정</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('invite')" data-tab="invite">
+      <span class="nav-icon">🔗</span><span>초대</span>
+    </button>
+  </nav>
+</div>
+
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
+<script>
+let sb = null;
+let myProfile = null;
+let myTeam = null;
+let isLeader = false;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(30,30,60,0.95);color:white;padding:10px 20px;border-radius:12px;font-size:13px;z-index:99999;backdrop-filter:blur(10px);';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ═══ DATA LOADING ═══
+async function loadDashboard() {
+  if (!sb || !myProfile?.team_id) return;
+  const teamId = myProfile.team_id;
+
+  // Load team info
+  const { data: team } = await sb.from('teams').select('*').eq('id', teamId).single();
+  myTeam = team;
+  if (team) {
+    document.getElementById('teamName').textContent = team.name;
+    document.getElementById('teamSub').textContent = isLeader ? '리더 대시보드' : '팀원 대시보드';
+    document.getElementById('inviteCode').textContent = team.invite_code;
+  }
+
+  // Load members
+  const { data: members } = await sb.from('profiles').select('*').eq('team_id', teamId).eq('is_active', true);
+  const memberCount = members?.length || 0;
+  document.getElementById('statMembers').textContent = memberCount;
+  document.getElementById('memberCount').textContent = memberCount + '/30';
+
+  // Load today's activities count
+  const today = new Date().toISOString().split('T')[0];
+  const { count: activeToday } = await sb.from('activities').select('*', { count: 'exact', head: true }).eq('team_id', teamId).eq('date', today);
+  document.getElementById('statActive').textContent = activeToday || 0;
+
+  // Load total customers
+  const { count: totalCustomers } = await sb.from('customers').select('*', { count: 'exact', head: true }).eq('team_id', teamId);
+  document.getElementById('statCustomers').textContent = totalCustomers || 0;
+
+  // Load leads count
+  const { count: totalLeads } = await sb.from('leads').select('*', { count: 'exact', head: true }).eq('team_id', teamId);
+  document.getElementById('statLeads').textContent = totalLeads || 0;
+
+  // Render member list
+  renderMembers(members || []);
+
+  // Load announcements
+  loadAnnouncements(teamId);
+
+  // Load schedules
+  loadSchedules(teamId);
+
+  // Show forms if leader
+  if (isLeader) {
+    document.getElementById('announceForm').style.display = 'block';
+    document.getElementById('scheduleForm').style.display = 'block';
+  }
+}
+
+function renderMembers(members) {
+  const list = document.getElementById('memberList');
+  const inviteList = document.getElementById('inviteMemberList');
+  if (!members.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>아직 팀원이 없어요<br>초대 코드를 공유해보세요</div>';
+    inviteList.innerHTML = list.innerHTML;
+    return;
+  }
+
+  const html = members.map(m => {
+    const initial = (m.display_name || '?')[0];
+    const role = m.role === 'leader' ? '리더' : '파트너';
+    return `<div class="member-card">
+      <div class="member-avatar">${initial}</div>
+      <div class="member-info">
+        <div class="member-name">${m.display_name || '이름 없음'} <span style="font-size:11px;color:var(--text3)">${role}</span></div>
+        <div class="member-meta">${m.phone || ''} ${m.business_code ? '· ' + m.business_code : ''}</div>
+      </div>
+      <div class="member-status active"></div>
+    </div>`;
+  }).join('');
+
+  list.innerHTML = html;
+  inviteList.innerHTML = html;
+}
+
+async function loadAnnouncements(teamId) {
+  const { data } = await sb.from('announcements').select('*').eq('team_id', teamId).order('is_pinned', { ascending: false }).order('created_at', { ascending: false }).limit(20);
+  const list = document.getElementById('announceList');
+  document.getElementById('annCount').textContent = data?.length || 0;
+
+  if (!data?.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📢</div>공지사항이 없어요</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(a => {
+    const time = new Date(a.created_at).toLocaleDateString('ko-KR');
+    return `<div class="announce-card${a.is_pinned ? ' pinned' : ''}">
+      <div class="announce-title">${a.is_pinned ? '<span class="pin-badge">📌 </span>' : ''}${a.title}</div>
+      <div class="announce-body">${a.content.replace(/\n/g, '<br>')}</div>
+      <div class="announce-time">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadSchedules(teamId) {
+  const { data } = await sb.from('team_schedules').select('*').eq('team_id', teamId).gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(20);
+  const list = document.getElementById('scheduleList');
+
+  if (!data?.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>등록된 일정이 없어요</div>';
+    return;
+  }
+
+  list.innerHTML = data.map(s => {
+    const d = new Date(s.event_date);
+    const day = d.getDate();
+    const month = (d.getMonth() + 1) + '월';
+    const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="schedule-card">
+      <div class="schedule-date"><div class="schedule-day">${day}</div><div class="schedule-month">${month}</div></div>
+      <div class="schedule-info">
+        <div class="schedule-title">${s.title}</div>
+        <div class="schedule-desc">${time}${s.description ? ' · ' + s.description : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ ACTIONS (Leader only) ═══
+async function postAnnouncement() {
+  const title = document.getElementById('annTitle').value.trim();
+  const content = document.getElementById('annContent').value.trim();
+  const pinned = document.getElementById('annPin').checked;
+  if (!title || !content) { showToast('제목과 내용을 입력해주세요'); return; }
+
+  const { error } = await sb.from('announcements').insert({
+    team_id: myProfile.team_id,
+    author_id: myProfile.id,
+    title, content, is_pinned: pinned
+  });
+
+  if (error) { showToast('등록 실패: ' + error.message); return; }
+  document.getElementById('annTitle').value = '';
+  document.getElementById('annContent').value = '';
+  document.getElementById('annPin').checked = false;
+  showToast('공지가 등록되었습니다');
+  loadAnnouncements(myProfile.team_id);
+}
+
+async function postSchedule() {
+  const title = document.getElementById('schTitle').value.trim();
+  const date = document.getElementById('schDate').value;
+  const desc = document.getElementById('schDesc').value.trim();
+  if (!title || !date) { showToast('일정명과 날짜를 입력해주세요'); return; }
+
+  const { error } = await sb.from('team_schedules').insert({
+    team_id: myProfile.team_id,
+    author_id: myProfile.id,
+    title, event_date: new Date(date).toISOString(),
+    description: desc || null
+  });
+
+  if (error) { showToast('등록 실패: ' + error.message); return; }
+  document.getElementById('schTitle').value = '';
+  document.getElementById('schDate').value = '';
+  document.getElementById('schDesc').value = '';
+  showToast('일정이 등록되었습니다');
+  loadSchedules(myProfile.team_id);
+}
+
+function copyInviteCode() {
+  const code = document.getElementById('inviteCode').textContent;
+  if (code === '------') return;
+  const text = `AI 세일즈 시스템에 합류하세요!\n초대 코드: ${code}\n👉 app.wellstar.life/team/`;
+  if (navigator.share) {
+    navigator.share({ title: '팀 초대', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('초대 코드가 복사되었습니다'));
+  }
+}
+
+// ═══ INIT ═══
+async function init() {
+  DinoAuth.init();
+  DinoAuth.onAuthChange(async (user, profile) => {
+    if (user && profile && profile.team_id) {
+      sb = DinoAuth.getSupabase();
+      myProfile = profile;
+      isLeader = profile.role === 'leader' || profile.role === 'admin';
+
+      document.getElementById('loginGate').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      document.getElementById('bottomNav').style.display = 'flex';
+      loadDashboard();
+    } else if (user && profile && !profile.team_id) {
+      document.getElementById('loginGate').querySelector('.login-gate-title').textContent = '팀에 합류하세요';
+      document.getElementById('loginGate').querySelector('.login-gate-desc').innerHTML = '리더에게 초대 코드를 받아<br>팀에 합류하면 이용할 수 있어요';
+    }
+  });
+}
+init();
+</script>
+</body>
+</html>

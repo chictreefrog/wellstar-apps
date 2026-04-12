@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AI 콘텐츠 생성기 — AI 세일즈 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D1A;--card:rgba(18,18,42,0.9);--text:#F5F5F7;--text2:rgba(255,255,255,0.6);--text3:rgba(255,255,255,0.35);--accent:#FF6B35;--accent2:#FF8F65;--green:#30D158;--border:rgba(255,255,255,0.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,sans-serif;min-height:100vh}
+.app{max-width:420px;margin:0 auto;padding:20px;min-height:100vh}
+.header{text-align:center;margin-bottom:24px}
+.header-icon{font-size:40px;margin-bottom:8px}
+.header-title{font-size:22px;font-weight:900}
+.header-sub{font-size:13px;color:var(--text2);margin-top:4px}
+
+.section{margin-bottom:18px}
+.section-title{font-size:14px;font-weight:700;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:13px;cursor:pointer;transition:all .2s;color:var(--text2)}
+.chip.active{border-color:var(--accent);background:rgba(255,107,53,0.12);color:var(--accent);font-weight:600}
+
+.form-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:var(--text);font-size:14px;font-family:inherit;outline:none;margin-bottom:10px}
+.form-input:focus{border-color:var(--accent)}
+textarea.form-input{min-height:80px;resize:vertical}
+
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+.btn-primary:disabled{opacity:0.5}
+
+.result-card{display:none;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px}
+.result-label{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.result-text{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.result-tags{margin-top:10px;font-size:13px;color:var(--blue,#0A84FF)}
+.result-actions{display:flex;gap:8px;margin-top:12px}
+.result-action{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;text-align:center}
+.result-action:active{background:rgba(255,255,255,0.05)}
+
+.loading{display:none;text-align:center;padding:30px}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--text2)}
+
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(30,30,60,0.95);color:white;padding:10px 20px;border-radius:12px;font-size:13px;z-index:9999;display:none;backdrop-filter:blur(10px)}
+.credit{text-align:center;font-size:11px;color:var(--text3);margin-top:24px;padding-bottom:20px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-icon">✍️</div>
+    <div class="header-title">AI 콘텐츠 생성기</div>
+    <div class="header-sub">SNS 게시물을 AI가 자동으로 만들어줘요</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📱 채널 선택</div>
+    <div class="chips" id="channelChips">
+      <div class="chip active" data-v="instagram">인스타그램</div>
+      <div class="chip" data-v="blog">블로그</div>
+      <div class="chip" data-v="kakao">카카오스토리</div>
+      <div class="chip" data-v="facebook">페이스북</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📌 콘텐츠 유형</div>
+    <div class="chips" id="typeChips">
+      <div class="chip active" data-v="daily">일상/브이로그</div>
+      <div class="chip" data-v="review">제품 후기</div>
+      <div class="chip" data-v="tip">영업 팁</div>
+      <div class="chip" data-v="story">성공 스토리</div>
+      <div class="chip" data-v="motivation">동기부여</div>
+      <div class="chip" data-v="recruit">사업 소개</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">✏️ 키워드 / 주제 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택)</span></div>
+    <input class="form-input" id="keyword" placeholder="예: 아침 루틴, 첫 계약 성공, 건강보조식품 효과">
+  </div>
+
+  <div class="section">
+    <div class="section-title">🎭 톤</div>
+    <div class="chips" id="toneChips">
+      <div class="chip active" data-v="friendly">친근하게</div>
+      <div class="chip" data-v="professional">전문적으로</div>
+      <div class="chip" data-v="emotional">감성적으로</div>
+      <div class="chip" data-v="witty">재치있게</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="genBtn" onclick="generate()">콘텐츠 생성하기</button>
+
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">AI가 콘텐츠를 작성하고 있어요...</div>
+  </div>
+
+  <!-- Caption -->
+  <div class="result-card" id="captionCard">
+    <div class="result-label">📝 본문</div>
+    <div class="result-text" id="captionText"></div>
+    <div class="result-actions">
+      <button class="result-action" onclick="copy('captionText')">📋 복사</button>
+      <button class="result-action" onclick="generate()">🔄 다시</button>
+    </div>
+  </div>
+
+  <!-- Hashtags -->
+  <div class="result-card" id="hashCard">
+    <div class="result-label">🏷 해시태그</div>
+    <div class="result-text" id="hashText"></div>
+    <div class="result-actions">
+      <button class="result-action" onclick="copy('hashText')">📋 복사</button>
+    </div>
+  </div>
+
+  <!-- Hook -->
+  <div class="result-card" id="hookCard">
+    <div class="result-label">🪝 첫 줄 (후킹)</div>
+    <div class="result-text" id="hookText"></div>
+    <div class="result-actions">
+      <button class="result-action" onclick="copy('hookText')">📋 복사</button>
+    </div>
+  </div>
+
+  <div class="credit">by 옆집디노 · <a href="/main/" style="color:var(--accent);text-decoration:none">AI 세일즈 시스템</a></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+document.querySelectorAll('.chips').forEach(g => {
+  g.addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    g.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+});
+function sel(id) { return document.querySelector(`#${id} .chip.active`)?.dataset.v || ''; }
+
+const CONTENT_DB = {
+  daily: {
+    friendly: {
+      captions: [
+        '오늘도 아침 6시 기상! ☀️\n\n{keyword} 하면서 하루를 시작했어요.\n사실 처음엔 힘들었는데, 이제는 이 시간이 제일 좋아요.\n\n작은 루틴 하나가 하루를 바꾸더라고요.\n여러분의 아침 루틴은 뭐예요? 😊',
+        '오늘 하루도 감사한 일이 참 많았어요 💛\n\n{keyword}... 이런 소소한 것들이\n사실 가장 큰 행복이더라고요.\n\n여러분은 오늘 어떤 감사한 일이 있었나요?\n댓글로 나눠주세요! 😊',
+      ],
+      hooks: ['여러분, 오늘 하루 어떠셨어요?','이거 안 하면 하루가 시작이 안 돼요!','아침에 이것 하나 바꿨더니 인생이 달라졌어요'],
+    },
+    professional: {
+      captions: [
+        '성공하는 사람들의 공통점,\n바로 "아침 루틴"입니다.\n\n{keyword}을 통해\n하루의 생산성을 극대화하고 있습니다.\n\n실제로 루틴을 시작한 후\n목표 달성률이 40% 이상 올랐습니다.\n\n당신의 아침 루틴은 어떤가요?',
+        '일상에서 배우는 비즈니스 인사이트.\n\n{keyword} 경험을 통해\n고객과의 소통에 대해 다시 생각하게 됐습니다.\n\n작은 경험이 큰 깨달음을 줍니다.',
+      ],
+      hooks: ['상위 1% 영업인의 하루는 이렇게 다릅니다','이 루틴을 시작하고 매출이 2배가 됐습니다','성공한 사람들은 아침에 이것을 합니다'],
+    },
+    emotional: {
+      captions: [
+        '오늘 문득,\n이 길을 선택하길 잘했다는 생각이 들었어요.\n\n{keyword}...\n\n힘든 날도 있지만\n이런 순간들이 있어서 계속 갈 수 있어요.\n\n같은 마음인 분 있나요? 💛',
+        '처음 시작할 때는\n이렇게 될 줄 몰랐어요.\n\n{keyword}하면서\n조금씩, 천천히 성장하고 있다는 걸 느껴요.\n\n완벽하지 않아도 괜찮아요.\n우리 모두 과정 중이니까요 🌱',
+      ],
+      hooks: ['이 일을 시작하고 가장 많이 들은 말이 있어요','어제의 나에게 해주고 싶은 말','울고 싶었던 그 날, 일어난 일'],
+    },
+    witty: {
+      captions: [
+        '아침 6시 알람: 일어나!\n나: 5분만...\n알람: 안 돼!\n나: (일어남)\n\n이게 바로 {keyword}의 힘이죠 ㅋㅋ\n\n여러분도 이런 거 있지 않나요? 😂',
+        '오늘의 TMI 🤭\n\n{keyword} 했는데\n예상과 완전 다른 결과가...ㅋㅋ\n\n실패도 콘텐츠가 되는 인생 😂\n공감되시는 분 좋아요!',
+      ],
+      hooks: ['ㅋㅋㅋ 이거 저만 그런 건가요?','오늘의 TMI인데... 들어보실래요?','나만 이런 줄 알았는데 다들 그렇대요 ㅋㅋ'],
+    }
+  },
+  review: {
+    friendly: {
+      captions: [
+        '솔직 후기 남겨볼게요! 😊\n\n{keyword} 써본 지 한 달이 됐는데요,\n결론부터 말하면... 진짜 좋아요!\n\n특히 좋았던 점:\n✅ 효과가 빠르게 느껴짐\n✅ 사용법이 간단함\n✅ 가성비가 좋음\n\n궁금한 점 있으시면 DM 주세요! 💬',
+        '{keyword} 리얼 후기! 🙌\n\n사실 처음엔 반신반의했는데...\n직접 써보니까 확실히 달라요!\n\n주변에서도 "뭐 바뀌었어?" 하고 물어볼 정도 ㅎㅎ\n\n자세한 건 프로필 링크 확인해주세요 😊',
+      ],
+      hooks: ['이거 진짜 써보고 깜짝 놀랐어요!','한 달 써봤습니다. 솔직 후기 공개!','주변에서 자꾸 물어봐요. 뭐 쓰냐고 ㅋㅋ'],
+    },
+    professional: {
+      captions: [
+        '{keyword} 30일 사용 리뷰\n\n▪️ 효과: ★★★★☆\n▪️ 사용감: ★★★★★\n▪️ 가성비: ★★★★☆\n\n실제 사용 데이터를 기반으로\n객관적으로 평가해보았습니다.\n\n상세 리뷰가 궁금하시면\n프로필 링크를 확인해주세요.',
+        '{keyword}에 대한 전문적 분석입니다.\n\n성분, 효과, 사용법을 꼼꼼히 비교해봤습니다.\n\n결론적으로 추천 대상은:\n✓ 바쁜 직장인\n✓ 효율을 중시하는 분\n✓ 검증된 제품을 원하는 분\n\n자세한 내용은 DM으로 문의해주세요.',
+      ],
+      hooks: ['30일 테스트 결과를 공개합니다','데이터로 증명하는 효과','전문가가 분석한 솔직 리뷰'],
+    },
+    emotional: {
+      captions: [
+        '이 제품 덕분에 자신감이 생겼어요 💛\n\n{keyword}를 시작하고 나서\n거울을 보는 게 즐거워졌어요.\n\n작은 변화가 큰 행복을 가져다줬어요.\n여러분에게도 그런 변화가 찾아오길 바라요 🙏',
+        '진심으로 추천하고 싶어서 글을 써요.\n\n{keyword}... 처음엔 기대 안 했는데\n정말 감사한 존재가 됐어요.\n\n같은 고민을 하고 계신 분이 있다면\n꼭 한번 경험해보세요 💛',
+      ],
+      hooks: ['이걸 만나고 인생이 달라졌어요','진심을 담아 추천합니다','나를 바꿔준 그것'],
+    },
+    witty: {
+      captions: [
+        '{keyword} 안 쓴 과거의 나에게\n한마디 해주고 싶다.\n\n"야, 빨리 써. 시간 낭비하지 말고!" ㅋㅋ\n\n진짜 써보면 아는 그 느낌 있잖아요 😂\n공감되시는 분?!',
+        '남편/와이프가 물었다.\n"이거 또 뭐야?"\n\n나: {keyword}인데... 이건 진짜야!\n\n결과:\n1주 후 → 남편/와이프도 쓰는 중 ㅋㅋㅋ',
+      ],
+      hooks: ['과거의 나에게 한마디','이거 안 쓰면 손해인 거 다들 알죠?','가족도 뺏어 쓰는 그것 ㅋㅋ'],
+    }
+  },
+  tip: {
+    friendly: {
+      captions: [
+        '영업 꿀팁 공유해요! 💡\n\n{keyword}\n\n이것만 알면 거절이 두렵지 않아요.\n\n핵심은 3가지:\n1️⃣ 질문으로 시작하기\n2️⃣ 공감 먼저, 설명은 나중에\n3️⃣ 결정은 상대방에게 맡기기\n\n저장해두고 써보세요! 😊',
+        '{keyword} 노하우 공개! 🔥\n\n이 방법으로 한 달 만에\n미팅 성사율을 2배로 올렸어요.\n\n비결은 간단해요:\n"팔지 말고, 도와주세요"\n\n자세한 방법은 저장해두고 천천히 읽어보세요!',
+      ],
+      hooks: ['이 한마디로 거절이 수락으로 바뀌었어요','영업 10년차가 알려주는 꿀팁','이것만 기억하면 영업이 쉬워져요'],
+    },
+    professional: {
+      captions: [
+        '[ 영업 성과를 높이는 {keyword} ]\n\n1. 고객의 니즈를 먼저 파악하라\n2. 솔루션을 제시하되, 강요하지 마라\n3. 팔로업의 타이밍이 핵심이다\n4. 데이터를 기반으로 접근하라\n5. 꾸준함이 실력을 만든다\n\n이 5가지 원칙을 적용하면\n확실한 차이를 체감하실 수 있습니다.',
+        '[ {keyword} 전략 가이드 ]\n\n성공적인 영업의 공식:\n\n리드 발굴 → 관계 구축 → 니즈 파악\n→ 솔루션 제안 → 팔로업 → 클로징\n\n각 단계별 핵심 포인트를\n프로필 링크에 정리해두었습니다.',
+      ],
+      hooks: ['상위 5% 영업인의 차이점','데이터가 증명하는 성공 공식','이 원칙을 모르면 영업이 어려워집니다'],
+    },
+    emotional: {
+      captions: [
+        '처음 영업을 시작했을 때\n100번 거절당했어요.\n\n그때 배운 {keyword}\n\n거절은 실패가 아니라\n성장의 기회라는 걸 알게 됐어요.\n\n지금 힘든 분이 있다면\n이 글이 힘이 되었으면 좋겠어요 💛',
+        '3년 전의 나에게 해주고 싶은 말.\n\n"{keyword}"\n\n그때는 몰랐지만\n지금 돌아보면 모든 게 배움이었어요.\n\n포기하지 마세요.\n당신이 생각하는 것보다 훨씬 가까이 와 있어요 🌟',
+      ],
+      hooks: ['100번 거절당하고 깨달은 것','3년 전의 나에게','힘들 때 꼭 기억해야 할 한 가지'],
+    },
+    witty: {
+      captions: [
+        '영업의 진실 ㅋㅋ\n\n기대: "이 제품 정말 좋아요!"\n현실: "아... 네... 생각해볼게요"\n\n{keyword} 알고 나니까\n"생각해볼게요"가 "YES"로 바뀌더라고요 😂\n\n비결 궁금하시면 저장!',
+        '영업 초보 vs 영업 고수\n\n초보: {keyword} 어떻게 해요? 😰\n고수: 그거 쉽지~ 이렇게 하면 돼!\n초보: (해봄)\n고수: 아 그게 아니라...\n\nㅋㅋㅋ 공감되시죠? 😂',
+      ],
+      hooks: ['영업인만 아는 이 상황 ㅋㅋ','초보 때 이거 알았으면 ㅠㅠ','영업의 이상과 현실 ㅋㅋㅋ'],
+    }
+  },
+  story: {
+    friendly: {
+      captions: [
+        '제 이야기를 해볼게요 😊\n\n1년 전, {keyword}\n그때는 정말 막막했어요.\n\n하지만 포기하지 않고 매일 조금씩...\n그 결과 지금은 상상도 못한 곳에 와 있어요.\n\n여러분도 할 수 있어요! 💪',
+        '성공 후기 공유! 🎉\n\n{keyword}부터 시작해서\n이제는 팀까지 이끌게 됐어요.\n\n비결은 단 하나:\n"매일 조금씩, 포기하지 않기"\n\n함께 성장할 분 DM 주세요! 🙌',
+      ],
+      hooks: ['1년 전에는 상상도 못한 일이 일어났어요','포기하려던 그 날, 일어난 일','평범한 제가 어떻게 여기까지 왔는지'],
+    },
+    professional: {
+      captions: [
+        '[ 성공 케이스 스터디 ]\n\n{keyword}\n\n초기 3개월: 기반 구축\n6개월: 첫 성과 달성\n12개월: 팀 규모 10명 달성\n\n핵심 성공 요인:\n1. 일관된 활동량 유지\n2. 시스템 기반 접근\n3. 팀원 육성에 투자\n\n자세한 전략은 프로필을 확인해주세요.',
+        '[ {keyword} — 실전 보고서 ]\n\n목표: 월 수입 500만원\n기간: 8개월\n결과: 목표 달성 + 팀 15명 구축\n\n전략적 접근과 꾸준한 실행이\n결과를 만들어냈습니다.',
+      ],
+      hooks: ['0원에서 월 500만원까지의 로드맵','12개월 성장 기록 공개','실제 수치로 증명하는 성공 전략'],
+    },
+    emotional: {
+      captions: [
+        '정말 힘들었던 그 시기.\n\n{keyword}...\n주변에서 다 말렸어요.\n"그만둬" "안 될 거야"\n\n근데 지금, 그때의 나에게\n이렇게 말해주고 싶어요.\n\n"잘 버텨줘서 고마워" 💛\n\n같은 길 걷고 있는 분,\n혼자가 아니에요 🤝',
+        '눈물이 났어요.\n\n{keyword}를 시작하고\n첫 번째 성과를 냈을 때.\n\n금액이 커서가 아니라\n"나도 할 수 있구나"라는 감정 때문에.\n\n이 감정을 더 많은 분과 나누고 싶어요 💛',
+      ],
+      hooks: ['그때 포기했다면 이 순간은 없었을 거예요','눈물이 났어요. 이유가...','혼자라고 느낄 때 읽어주세요'],
+    },
+    witty: {
+      captions: [
+        '나의 성공 스토리 (약간 과장 포함 ㅋㅋ)\n\n{keyword} 시작\n→ 1개월: "이거 맞아?" 🤔\n→ 3개월: "아 됐다!" 😤\n→ 6개월: "어...되네?!" 😮\n→ 12개월: "이게 되네!!!" 🤩\n\n결론: 포기만 안 하면 됨 ㅋㅋ',
+        '친구: 너 요즘 뭐해?\n나: {keyword}\n친구: 그거 되냐?\n\n(1년 후)\n\n친구: 나도 하고 싶은데...\n나: 😏\n\nㅋㅋㅋ 이 전개 공감되시는 분?',
+      ],
+      hooks: ['이 전개 공감되시는 분 ㅋㅋ','나의 성공 스토리 (TMI 주의)','1년 전에 나를 말렸던 친구의 반응 ㅋㅋ'],
+    }
+  },
+  motivation: {
+    friendly: {
+      captions: [
+        '오늘 힘드셨나요? 😊\n\n{keyword}\n\n완벽하지 않아도 괜찮아요.\n오늘 하루를 버텨낸 것만으로도\n충분히 대단한 거예요.\n\n내일은 오늘보다 더 좋은 날이 될 거예요!\n함께 힘내요 💪',
+        '한 걸음만 더! 🔥\n\n{keyword}\n\n성공은 거창한 게 아니에요.\n매일 조금씩 나아가는 것.\n그게 진짜 성공이에요.\n\n오늘도 한 걸음 내딛은 당신,\n정말 멋져요! 👏',
+      ],
+      hooks: ['오늘도 고생 많으셨어요 💛','이것 하나만 기억하세요','포기하고 싶을 때 읽어보세요'],
+    },
+    professional: {
+      captions: [
+        '[ 성공 마인드셋 ]\n\n{keyword}\n\n성공하는 사람과 그렇지 않은 사람의 차이는\n능력이 아닌 "지속성"에 있습니다.\n\n매일 1%씩 성장하면\n1년 후 37배가 됩니다.\n\n오늘의 작은 노력이 내일의 큰 결과를 만듭니다.',
+        '성공의 조건 3가지:\n\n1. {keyword}\n2. 일관된 실행\n3. 실패에서 배우는 자세\n\n이 세 가지를 갖추면\n결과는 시간 문제입니다.\n\n지금 시작하세요.',
+      ],
+      hooks: ['성공하는 사람의 3가지 공통점','매일 1%의 법칙','상위 1%의 마인드셋'],
+    },
+    emotional: {
+      captions: [
+        '힘든 날이 있다면\n이 글을 저장해두세요.\n\n{keyword}\n\n당신은 생각보다 강하고\n당신은 생각보다 가까이 와 있어요.\n\n오늘이 가장 힘든 날이라면\n내일은 반드시 더 나은 날이에요 💛\n\n포기하지 마세요 🌟',
+        '누군가에게 말하고 싶어요.\n\n{keyword}\n\n당신의 노력을 알아요.\n보이지 않는 곳에서 묵묵히 애쓰고 있다는 거.\n\n괜찮아요. 잘 하고 있어요.\n그 길의 끝에 당신이 원하는 게 있어요 💛',
+      ],
+      hooks: ['이 글이 필요한 사람이 있을 거예요','지금 힘든 당신에게','당신의 노력을 알아요'],
+    },
+    witty: {
+      captions: [
+        '월요일 아침 마음가짐:\n\n❌ "또 월요일이네..."\n✅ "{keyword}!"\n\n마인드 하나 바꿨더니\n진짜 인생이 바뀌었어요 ㅋㅋ\n\n(약간의 과장 포함 😂)\n\n그래도 진짜 효과 있으니까\n한번 해보세요!',
+        '성공 비결을 알려드릴게요.\n\n1. 일찍 일어난다\n2. 계획을 세운다\n3. {keyword}\n4. 포기하지 않는다\n5. 이 게시물에 좋아요 누른다\n\n5번이 제일 중요합니다 😂\n\n(진지)\n사실 3번이 핵심이에요 ㅋㅋ',
+      ],
+      hooks: ['성공 비결 5번째가 핵심입니다 ㅋㅋ','월요일병 치료제 발견','이거 하나로 인생 바뀜 (약간 과장)'],
+    }
+  },
+  recruit: {
+    friendly: {
+      captions: [
+        '이런 분을 찾고 있어요! 🙌\n\n{keyword}\n\n✅ 현재에 만족하지 않는 분\n✅ 새로운 도전을 원하는 분\n✅ 함께 성장하고 싶은 분\n\nAI가 도와주는 시대,\n혼자가 아닌 팀으로 성장할 수 있어요.\n\n관심 있으시면 편하게 DM 주세요! 😊\n부담은 절대 없어요!',
+        '요즘 제가 하는 일 소개할게요! 😊\n\n{keyword}\n\n처음엔 저도 고민 많았는데\nAI 도구의 도움으로 생각보다 쉽게 시작했어요.\n\n같이 해보고 싶으신 분\n프로필 링크 확인해주세요! 🔗',
+      ],
+      hooks: ['이런 분을 찾고 있어요!','요즘 제가 하는 일, 궁금하시죠?','AI 시대에 돈 버는 방법'],
+    },
+    professional: {
+      captions: [
+        '[ 파트너 모집 ]\n\n{keyword}\n\n제공되는 것:\n▪️ AI 기반 영업 지원 시스템\n▪️ 체계적인 교육 프로그램\n▪️ 1:1 맞춤 코칭\n▪️ 팀 단위 성장 지원\n\n관심 있는 분은 DM으로 문의해주세요.\n상세한 사업 설명을 드리겠습니다.',
+        '[ 비즈니스 파트너 모집 안내 ]\n\n{keyword}\n\n자격요건:\n✓ 성장 의지가 있는 분\n✓ 주 10시간 이상 투자 가능한 분\n✓ 팀워크를 중시하는 분\n\n지원방법: DM 또는 프로필 링크',
+      ],
+      hooks: ['함께 성장할 파트너를 찾습니다','AI가 바꾸는 영업의 미래','이 시스템으로 시작하면 다릅니다'],
+    },
+    emotional: {
+      captions: [
+        '1년 전,\n저도 여러분과 같은 자리에 있었어요.\n\n{keyword}\n\n불안했고, 두려웠어요.\n하지만 한 걸음을 내딛었고\n지금은 감사한 매일을 살고 있어요.\n\n그 한 걸음을 함께 내딛어보시겠어요?\n\n저와 함께라면 외롭지 않을 거예요 💛',
+        '혼자서는 힘들어도\n함께라면 할 수 있어요.\n\n{keyword}\n\nAI가 도와주고, 팀이 함께하는\n새로운 방식의 비즈니스.\n\n관심 있으시면\n용기 내어 연락 주세요 💛',
+      ],
+      hooks: ['1년 전의 저에게 말해주고 싶어요','혼자가 아닌 함께의 힘','용기 내어 한 걸음'],
+    },
+    witty: {
+      captions: [
+        '현실:\n월급 빼면 통장 잔고 → 🥲\n퇴근 후 시간 → 넷플릭스\n미래 계획 → "언젠간..."\n\n이거 바꾸고 싶으시면\n{keyword} 같이 해봐요! ㅋㅋ\n\n(진짜 쉽게 시작할 수 있어요)\nDM 주세요! 😊',
+        '직장생활 10년:\n연봉 200만원 올랐다 (세전) ㅋㅋ\n\n부업 시작 후:\n{keyword}\n\n가능하냐고요?\nAI가 도와주는 시대에요 😎\n\n궁금하시면 DM!',
+      ],
+      hooks: ['통장 잔고 보고 결심했습니다 ㅋㅋ','이거 안 하면 손해인 이유','직장생활 10년 vs 이것 1년'],
+    }
+  }
+};
+
+const HASHTAGS = {
+  instagram: {
+    daily: '#일상 #데일리 #루틴 #아침루틴 #성장 #자기개발 #습관 #긍정 #감사일기 #하루기록',
+    review: '#솔직후기 #리뷰 #추천 #꿀템 #사용후기 #리얼후기 #인생템 #효과좋은 #강추 #생활꿀팁',
+    tip: '#영업팁 #세일즈 #비즈니스 #성공전략 #영업노하우 #사업 #수입 #부업 #자기계발 #성공',
+    story: '#성공스토리 #도전 #성장기록 #네트워크마케팅 #사업성공 #인생역전 #도전기 #나의이야기',
+    motivation: '#동기부여 #자기계발 #긍정 #힘내 #포기하지마 #성공마인드 #명언 #오늘의한마디 #마인드셋',
+    recruit: '#파트너모집 #사업파트너 #함께성장 #AI영업 #부업추천 #투잡 #재택부업 #N잡러 #비즈니스기회'
+  },
+  blog: {
+    daily: '#일상기록 #오늘의일기 #브이로그 #성장일기 #루틴공유',
+    review: '#제품리뷰 #솔직후기 #사용기 #추천제품 #비교분석',
+    tip: '#영업팁공유 #세일즈전략 #비즈니스노하우 #실전영업 #성공비결',
+    story: '#성공스토리 #나의도전 #성장기록 #사업이야기 #경험공유',
+    motivation: '#동기부여글 #명언모음 #자기개발 #성공마인드 #오늘의명언',
+    recruit: '#사업파트너 #비즈니스기회 #함께성장 #팀모집 #파트너십'
+  },
+  kakao: { daily:'#일상 #오늘',review:'#후기 #추천',tip:'#팁 #노하우',story:'#성공 #도전',motivation:'#힘내 #응원',recruit:'#파트너 #함께' },
+  facebook: { daily:'#일상 #데일리그램',review:'#솔직후기 #리뷰',tip:'#영업팁 #노하우',story:'#성공스토리 #도전',motivation:'#동기부여 #응원',recruit:'#파트너모집 #기회' }
+};
+
+function generate() {
+  const channel = sel('channelChips');
+  const type = sel('typeChips');
+  const tone = sel('toneChips');
+  const keyword = document.getElementById('keyword').value.trim() || '나의 도전';
+
+  const db = CONTENT_DB[type]?.[tone];
+  if (!db) { showToast('준비 중인 조합이에요'); return; }
+
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.querySelectorAll('.result-card').forEach(c => c.style.display = 'none');
+
+  setTimeout(() => {
+    const idx = Math.floor(Math.random() * db.captions.length);
+    const caption = db.captions[idx].replace(/\{keyword\}/g, keyword);
+    const hook = db.hooks[Math.floor(Math.random() * db.hooks.length)];
+    const tags = HASHTAGS[channel]?.[type] || '';
+
+    document.getElementById('captionText').textContent = caption;
+    document.getElementById('hashText').textContent = tags;
+    document.getElementById('hookText').textContent = hook;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('captionCard').style.display = 'block';
+    document.getElementById('hashCard').style.display = 'block';
+    document.getElementById('hookCard').style.display = 'block';
+    document.getElementById('genBtn').disabled = false;
+
+    document.getElementById('captionCard').scrollIntoView({ behavior: 'smooth' });
+  }, 1200);
+}
+
+function copy(id) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent)
+    .then(() => showToast('복사되었어요 📋'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+</script>
+</body>
+</html>

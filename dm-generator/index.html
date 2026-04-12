@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D0D1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>DM 메시지 생성기 — AI 세일즈 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0D1A;--card:rgba(18,18,42,0.9);--text:#F5F5F7;--text2:rgba(255,255,255,0.6);--text3:rgba(255,255,255,0.35);--accent:#FF6B35;--accent2:#FF8F65;--green:#30D158;--border:rgba(255,255,255,0.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,sans-serif;min-height:100vh}
+.app{max-width:420px;margin:0 auto;padding:20px;min-height:100vh}
+.header{text-align:center;margin-bottom:24px}
+.header-icon{font-size:40px;margin-bottom:8px}
+.header-title{font-size:22px;font-weight:900}
+.header-sub{font-size:13px;color:var(--text2);margin-top:4px}
+
+.section{margin-bottom:20px}
+.section-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:13px;cursor:pointer;transition:all .2s;color:var(--text2)}
+.chip.active{border-color:var(--accent);background:rgba(255,107,53,0.12);color:var(--accent);font-weight:600}
+
+/* Form */
+.form-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.05);color:var(--text);font-size:14px;font-family:inherit;outline:none;margin-bottom:10px}
+.form-input:focus{border-color:var(--accent)}
+textarea.form-input{min-height:70px;resize:vertical}
+.form-hint{font-size:11px;color:var(--text3);margin-top:-6px;margin-bottom:10px}
+
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);margin-top:8px}
+
+/* Result */
+.result-box{display:none;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.result-label{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:8px}
+.result-text{font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.result-actions{display:flex;gap:8px;margin-top:14px}
+.result-action{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;text-align:center}
+.result-action:active{background:rgba(255,255,255,0.05)}
+
+/* Templates */
+.template-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.template-card:active{transform:scale(0.98)}
+.template-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.template-preview{font-size:12px;color:var(--text3);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,30,60,0.95);color:white;padding:10px 20px;border-radius:12px;font-size:13px;z-index:9999;display:none;backdrop-filter:blur(10px)}
+
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:12px;padding:3px;margin-bottom:20px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);transition:all .2s}
+.tab.active{background:var(--accent);color:white}
+
+.credit{text-align:center;font-size:11px;color:var(--text3);margin-top:24px;padding-bottom:20px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-icon">💬</div>
+    <div class="header-title">DM 메시지 생성기</div>
+    <div class="header-sub">상황에 맞는 완벽한 메시지를 AI가 만들어줘요</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchMode('ai')">AI 생성</div>
+    <div class="tab" onclick="switchMode('templates')">템플릿</div>
+  </div>
+
+  <!-- AI Generation Mode -->
+  <div id="modeAI">
+    <div class="section">
+      <div class="section-title">📌 메시지 목적</div>
+      <div class="chips" id="purposeChips">
+        <div class="chip active" data-v="first-contact">첫 연락</div>
+        <div class="chip" data-v="followup">팔로업</div>
+        <div class="chip" data-v="invitation">사업 초대</div>
+        <div class="chip" data-v="product">제품 소개</div>
+        <div class="chip" data-v="recontact">재연락</div>
+        <div class="chip" data-v="congrats">축하/안부</div>
+        <div class="chip" data-v="objection">반론 대응</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🎭 톤 & 스타일</div>
+      <div class="chips" id="toneChips">
+        <div class="chip active" data-v="casual">친근하게</div>
+        <div class="chip" data-v="professional">전문적으로</div>
+        <div class="chip" data-v="warm">따뜻하게</div>
+        <div class="chip" data-v="energetic">에너지 넘치게</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📝 상황 설명 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택)</span></div>
+      <textarea class="form-input" id="context" placeholder="예: 인스타에서 알게 된 30대 여성, 육아맘, 건강에 관심 많음"></textarea>
+      <div class="form-hint">상대방 정보를 넣으면 더 맞춤형 메시지가 생성돼요</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📱 채널</div>
+      <div class="chips" id="channelChips">
+        <div class="chip active" data-v="kakao">카카오톡</div>
+        <div class="chip" data-v="instagram">인스타 DM</div>
+        <div class="chip" data-v="sms">문자</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="generateBtn" onclick="generateMessage()">메시지 생성하기</button>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-label">생성된 메시지</div>
+      <div class="result-text" id="resultText"></div>
+      <div class="result-actions">
+        <button class="result-action" onclick="copyResult()">📋 복사</button>
+        <button class="result-action" onclick="regenerate()">🔄 다시 생성</button>
+      </div>
+    </div>
+
+    <div class="result-box" id="altBox" style="display:none">
+      <div class="result-label">대안 메시지</div>
+      <div class="result-text" id="altText"></div>
+      <div class="result-actions">
+        <button class="result-action" onclick="copyAlt()">📋 복사</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Mode -->
+  <div id="modeTemplates" style="display:none">
+    <div class="section">
+      <div class="section-title">📋 바로 쓸 수 있는 템플릿</div>
+      <div id="templateList"></div>
+    </div>
+  </div>
+
+  <div class="credit">by 옆집디노 · <a href="/main/" style="color:var(--accent);text-decoration:none">AI 세일즈 시스템</a></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ CHIP SELECTION ═══
+document.querySelectorAll('.chips').forEach(group => {
+  group.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+function getSelected(containerId) {
+  return document.querySelector(`#${containerId} .chip.active`)?.dataset.v || '';
+}
+
+// ═══ TABS ═══
+function switchMode(mode) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('modeAI').style.display = mode === 'ai' ? 'block' : 'none';
+  document.getElementById('modeTemplates').style.display = mode === 'templates' ? 'block' : 'none';
+  if (mode === 'templates') renderTemplates();
+}
+
+// ═══ TEMPLATES ═══
+const TEMPLATES = [
+  {name:'첫 인사 (인스타)',purpose:'first-contact',msg:'안녕하세요 😊 게시물 보고 너무 공감돼서 메시지 드려요! 저도 비슷한 관심사가 있어서 혹시 이야기 나눌 수 있을까 해서요. 편하실 때 답 주시면 좋겠어요!'},
+  {name:'팔로업 (3일 후)',purpose:'followup',msg:'안녕하세요! 지난번 이야기 나눠서 즐거웠어요 😄 혹시 그 후로 더 궁금한 점 있으셨나요? 편하게 물어봐 주세요!'},
+  {name:'사업 초대 (조심스럽게)',purpose:'invitation',msg:'최근에 제가 시작한 일이 있는데, 혹시 관심 있으시면 간단히 설명드릴 수 있어요. 부담 없이 들어보시고 판단하셔도 돼요 😊 시간 괜찮으시면 커피 한잔 어떠세요?'},
+  {name:'제품 추천 (자연스럽게)',purpose:'product',msg:'요즘 제가 써보고 있는 건데 진짜 좋더라고요! 혹시 관심 있으시면 제가 쓰고 있는 후기 공유해드릴까요? 무리하게 권하는 건 아니에요 ㅎㅎ'},
+  {name:'재연락 (오래된 지인)',purpose:'recontact',msg:'오랜만이에요! 요즘 어떻게 지내세요? 😊 SNS 보니까 잘 지내시는 것 같아서 반가워서 연락드려요. 언제 시간 되시면 밥 한번 먹어요!'},
+  {name:'축하 메시지',purpose:'congrats',msg:'와~ 축하드려요! 🎉 정말 대단하세요. 좋은 소식 보면서 저도 덩달아 기분이 좋아졌어요. 앞으로도 좋은 일만 가득하시길 바랄게요!'},
+  {name:'거절 후 우아한 대응',purpose:'objection',msg:'네, 충분히 이해해요 😊 전혀 부담 갖지 마세요. 혹시 나중에라도 궁금한 점 있으시면 언제든 편하게 연락 주세요. 좋은 하루 보내세요!'},
+  {name:'팔로업 (관심 표현한 사람)',purpose:'followup',msg:'안녕하세요! 지난번에 관심 보여주셔서 감사해요 😊 혹시 더 자세히 알아보고 싶으시면 간단한 자료 보내드릴까요? 편하실 때 말씀해주세요!'},
+];
+
+function renderTemplates() {
+  document.getElementById('templateList').innerHTML = TEMPLATES.map((t, i) => `
+    <div class="template-card" onclick="useTemplate(${i})">
+      <div class="template-name">${t.name}</div>
+      <div class="template-preview">${t.msg}</div>
+    </div>
+  `).join('');
+}
+
+function useTemplate(idx) {
+  const t = TEMPLATES[idx];
+  document.getElementById('resultText').textContent = t.msg;
+  document.getElementById('resultBox').style.display = 'block';
+  document.getElementById('altBox').style.display = 'none';
+  switchMode('ai');
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  showToast('템플릿이 적용되었어요');
+}
+
+// ═══ AI GENERATION ═══
+const MSG_DB = {
+  'first-contact': {
+    casual: [
+      '안녕하세요! 😊 프로필 보고 공감되는 부분이 많아서 인사드려요. {context}에 관심 있으시다니 저도 반가워요! 편하실 때 이야기 나눠요~',
+      '안녕하세요~ 혹시 {context} 관련해서 좋은 정보 있으면 서로 나눠볼까요? 😄 부담 없이 답 주세요!'
+    ],
+    professional: [
+      '안녕하세요, 반갑습니다. {context} 분야에서 활동하고 계신 걸 보고 연락드렸습니다. 서로 시너지가 될 수 있을 것 같아 인사드려요.',
+      '안녕하세요. {context}에 관심을 갖고 계신 걸 알게 되어 연락드립니다. 관련하여 좋은 정보를 공유드릴 수 있을 것 같습니다.'
+    ],
+    warm: [
+      '안녕하세요 💛 게시물 보면서 공감이 많이 됐어요. {context}에 대한 이야기, 혹시 나눠보실 수 있을까요? 편하게 답 주셔도 돼요 😊',
+      '반가워요! 😊 {context}에 관심 있으신 거 보고 저도 같은 마음이라 인사드려요. 언제든 편하게 이야기 나눠요~'
+    ],
+    energetic: [
+      '안녕하세요! ✨ {context}에 관심 있으시다구요?! 저도요!! 꼭 이야기 나눠보고 싶어요! 시간 되실 때 답 주세요 🔥',
+      '와! {context} 정말 좋죠! 저도 엄청 관심 있어요! 😆 혹시 같이 이야기 나눠볼 수 있을까요?'
+    ]
+  },
+  'followup': {
+    casual: ['지난번 이야기 즐거웠어요 😊 그 후로 어떠세요? 궁금한 거 있으시면 편하게 물어봐 주세요~','안녕하세요! 지난번에 말씀드린 부분, 혹시 더 생각해보셨나요? 천천히 결정하셔도 돼요 😄'],
+    professional: ['안녕하세요, 지난 미팅 이후 추가로 궁금하신 사항이 있으시면 말씀해 주세요. 상세한 자료를 준비해두었습니다.','지난번 공유드린 내용 관련하여 연락드립니다. 검토해보셨는지 여쭤봐도 될까요?'],
+    warm: ['안녕하세요 💛 지난번 이야기 후에 혹시 더 궁금한 점 있으셨나요? 편하게 말씀해주시면 정성껏 답해드릴게요 😊','요즘 어떻게 지내세요? 지난번 이야기가 도움이 되셨으면 좋겠어요 💛'],
+    energetic: ['안녕하세요! 그때 이야기 진짜 좋았잖아요! 🔥 더 궁금한 거 있으시면 바로 답해드릴게요!','지난번 내용 어떠셨어요?! 더 알고 싶으시면 바로 알려드릴게요! ✨']
+  },
+  'invitation': {
+    casual: ['요즘 제가 시작한 일이 있는데 꽤 재밌어요 😊 부담 없이 한번 들어보실래요? 커피 한잔하면서~','제가 요즘 하고 있는 거 한번 보여드리고 싶어요! 관심 없으시면 괜찮고, 가볍게 들어만 보세요 ㅎㅎ'],
+    professional: ['현재 진행 중인 프로젝트가 있는데, 함께 성장할 파트너를 찾고 있습니다. 시간 괜찮으시면 설명드릴 기회를 주시겠어요?','좋은 비즈니스 기회가 있어 공유드리고 싶습니다. 편하신 시간에 30분만 시간 내주시면 상세히 설명드리겠습니다.'],
+    warm: ['제가 정말 좋은 걸 알게 됐는데, 혹시 같이 해보시겠어요? 💛 부담 없이 들어보시고 결정하셔도 돼요 😊','요즘 저 완전 행복하게 일하고 있거든요 💛 혹시 관심 있으시면 이야기 나눠볼까요?'],
+    energetic: ['이거 진짜 대박이에요! 🔥 같이 하면 진짜 좋을 것 같은데! 한번만 들어보세요!','저 요즘 엄청 신나요! ✨ 이유가 궁금하시면 카페에서 만나요! 인생이 바뀔 수도 있어요!']
+  },
+  'product': {
+    casual: ['이거 써봤는데 진짜 좋더라고요 😊 {context} 관심 있으시면 후기 공유해드릴까요?','요즘 이거 쓰면서 완전 만족 중이에요! 혹시 {context} 고민이시면 추천드려요 ㅎㅎ'],
+    professional: ['{context} 관련 제품을 소개드리고 싶습니다. 효과와 성분에 대해 상세한 자료가 준비되어 있습니다.','안녕하세요, {context}에 도움이 되는 제품이 있어 추천드립니다. 관심 있으시면 상세 정보 보내드리겠습니다.'],
+    warm: ['제가 직접 써보고 너무 좋아서 알려드리고 싶었어요 💛 {context} 고민이시라면 꼭 한번 써보세요!','이거 정말 좋은 거예요 😊 {context}에 관심 있으시다면 추천드리고 싶어요 💛'],
+    energetic: ['이거 진짜 써보세요! {context}에 완전 효과적이에요! 🔥 후기 보여드릴까요?!','대박! 이 제품 진짜 좋아요! ✨ {context} 고민 해결돼요!']
+  },
+  'recontact': {
+    casual: ['오랜만이에요! 😊 요즘 잘 지내세요? SNS 보니까 좋아 보여서 반가워서 연락했어요~','안녕하세요~ 오래 연락 못 드렸네요 ㅎㅎ 요즘 어떻게 지내세요? 밥 한번 먹어요!'],
+    professional: ['오랜만에 인사드립니다. 근황이 궁금하여 연락드렸습니다. 시간 되실 때 커피 한잔 어떠신가요?','안녕하세요, 오랫동안 연락을 못 드렸습니다. 근황 공유겸 한번 뵐 수 있을까요?'],
+    warm: ['오랜만이에요 💛 생각나서 연락드렸어요. 요즘 어떻게 지내세요? 만나고 싶네요 😊','안녕하세요! 문득 생각나서요 💛 건강하게 잘 지내고 계시죠? 언제 시간 되면 만나요~'],
+    energetic: ['오랜만이에요! 보고 싶었어요! 😆 요즘 뭐하고 지내세요?! 꼭 만나요!','헐 오랜만! 😆 요즘 어떻게 지내?! 할 말도 많고 보고 싶으니까 꼭 밥 먹자!']
+  },
+  'congrats': {
+    casual: ['와~ 축하해요! 🎉 대단하세요! 좋은 소식 듣니까 저도 기분 좋아지네요 ㅎㅎ','축하드려요! 😊 항상 응원하고 있어요! 앞으로도 좋은 일만 가득하시길!'],
+    professional: ['축하드립니다! 좋은 성과를 이루신 것 진심으로 기쁘게 생각합니다. 앞으로의 더 큰 성장을 기대합니다.','대단하신 성과 축하드립니다. 노력의 결과가 빛을 발하고 있군요. 앞으로도 승승장구하시길 바랍니다.'],
+    warm: ['진심으로 축하드려요! 💛 정말 대단하세요. 그 노력을 알기에 더 감동이에요 😊','와~ 너무 축하해요! 💛 이렇게 좋은 소식 들으니 제 일처럼 기뻐요!'],
+    energetic: ['대박!! 축하해요!! 🎉🔥 진짜 대단해요!! 역시!!','OMG 축하드려요!! ✨ 이건 진짜 축하받아야 해요!! 🎉']
+  },
+  'objection': {
+    casual: ['네, 충분히 이해해요 😊 부담 갖지 마세요. 나중에 궁금한 거 있으시면 언제든 연락 주세요~','전혀 괜찮아요! ㅎㅎ 무리하게 권하는 건 제 스타일이 아니에요. 좋은 인연으로 남아요 😊'],
+    professional: ['충분히 이해합니다. 신중하게 판단하시는 것이 당연합니다. 추후 관심이 생기시면 언제든 연락 주시기 바랍니다.','네, 존중합니다. 지금 타이밍이 아니실 수 있습니다. 좋은 기회가 되실 때 다시 말씀 나눌 수 있으면 좋겠습니다.'],
+    warm: ['전혀 괜찮아요 💛 이해해요. 사람마다 맞는 타이밍이 있으니까요. 언제든 필요하시면 제가 있을게요 😊','충분히 공감해요 💛 급하게 결정할 필요 없어요. 편하실 때 다시 이야기 나눠요~'],
+    energetic: ['괜찮아요! 전혀 서운하지 않아요! 😊 근데 언젠가 다시 만날 거예요! 그때 또 이야기해요! ✨','ㅋㅋ 괜찮아요! 무리하는 건 제 스타일 아니에요! 😄 나중에 마음 바뀌면 언제든 연락주세요!']
+  }
+};
+
+function generateMessage() {
+  const purpose = getSelected('purposeChips');
+  const tone = getSelected('toneChips');
+  const channel = getSelected('channelChips');
+  const context = document.getElementById('context').value.trim();
+
+  const msgs = MSG_DB[purpose]?.[tone];
+  if (!msgs || !msgs.length) {
+    showToast('해당 조합의 메시지를 준비 중이에요');
+    return;
+  }
+
+  const contextText = context || '관심사';
+  const idx = Math.floor(Math.random() * msgs.length);
+  let mainMsg = msgs[idx].replace(/\{context\}/g, contextText);
+  let altIdx = (idx + 1) % msgs.length;
+  let altMsg = msgs[altIdx].replace(/\{context\}/g, contextText);
+
+  // Channel adjustments
+  if (channel === 'sms') {
+    mainMsg = mainMsg.replace(/😊|💛|✨|🔥|😆|😄|🎉|ㅎㅎ|ㅋㅋ/g, '').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  document.getElementById('resultText').textContent = mainMsg;
+  document.getElementById('resultBox').style.display = 'block';
+
+  if (altMsg !== mainMsg) {
+    document.getElementById('altText').textContent = altMsg;
+    document.getElementById('altBox').style.display = 'block';
+  }
+
+  document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+}
+
+function regenerate() {
+  generateMessage();
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(document.getElementById('resultText').textContent)
+    .then(() => showToast('메시지가 복사되었어요 📋'));
+}
+
+function copyAlt() {
+  navigator.clipboard.writeText(document.getElementById('altText').textContent)
+    .then(() => showToast('메시지가 복사되었어요 📋'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+renderTemplates();
+</script>
+</body>
+</html>

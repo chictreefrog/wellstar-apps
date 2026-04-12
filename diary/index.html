@@ -687,6 +687,8 @@ textarea { resize: none; min-height: 80px; }
 <!-- ── 토스트 ── -->
 <div id="toast" class="toast"></div>
 
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
 <script>
 // ══════════════════════════════
 // 데이터 관리
@@ -706,6 +708,45 @@ function loadObj(key, def) {
 }
 function save(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
+  syncToCloud(key, val);
+}
+
+// ── Supabase 동기화 (로그인 시에만) ──
+async function syncToCloud(key, val) {
+  if (!window.dinoSupabase || !DinoAuth.isLoggedIn()) return;
+  const sb = window.dinoSupabase;
+  const profile = DinoAuth.getProfile();
+  if (!profile) return;
+
+  if (key === KEYS.customers && Array.isArray(val)) {
+    for (const c of val) {
+      const row = {
+        id: c.id?.length > 20 ? undefined : undefined,
+        user_id: profile.id,
+        team_id: profile.team_id || null,
+        name: c.name || '',
+        phone: c.phone || null,
+        memo: c.memo || null,
+        stage: c.stage || 'prospect',
+        followup_date: c.followup || null,
+        birthday: c.birthday || null,
+        updated_at: new Date().toISOString()
+      };
+      await sb.from('customers').upsert(row, { onConflict: 'id', ignoreDuplicates: false }).catch(() => {});
+    }
+  }
+
+  if (key === KEYS.activities) {
+    const today = todayStr();
+    const todayData = typeof val === 'object' && !Array.isArray(val) ? val : {};
+    await sb.from('activities').upsert({
+      user_id: profile.id,
+      team_id: profile.team_id || null,
+      date: today,
+      items: todayData,
+      memo: todayData._memo || null
+    }, { onConflict: 'user_id,date' }).catch(() => {});
+  }
 }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -1574,6 +1615,9 @@ function copyText(text) {
 // ══════════════════════════════
 applyStoredAppearance();
 renderHome();
+
+// Auth 초기화
+DinoAuth.init();
 
 // 알림 스케줄 시작
 const _s = getSettings();

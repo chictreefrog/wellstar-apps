@@ -6,7 +6,11 @@
     { "source": "/quiz", "destination": "/quiz/index.html" },
     { "source": "/diary", "destination": "/diary/index.html" },
     { "source": "/simulator", "destination": "/simulator/index.html" },
-    { "source": "/card", "destination": "/card/index.html" }
+    { "source": "/card", "destination": "/card/index.html" },
+    { "source": "/team", "destination": "/team/index.html" },
+    { "source": "/success-test", "destination": "/success-test/index.html" },
+    { "source": "/dm-generator", "destination": "/dm-generator/index.html" },
+    { "source": "/content-maker", "destination": "/content-maker/index.html" }
   ],
   "headers": [
     {
@@ -96,6 +100,12 @@
     },
     {
       "source": "/card/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/team/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]
