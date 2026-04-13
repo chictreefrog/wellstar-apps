@@ -5,10 +5,7 @@
  * 사용법:
  *   <script src="/shared/supabase.js"></script>
  *   <script src="/shared/auth.js"></script>
- *
- *   DinoAuth.init(); // 앱 로드 시 호출
- *   DinoAuth.requireLogin(); // 로그인 필요한 기능에서 호출
- *   DinoAuth.getUser(); // 현재 사용자 반환 (null이면 미로그인)
+ *   DinoAuth.init();
  */
 
 window.DinoAuth = (function() {
@@ -17,7 +14,6 @@ window.DinoAuth = (function() {
   let supabase = null;
   let onAuthChangeCallbacks = [];
 
-  // ═══ 스타일 주입 ═══
   function injectStyles() {
     if (document.getElementById('dino-auth-styles')) return;
     const style = document.createElement('style');
@@ -38,7 +34,7 @@ window.DinoAuth = (function() {
       }
       .dino-auth-overlay.show .dino-auth-modal { transform: translateY(0); }
       .dino-auth-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; }
-      .dino-auth-sub { font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; margin-bottom: 24px; }
+      .dino-auth-sub { font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; margin-bottom: 24px; line-height: 1.5; }
       .dino-auth-input {
         width: 100%; padding: 14px 16px; border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
@@ -64,6 +60,10 @@ window.DinoAuth = (function() {
         color: #FF453A; font-size: 13px; text-align: center;
         margin-bottom: 12px; min-height: 18px;
       }
+      .dino-auth-success {
+        color: #30D158; font-size: 13px; text-align: center;
+        margin-bottom: 12px; min-height: 18px;
+      }
       .dino-auth-divider {
         display: flex; align-items: center; gap: 12px;
         color: rgba(255,255,255,0.3); font-size: 12px; margin: 16px 0;
@@ -73,18 +73,10 @@ window.DinoAuth = (function() {
       }
       .dino-auth-step { display: none; }
       .dino-auth-step.active { display: block; }
-      .dino-auth-user-bar {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 12px; border-radius: 10px;
-        background: rgba(255,107,53,0.1); cursor: pointer;
-        font-size: 13px; color: #FF8F65;
-      }
-      .dino-auth-user-bar:hover { background: rgba(255,107,53,0.18); }
     `;
     document.head.appendChild(style);
   }
 
-  // ═══ 모달 HTML ═══
   function createModal() {
     if (document.getElementById('dino-auth-overlay')) return;
     const div = document.createElement('div');
@@ -92,26 +84,23 @@ window.DinoAuth = (function() {
     div.className = 'dino-auth-overlay';
     div.innerHTML = `
       <div class="dino-auth-modal">
-        <!-- Step 1: 전화번호 입력 -->
-        <div class="dino-auth-step active" id="dino-step-phone">
+        <!-- Step 1: 이메일 입력 -->
+        <div class="dino-auth-step active" id="dino-step-email">
           <div class="dino-auth-title">AI 세일즈 시스템</div>
-          <div class="dino-auth-sub">팀과 함께 성장하세요</div>
-          <input class="dino-auth-input" id="dino-phone" type="tel"
-            placeholder="휴대폰 번호 (예: 01012345678)" maxlength="11" inputmode="numeric">
-          <div class="dino-auth-error" id="dino-error-phone"></div>
-          <button class="dino-auth-btn" id="dino-btn-send" onclick="DinoAuth._sendOTP()">인증번호 받기</button>
+          <div class="dino-auth-sub">이메일로 간편하게 시작하세요</div>
+          <input class="dino-auth-input" id="dino-email" type="email"
+            placeholder="이메일 주소" inputmode="email">
+          <div class="dino-auth-error" id="dino-error-email"></div>
+          <button class="dino-auth-btn" id="dino-btn-send" onclick="DinoAuth._sendMagicLink()">로그인 링크 받기</button>
           <div class="dino-auth-divider">또는</div>
           <button class="dino-auth-btn-ghost" onclick="DinoAuth._closeModal()">나중에 로그인</button>
         </div>
-        <!-- Step 2: OTP 입력 -->
-        <div class="dino-auth-step" id="dino-step-otp">
-          <div class="dino-auth-title">인증번호 입력</div>
-          <div class="dino-auth-sub" id="dino-otp-sub">전송된 6자리 코드를 입력하세요</div>
-          <input class="dino-auth-input" id="dino-otp" type="text"
-            placeholder="인증번호 6자리" maxlength="6" inputmode="numeric">
-          <div class="dino-auth-error" id="dino-error-otp"></div>
-          <button class="dino-auth-btn" id="dino-btn-verify" onclick="DinoAuth._verifyOTP()">확인</button>
-          <button class="dino-auth-btn-ghost" onclick="DinoAuth._goStep('phone')">다시 보내기</button>
+        <!-- Step 2: 이메일 확인 안내 -->
+        <div class="dino-auth-step" id="dino-step-check">
+          <div class="dino-auth-title">메일함을 확인하세요</div>
+          <div class="dino-auth-sub" id="dino-check-sub">이메일로 로그인 링크를 보냈어요.<br>링크를 클릭하면 자동으로 로그인됩니다.</div>
+          <div class="dino-auth-success">📩 메일이 도착하지 않으면 스팸함도 확인해주세요</div>
+          <button class="dino-auth-btn-ghost" onclick="DinoAuth._goStep('email')">다시 보내기</button>
         </div>
         <!-- Step 3: 프로필 설정 (신규 가입 시) -->
         <div class="dino-auth-step" id="dino-step-profile">
@@ -128,7 +117,6 @@ window.DinoAuth = (function() {
     document.body.appendChild(div);
   }
 
-  // ═══ 모달 제어 ═══
   function showModal() {
     createModal();
     const overlay = document.getElementById('dino-auth-overlay');
@@ -146,17 +134,14 @@ window.DinoAuth = (function() {
   function goStep(step) {
     document.querySelectorAll('.dino-auth-step').forEach(s => s.classList.remove('active'));
     document.getElementById('dino-step-' + step).classList.add('active');
-    // Clear errors
     document.querySelectorAll('.dino-auth-error').forEach(e => e.textContent = '');
   }
 
-  // ═══ 인증 플로우 ═══
-  let pendingPhone = '';
-
-  async function sendOTP() {
-    const phone = document.getElementById('dino-phone').value.replace(/\D/g, '');
-    if (phone.length < 10) {
-      document.getElementById('dino-error-phone').textContent = '올바른 전화번호를 입력해주세요';
+  // ═══ 이메일 인증 플로우 ═══
+  async function sendMagicLink() {
+    const email = document.getElementById('dino-email').value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('dino-error-email').textContent = '올바른 이메일을 입력해주세요';
       return;
     }
 
@@ -165,64 +150,24 @@ window.DinoAuth = (function() {
     btn.textContent = '전송 중...';
 
     try {
-      const formatted = '+82' + phone.replace(/^0/, '');
-      const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-      if (error) throw error;
-
-      pendingPhone = formatted;
-      document.getElementById('dino-otp-sub').textContent = phone + '으로 인증번호를 보냈어요';
-      goStep('otp');
-    } catch (err) {
-      document.getElementById('dino-error-phone').textContent = err.message || '인증번호 전송에 실패했어요';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '인증번호 받기';
-    }
-  }
-
-  async function verifyOTP() {
-    const otp = document.getElementById('dino-otp').value.replace(/\D/g, '');
-    if (otp.length !== 6) {
-      document.getElementById('dino-error-otp').textContent = '6자리 인증번호를 입력해주세요';
-      return;
-    }
-
-    const btn = document.getElementById('dino-btn-verify');
-    btn.disabled = true;
-    btn.textContent = '확인 중...';
-
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: pendingPhone,
-        token: otp,
-        type: 'sms'
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + '/main/' }
       });
       if (error) throw error;
 
-      currentUser = data.user;
-      // Check if profile needs setup (new user)
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
-
-      currentProfile = profile;
-
-      if (!profile || !profile.display_name) {
-        goStep('profile');
-      } else {
-        closeModal();
-        notifyAuthChange();
-      }
+      document.getElementById('dino-check-sub').innerHTML =
+        `<strong>${email}</strong>으로<br>로그인 링크를 보냈어요.<br>링크를 클릭하면 자동으로 로그인됩니다.`;
+      goStep('check');
     } catch (err) {
-      document.getElementById('dino-error-otp').textContent = err.message || '인증에 실패했어요';
+      document.getElementById('dino-error-email').textContent = err.message || '전송에 실패했어요';
     } finally {
       btn.disabled = false;
-      btn.textContent = '확인';
+      btn.textContent = '로그인 링크 받기';
     }
   }
 
+  // ═══ 프로필 저장 ═══
   async function saveProfile() {
     const name = document.getElementById('dino-name').value.trim();
     if (!name) {
@@ -238,7 +183,6 @@ window.DinoAuth = (function() {
       const bizCode = document.getElementById('dino-biz-code').value.trim();
       const inviteCode = document.getElementById('dino-invite').value.trim().toUpperCase();
 
-      // Update profile
       const { error: profileErr } = await supabase
         .from('profiles')
         .update({
@@ -250,7 +194,6 @@ window.DinoAuth = (function() {
 
       if (profileErr) throw profileErr;
 
-      // Join team if invite code provided
       if (inviteCode) {
         const { data: joinResult } = await supabase.rpc('join_team_by_code', { code: inviteCode });
         if (joinResult?.error) {
@@ -261,7 +204,6 @@ window.DinoAuth = (function() {
         }
       }
 
-      // Refresh profile
       const { data: updated } = await supabase
         .from('profiles')
         .select('*')
@@ -283,7 +225,6 @@ window.DinoAuth = (function() {
   async function init() {
     injectStyles();
 
-    // Wait for Supabase
     if (!window.dinoSupabase) {
       await new Promise(resolve => {
         window.addEventListener('dino-supabase-ready', resolve, { once: true });
@@ -291,7 +232,6 @@ window.DinoAuth = (function() {
     }
     supabase = window.dinoSupabase;
 
-    // Check existing session
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       currentUser = session.user;
@@ -301,9 +241,14 @@ window.DinoAuth = (function() {
         .eq('id', currentUser.id)
         .single();
       currentProfile = profile;
+
+      // New user — show profile setup
+      if (profile && !profile.display_name) {
+        showModal();
+        goStep('profile');
+      }
     }
 
-    // Listen for auth changes
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         currentUser = session.user;
@@ -313,6 +258,13 @@ window.DinoAuth = (function() {
           .eq('id', currentUser.id)
           .single();
         currentProfile = profile;
+
+        if (profile && !profile.display_name) {
+          showModal();
+          goStep('profile');
+        } else {
+          closeModal();
+        }
         notifyAuthChange();
       } else if (event === 'SIGNED_OUT') {
         currentUser = null;
@@ -333,17 +285,13 @@ window.DinoAuth = (function() {
     }));
   }
 
-  // ═══ 로그아웃 ═══
   async function logout() {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
+    if (supabase) await supabase.auth.signOut();
     currentUser = null;
     currentProfile = null;
     notifyAuthChange();
   }
 
-  // ═══ Public API ═══
   return {
     init,
     getUser: () => currentUser,
@@ -354,9 +302,7 @@ window.DinoAuth = (function() {
     showLogin: showModal,
     logout,
     onAuthChange: (cb) => { onAuthChangeCallbacks.push(cb); },
-    // Internal (called by modal onclick)
-    _sendOTP: sendOTP,
-    _verifyOTP: verifyOTP,
+    _sendMagicLink: sendMagicLink,
     _saveProfile: saveProfile,
     _closeModal: closeModal,
     _goStep: goStep,
