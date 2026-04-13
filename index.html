@@ -275,6 +275,14 @@ footer{border-top:1px solid var(--border);padding:32px 0;text-align:center}
   </div>
 </footer>
 
+<script>
+// 재방문자 자동 리다이렉트 (처음 온 사람만 랜딩 보여줌)
+if (localStorage.getItem('dino_visited')) {
+  location.replace('/main/');
+} else {
+  localStorage.setItem('dino_visited', '1');
+}
+</script>
 <script src="/shared/supabase.js"></script>
 <script>
 // Stars
