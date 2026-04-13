@@ -10,7 +10,8 @@
     { "source": "/team", "destination": "/team/index.html" },
     { "source": "/success-test", "destination": "/success-test/index.html" },
     { "source": "/dm-generator", "destination": "/dm-generator/index.html" },
-    { "source": "/content-maker", "destination": "/content-maker/index.html" }
+    { "source": "/content-maker", "destination": "/content-maker/index.html" },
+    { "source": "/health-check", "destination": "/health-check/index.html" }
   ],
   "headers": [
     {
