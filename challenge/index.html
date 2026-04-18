@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>세일즈 챌린지 — AI 세일즈 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--card:rgba(20,20,50,0.8);--text:#F5F5F7;--text2:rgba(255,255,255,0.6);--text3:rgba(255,255,255,0.35);--accent:#FF6B35;--green:#30D158;--red:#FF453A;--blue:#0A84FF;--border:rgba(255,255,255,0.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,sans-serif;min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding:20px;padding-bottom:80px}
+.header{text-align:center;margin-bottom:24px}
+.header-icon{font-size:40px;margin-bottom:8px}
+.header-title{font-size:22px;font-weight:900}
+.header-sub{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,0.05);border-radius:12px;padding:3px;margin-bottom:20px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);transition:all .2s}
+.tab.active{background:var(--accent);color:white}
+
+/* Challenge Card */
+.ch-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.ch-card:active{transform:scale(0.98)}
+.ch-card.joined{border-color:rgba(255,107,53,0.3)}
+.ch-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.ch-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ch-info{flex:1}
+.ch-name{font-size:15px;font-weight:700}
+.ch-meta{font-size:12px;color:var(--text3);margin-top:2px}
+.ch-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.badge-beginner{background:rgba(48,209,88,0.15);color:var(--green)}
+.badge-growth{background:rgba(10,132,255,0.15);color:var(--blue)}
+.ch-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px}
+.ch-rule{font-size:12px;color:var(--text3);margin-bottom:4px}
+
+/* Progress */
+.ch-progress{margin-top:12px}
+.ch-progress-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.ch-progress-fill{height:100%;border-radius:3px;transition:width .5s}
+.ch-progress-text{font-size:11px;color:var(--text3);display:flex;justify-content:space-between}
+.ch-streak{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.ch-day{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.ch-day.done{background:var(--accent);color:white}
+.ch-day.today{background:rgba(255,107,53,0.2);color:var(--accent);border:1px solid var(--accent)}
+.ch-day.future{background:rgba(255,255,255,0.05);color:var(--text3)}
+.ch-day.missed{background:rgba(255,69,58,0.15);color:var(--red)}
+
+/* Buttons */
+.btn{display:block;width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#FF8F65);color:white}
+.btn-success{background:var(--green);color:white}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);margin-top:8px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+
+/* Detail Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#1A1A2E;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom))}
+.modal-handle{width:36px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px}
+
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:8px}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(30,30,60,0.95);color:white;padding:10px 20px;border-radius:12px;font-size:13px;z-index:99999;display:none;backdrop-filter:blur(10px)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-icon">🏆</div>
+    <div class="header-title">세일즈 챌린지</div>
+    <div class="header-sub">매일 미션을 달성하고 영업 근육을 키워요</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('available')">도전 가능</div>
+    <div class="tab" onclick="switchTab('active')">진행 중</div>
+    <div class="tab" onclick="switchTab('done')">완료</div>
+  </div>
+
+  <div id="tab-available"></div>
+  <div id="tab-active" style="display:none"></div>
+  <div id="tab-done" style="display:none"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/shared/nav.js"></script>
+<script>
+// ═══ CHALLENGE DATA ═══
+const CHALLENGES = [
+  {
+    id: 'reject10', category: 'beginner', icon: '🛡️', color: 'rgba(48,209,88,0.15)',
+    name: '거절 10회 챌린지', duration: 7, daily: '거절 경험 1회 이상 기록',
+    desc: '거절이 두렵다면 이 챌린지부터! 7일 동안 거절을 모으면서 두려움을 극복해요. 거절은 실패가 아니라 성장의 증거입니다.',
+    rules: ['매일 최소 1회 이상 거절 경험 기록', '거절 일기에 상황과 느낌 적기', '7일간 총 10회 이상 달성'],
+    reward: '🛡️ "강철멘탈" 뱃지',
+    diaryLink: '거절 회복 저널에 기록됩니다'
+  },
+  {
+    id: 'contact333', category: 'beginner', icon: '📞', color: 'rgba(10,132,255,0.15)',
+    name: '3-3-3 챌린지', duration: 7, daily: '3명 연락 + 3명 팔로업 + 3줄 메모',
+    desc: '매일 3명에게 연락하고, 3명 팔로업하고, 3줄 메모를 남겨요. 영업의 기본 습관을 만드는 챌린지!',
+    rules: ['매일 신규 3명에게 연락 (전화/문자/DM)', '매일 기존 고객 3명 팔로업', '다이어리에 활동 메모 3줄 이상'],
+    reward: '📞 "습관의 시작" 뱃지',
+    diaryLink: '활동 기록에 자동 연동됩니다'
+  },
+  {
+    id: 'firstmeeting', category: 'beginner', icon: '🤝', color: 'rgba(255,107,53,0.15)',
+    name: '첫 미팅 달성', duration: 14, daily: '미팅 성사를 위한 활동',
+    desc: '2주 안에 첫 대면 또는 비대면 미팅을 성사시켜요. 시작이 반이에요!',
+    rules: ['매일 최소 2명에게 미팅 제안', '거절당하면 거절 일기에 기록', '미팅 성사 시 챌린지 완료!'],
+    reward: '🤝 "퍼스트 클로저" 뱃지',
+    diaryLink: '고객 단계가 "미팅"으로 변경됩니다'
+  },
+  {
+    id: 'sevenup', category: 'growth', icon: '🔥', color: 'rgba(255,69,58,0.15)',
+    name: '세븐업 챌린지', duration: 7, daily: '매일 7명에게 연락',
+    desc: '하루 7명! 접촉량을 폭발시키는 챌린지. 양이 질을 만듭니다. 7일 동안 총 49명과 대화하세요.',
+    rules: ['매일 7명에게 연락 (신규+팔로업 합산)', '다이어리 활동 기록 필수', '7일간 총 49명 이상 달성'],
+    reward: '🔥 "접촉왕" 뱃지',
+    diaryLink: '활동 기록에 자동 연동됩니다'
+  },
+  {
+    id: 'routine21', category: 'growth', icon: '📋', color: 'rgba(191,90,242,0.15)',
+    name: '21일 루틴 챌린지', duration: 21, daily: '플래너 작성 + 활동 기록',
+    desc: '21일이면 습관이 됩니다! 매일 플래너로 하루를 설계하고, 다이어리로 활동을 기록하세요.',
+    rules: ['매일 아침 5분법칙 플래너 작성', '매일 저녁 다이어리 활동 기록', '21일 연속 달성 시 완료'],
+    reward: '📋 "루틴 마스터" 뱃지',
+    diaryLink: '플래너 + 다이어리 사용 기록 연동'
+  },
+  {
+    id: 'sns30', category: 'growth', icon: '📱', color: 'rgba(255,159,10,0.15)',
+    name: 'SNS 30일 챌린지', duration: 30, daily: 'SNS에 게시물 1개 업로드',
+    desc: '30일 동안 매일 SNS에 1개 게시물! AI 콘텐츠 생성기로 쉽게 만들어요. 30일 후 당신은 전문가입니다.',
+    rules: ['매일 인스타/블로그/페이스북 중 1곳에 게시', 'AI 콘텐츠 생성기 활용 가능', '30일간 총 30개 이상 달성'],
+    reward: '📱 "SNS 전문가" 뱃지',
+    diaryLink: '활동 기록에 SNS 항목으로 연동'
+  },
+  {
+    id: 'followup14', category: 'growth', icon: '🎯', color: 'rgba(0,210,150,0.15)',
+    name: '팔로업 마스터', duration: 14, daily: '매일 5명 팔로업 완료',
+    desc: '팔로업은 귀찮은 게 아니라 관심의 표현! 14일 동안 매일 5명씩 팔로업하세요.',
+    rules: ['매일 5명 이상 팔로업 연락', '다이어리에 팔로업 기록', '14일간 총 70회 이상 달성'],
+    reward: '🎯 "팔로업 마스터" 뱃지',
+    diaryLink: '고객 팔로업 날짜와 연동됩니다'
+  }
+];
+
+// ═══ STATE ═══
+function getState() {
+  return JSON.parse(localStorage.getItem('dino_challenges') || '{}');
+}
+function saveState(state) {
+  localStorage.setItem('dino_challenges', JSON.stringify(state));
+}
+
+// ═══ TAB ═══
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-available').style.display = tab === 'available' ? 'block' : 'none';
+  document.getElementById('tab-active').style.display = tab === 'active' ? 'block' : 'none';
+  document.getElementById('tab-done').style.display = tab === 'done' ? 'block' : 'none';
+  render();
+}
+
+// ═══ RENDER ═══
+function render() {
+  const state = getState();
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  // Available
+  const available = CHALLENGES.filter(c => !state[c.id]);
+  document.getElementById('tab-available').innerHTML = available.length
+    ? available.map(c => renderCard(c, null)).join('')
+    : '<div class="empty"><div class="empty-icon">🏆</div>모든 챌린지에 참여 중이에요!</div>';
+
+  // Active
+  const active = CHALLENGES.filter(c => state[c.id] && !state[c.id].completed);
+  document.getElementById('tab-active').innerHTML = active.length
+    ? active.map(c => renderCard(c, state[c.id])).join('')
+    : '<div class="empty"><div class="empty-icon">💤</div>진행 중인 챌린지가 없어요</div>';
+
+  // Done
+  const done = CHALLENGES.filter(c => state[c.id]?.completed);
+  document.getElementById('tab-done').innerHTML = done.length
+    ? done.map(c => renderCard(c, state[c.id])).join('')
+    : '<div class="empty"><div class="empty-icon">🎯</div>아직 완료한 챌린지가 없어요</div>';
+}
+
+function renderCard(ch, progress) {
+  const badgeClass = ch.category === 'beginner' ? 'badge-beginner' : 'badge-growth';
+  const badgeText = ch.category === 'beginner' ? '초보자' : '성장';
+  let progressHtml = '';
+
+  if (progress) {
+    const days = progress.days || {};
+    const totalDays = ch.duration;
+    const doneDays = Object.keys(days).length;
+    const pct = Math.round(doneDays / totalDays * 100);
+    const color = progress.completed ? 'var(--green)' : 'var(--accent)';
+
+    progressHtml = `
+      <div class="ch-progress">
+        <div class="ch-progress-bar"><div class="ch-progress-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="ch-progress-text"><span>${doneDays}/${totalDays}일 완료</span><span>${pct}%</span></div>
+      </div>`;
+  }
+
+  return `
+    <div class="ch-card ${progress ? 'joined' : ''}" onclick="openDetail('${ch.id}')">
+      <div class="ch-top">
+        <div class="ch-icon" style="background:${ch.color}">${ch.icon}</div>
+        <div class="ch-info">
+          <div class="ch-name">${ch.name}</div>
+          <div class="ch-meta">${ch.duration}일 · ${ch.daily}</div>
+        </div>
+        <span class="ch-badge ${badgeClass}">${badgeText}</span>
+      </div>
+      ${progressHtml}
+    </div>`;
+}
+
+// ═══ DETAIL ═══
+function openDetail(id) {
+  const ch = CHALLENGES.find(c => c.id === id);
+  if (!ch) return;
+  const state = getState();
+  const progress = state[id];
+  const now = new Date(); now.setHours(0,0,0,0);
+  const todayKey = now.toISOString().split('T')[0];
+
+  let actionBtn = '';
+  let dayGrid = '';
+
+  if (!progress) {
+    actionBtn = `<button class="btn btn-primary" onclick="joinChallenge('${id}')">챌린지 시작하기</button>`;
+  } else if (progress.completed) {
+    actionBtn = `<button class="btn btn-success" disabled>✅ 완료! ${ch.reward}</button>`;
+  } else {
+    const todayDone = progress.days?.[todayKey];
+    actionBtn = todayDone
+      ? `<button class="btn btn-success" disabled>오늘 미션 완료! ✅</button>`
+      : `<button class="btn btn-primary" onclick="checkToday('${id}')">오늘 미션 완료 체크 ✓</button>`;
+
+    // Day grid
+    const startDate = new Date(progress.startDate);
+    const days = [];
+    for (let i = 0; i < ch.duration; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      const isToday = key === todayKey;
+      const isDone = progress.days?.[key];
+      const isPast = d < now && !isToday;
+      let cls = 'future';
+      if (isDone) cls = 'done';
+      else if (isToday) cls = 'today';
+      else if (isPast) cls = 'missed';
+      days.push(`<div class="ch-day ${cls}">${i + 1}</div>`);
+    }
+    dayGrid = `<div class="ch-streak">${days.join('')}</div>`;
+  }
+
+  document.getElementById('detailContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:48px;margin-bottom:8px">${ch.icon}</div>
+      <div style="font-size:20px;font-weight:900">${ch.name}</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:4px">${ch.duration}일 · ${ch.daily}</div>
+    </div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:16px">${ch.desc}</div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📋 규칙</div>
+      ${ch.rules.map(r => `<div style="font-size:13px;color:var(--text2);margin-bottom:4px">• ${r}</div>`).join('')}
+    </div>
+    <div style="background:rgba(255,107,53,0.08);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">🏆 달성 보상</div>
+      <div style="font-size:13px;color:var(--text2)">${ch.reward}</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">📒 ${ch.diaryLink}</div>
+    ${dayGrid}
+    <div style="margin-top:16px">${actionBtn}</div>
+    <button class="btn btn-ghost" onclick="closeDetail()">닫기</button>
+  `;
+
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+// ═══ ACTIONS ═══
+function joinChallenge(id) {
+  const state = getState();
+  const todayKey = new Date().toISOString().split('T')[0];
+  state[id] = {
+    startDate: todayKey,
+    days: {},
+    completed: false
+  };
+  saveState(state);
+  closeDetail();
+  showToast('챌린지를 시작했어요! 🔥');
+
+  // Activity log
+  try {
+    const logs = JSON.parse(localStorage.getItem('dino_activity_log') || '[]');
+    const ch = CHALLENGES.find(c => c.id === id);
+    logs.unshift({ app: 'challenge', label: ch.name + ' 시작', ts: Date.now() });
+    localStorage.setItem('dino_activity_log', JSON.stringify(logs.slice(0, 50)));
+  } catch {}
+
+  render();
+}
+
+function checkToday(id) {
+  const state = getState();
+  const todayKey = new Date().toISOString().split('T')[0];
+  if (!state[id]) return;
+
+  state[id].days[todayKey] = true;
+
+  // Check completion
+  const ch = CHALLENGES.find(c => c.id === id);
+  const doneDays = Object.keys(state[id].days).length;
+  if (doneDays >= ch.duration) {
+    state[id].completed = true;
+    showToast(`축하해요! ${ch.reward} 획득! 🎉`);
+  } else {
+    showToast(`오늘 미션 완료! ${doneDays}/${ch.duration}일 달성 💪`);
+  }
+
+  saveState(state);
+
+  // Diary activity sync
+  try {
+    const today = todayKey;
+    const actKey = 'diary_activities';
+    const activities = JSON.parse(localStorage.getItem(actKey) || '{}');
+    if (!activities[today]) activities[today] = {};
+    activities[today]._challenge = (activities[today]._challenge || 0) + 1;
+    localStorage.setItem(actKey, JSON.stringify(activities));
+  } catch {}
+
+  closeDetail();
+  render();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+render();
+</script>
+</body>
+</html>
