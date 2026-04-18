@@ -1178,12 +1178,24 @@ function updateAuthUI(user, profile) {
     if (profile.business_code) {
       myBizCode.textContent = '사업자번호: ' + profile.business_code;
     }
-    // 역할 뱃지 (홈 + MY)
+    // 역할 뱃지 + 팀 이름 (홈 + MY)
     const roleLabels = { admin: 'Admin', leader: 'Leader', partner: 'Partner', guest: 'Guest', subscriber: 'Member' };
     const roleLabel = roleLabels[profile.role] || 'Guest';
-    badge.textContent = roleLabel;
+
+    // 팀 이름 가져오기
+    if (profile.team_id && DinoAuth.getSupabase()) {
+      DinoAuth.getSupabase().from('teams').select('name').eq('id', profile.team_id).single()
+        .then(({ data: team }) => {
+          const teamName = team?.name || '';
+          const badgeText = teamName ? teamName + ' · ' + roleLabel : roleLabel;
+          badge.textContent = badgeText;
+          myMemberBadge.textContent = badgeText;
+        });
+    } else {
+      badge.textContent = roleLabel;
+      myMemberBadge.textContent = roleLabel;
+    }
     badge.style.display = '';
-    myMemberBadge.textContent = roleLabel;
 
     DinoGuest.check(profile);
   } else {
