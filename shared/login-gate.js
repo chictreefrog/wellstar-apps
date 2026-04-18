@@ -2,10 +2,6 @@
  * AI 세일즈 시스템 — 로그인 게이트
  * 코어 도구(챗봇, 다이어리, 플래너, 시뮬레이터, 명함, 팀)에서 사용
  * 로그인하지 않으면 앱 내용을 가리고 로그인 유도
- *
- * <script src="/shared/supabase.js"></script>
- * <script src="/shared/auth.js"></script>
- * <script src="/shared/login-gate.js"></script>
  */
 (function() {
   function show() {
@@ -33,19 +29,44 @@
     if (el) el.remove();
   }
 
-  // Wait for auth to initialize, then check
+  // Magic Link 토큰이 URL에 있으면 게이트를 보여주지 않음 (Supabase가 처리 중)
+  function hasMagicLinkToken() {
+    const hash = window.location.hash;
+    const search = window.location.search;
+    return hash.includes('access_token') || hash.includes('type=magiclink')
+      || search.includes('code=') || search.includes('token=');
+  }
+
+  // 로그인 되면 게이트 숨김
   window.addEventListener('dino-auth-change', (e) => {
     if (e.detail.user) hide();
   });
 
-  // Check after DinoAuth.init()
-  const checkInterval = setInterval(() => {
-    if (typeof DinoAuth !== 'undefined') {
-      clearInterval(checkInterval);
-      // Give auth time to restore session
-      setTimeout(() => {
-        if (!DinoAuth.isLoggedIn()) show();
-      }, 1500);
-    }
-  }, 100);
+  // Magic Link 토큰이 있으면 → 기다림 (Supabase가 세션 복원 중)
+  if (hasMagicLinkToken()) return;
+
+  // 토큰이 없을 때만 → auth 초기화 후 체크
+  window.addEventListener('dino-supabase-ready', () => {
+    // Supabase 세션 직접 확인
+    setTimeout(async () => {
+      try {
+        const { data } = await window.dinoSupabase.auth.getSession();
+        if (!data?.session) show();
+      } catch {
+        show();
+      }
+    }, 500);
+  });
+
+  // Supabase가 이미 로드됐으면 바로 체크
+  if (window.dinoSupabase) {
+    setTimeout(async () => {
+      try {
+        const { data } = await window.dinoSupabase.auth.getSession();
+        if (!data?.session) show();
+      } catch {
+        show();
+      }
+    }, 500);
+  }
 })();
