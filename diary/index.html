@@ -606,6 +606,20 @@ textarea { resize: none; min-height: 80px; }
       <label class="form-label">연락처</label>
       <input type="tel" id="f-phone" placeholder="010-0000-0000">
     </div>
+    <div style="display:flex;gap:8px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">성별</label>
+        <select id="f-gender">
+          <option value="">미지정</option>
+          <option value="남">남성</option>
+          <option value="여">여성</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">지역</label>
+        <input type="text" id="f-region" placeholder="예: 서울 강남">
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label">생년월일 (생일 알림용)</label>
       <input type="date" id="f-birthday">
@@ -937,6 +951,8 @@ function openAddCustomer() {
   document.getElementById('edit-customer-id').value = '';
   document.getElementById('f-name').value = '';
   document.getElementById('f-phone').value = '';
+  document.getElementById('f-gender').value = '';
+  document.getElementById('f-region').value = '';
   document.getElementById('f-birthday').value = '';
   document.getElementById('f-stage').value = '잠재';
   document.getElementById('f-followup').value = '';
@@ -953,6 +969,8 @@ function openEditCustomer(id) {
   document.getElementById('edit-customer-id').value = c.id;
   document.getElementById('f-name').value = c.name || '';
   document.getElementById('f-phone').value = c.phone || '';
+  document.getElementById('f-gender').value = c.gender || '';
+  document.getElementById('f-region').value = c.region || '';
   document.getElementById('f-birthday').value = c.birthday || '';
   document.getElementById('f-stage').value = c.stage || '잠재';
   document.getElementById('f-followup').value = c.followUp || '';
@@ -971,6 +989,8 @@ function saveCustomer() {
     id: editId || genId(),
     name,
     phone: document.getElementById('f-phone').value.trim(),
+    gender: document.getElementById('f-gender').value,
+    region: document.getElementById('f-region').value.trim(),
     birthday: document.getElementById('f-birthday').value,
     stage: document.getElementById('f-stage').value,
     followUp: document.getElementById('f-followup').value,
