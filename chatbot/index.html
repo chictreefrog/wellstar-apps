@@ -709,10 +709,9 @@ function addMessage(role, content, skipSave, citations) {
   } else {
     let citationsHtml = '';
     if (citations && citations.length > 0) {
-      const tags = citations.map(c => {
-        const label = c.source ? `📖 ${c.source}` : '📖 책 참조';
-        return `<span class="citation-tag">${escapeHtml(label)}</span>`;
-      }).join('');
+      // 중복 제거 + 최대 2개
+      const unique = [...new Set(citations.map(c => c.source || '책 참조'))].slice(0, 2);
+      const tags = unique.map(s => `<span class="citation-tag">📖 ${escapeHtml(s)}</span>`).join('');
       citationsHtml = `<div class="msg-citations">${tags}</div>`;
     }
 
