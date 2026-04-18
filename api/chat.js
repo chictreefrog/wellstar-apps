@@ -83,7 +83,7 @@ module.exports = async function handler(req, res) {
         temperature: 0.8,
         topP: 0.9,
         topK: 40,
-        maxOutputTokens: 600,
+        maxOutputTokens: 1000,
       }
     });
 
@@ -114,7 +114,7 @@ module.exports = async function handler(req, res) {
           config: {
             systemInstruction: enrichedPrompt,
             temperature: 0.8,
-            maxOutputTokens: 600,
+            maxOutputTokens: 1000,
           }
         });
         reply = retryRes.text || '';
