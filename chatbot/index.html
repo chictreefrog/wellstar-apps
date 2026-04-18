@@ -527,6 +527,7 @@ body.light-theme .input-bar {
   </div>
 
   <!-- Scenario Chips -->
+  <div style="position:relative">
   <div class="scenario-bar" id="scenarioBar">
     <button class="scenario-chip active" data-scenario="general" onclick="selectScenario(this)">💬 자유 대화</button>
     <button class="scenario-chip" data-scenario="mindset" onclick="selectScenario(this)">🛡️ 마음 다지기</button>
@@ -534,6 +535,8 @@ body.light-theme .input-bar {
     <button class="scenario-chip" data-scenario="objection" onclick="selectScenario(this)">🧹 거절 대응</button>
     <button class="scenario-chip" data-scenario="closing" onclick="selectScenario(this)">🤝 클로징</button>
     <button class="scenario-chip" data-scenario="team" onclick="selectScenario(this)">🌱 팀 빌딩</button>
+  </div>
+  <div id="scrollHint" style="position:absolute;right:0;top:0;bottom:1px;width:40px;background:linear-gradient(90deg,transparent,var(--bg-primary));pointer-events:none;transition:opacity .3s" aria-hidden="true"></div>
   </div>
 
   <!-- Chat Area -->
@@ -649,6 +652,14 @@ function goBack() {
     location.href = '/main/';
   }
 }
+
+// ==================== SCROLL HINT ====================
+document.getElementById('scenarioBar').addEventListener('scroll', function() {
+  const hint = document.getElementById('scrollHint');
+  if (!hint) return;
+  const atEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth - 20;
+  hint.style.opacity = atEnd ? '0' : '1';
+});
 
 // ==================== SCENARIOS ====================
 function selectScenario(el) {
