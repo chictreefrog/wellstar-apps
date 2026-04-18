@@ -770,6 +770,12 @@ async function syncToCloud(key, val) {
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+function autoFollowUp(daysLater) {
+  const d = new Date();
+  d.setDate(d.getDate() + (daysLater || 3));
+  return d.toISOString().split('T')[0];
+}
+
 // ── 오늘 날짜 유틸 ──
 function todayStr() {
   const d = new Date();
@@ -994,11 +1000,14 @@ function saveCustomer() {
     region: document.getElementById('f-region').value.trim(),
     birthday: document.getElementById('f-birthday').value,
     stage: document.getElementById('f-stage').value,
-    followUp: document.getElementById('f-followup').value,
+    followUp: document.getElementById('f-followup').value || autoFollowUp(),
     note: document.getElementById('f-note').value.trim(),
     memos: [],
     createdAt: new Date().toISOString()
   };
+  if (!document.getElementById('f-followup').value && !editId) {
+    showToast('팔로업 날짜가 3일 후로 자동 설정됐어요 📅');
+  }
   if (editId) {
     const idx = customers.findIndex(x => x.id === editId);
     if (idx >= 0) { data.memos = customers[idx].memos || []; data.createdAt = customers[idx].createdAt; customers[idx] = data; }
