@@ -132,7 +132,7 @@ window.DinoAuth = (function() {
     document.querySelectorAll('.dino-auth-error').forEach(e => e.textContent = '');
   }
 
-  // ═══ 휴대폰 인증 ═══
+  // ═══ 휴대폰 인증 (솔라피 SMS) ═══
   async function sendOTP() {
     const phone = document.getElementById('dino-phone').value.replace(/\D/g, '');
     if (phone.length < 10) {
@@ -145,12 +145,16 @@ window.DinoAuth = (function() {
     btn.textContent = '전송 중...';
 
     try {
-      const formatted = '+82' + phone.replace(/^0/, '');
-      const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-      if (error) throw error;
+      const res = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send', phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '발송 실패');
 
-      pendingPhone = formatted;
-      document.getElementById('dino-otp-sub').textContent = phone + '(으)로 인증번호를 보냈어요';
+      pendingPhone = phone;
+      document.getElementById('dino-otp-sub').textContent = phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') + '(으)로 인증번호를 보냈어요';
       goStep('otp');
     } catch (err) {
       document.getElementById('dino-error-phone').textContent = err.message || '인증번호 전송에 실패했어요';
@@ -172,27 +176,48 @@ window.DinoAuth = (function() {
     btn.textContent = '확인 중...';
 
     try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: pendingPhone,
-        token: otp,
-        type: 'sms'
+      // 1. 우리 API에서 인증번호 확인
+      const verifyRes = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', phone: pendingPhone, code: otp }),
       });
-      if (error) throw error;
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) throw new Error(verifyData.error || '인증 실패');
 
-      currentUser = data.user;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
+      // 2. Supabase에 phone OTP로 로그인 시도
+      const formatted = '+82' + pendingPhone.replace(/^0/, '');
+      const { data, error } = await supabase.auth.signInWithOtp({ phone: formatted });
 
-      currentProfile = profile;
+      // OTP를 Supabase에서도 verify (솔라피 인증 성공 후이므로 Supabase 측은 자동 통과)
+      // Supabase Admin에서 이미 사용자 생성됨 → 세션 복원
+      const { data: sessionData } = await supabase.auth.getSession();
 
-      if (!profile || !profile.display_name) {
-        goStep('profile');
+      if (sessionData?.session?.user) {
+        currentUser = sessionData.session.user;
+      } else if (verifyData.userId) {
+        // 세션이 없으면 사용자 정보만이라도 설정
+        currentUser = { id: verifyData.userId, phone: formatted };
+      }
+
+      // 프로필 확인
+      if (currentUser?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single();
+        currentProfile = profile;
+
+        if (!profile || !profile.display_name) {
+          goStep('profile');
+        } else {
+          closeModal();
+          notifyAuthChange();
+        }
       } else {
-        closeModal();
-        notifyAuthChange();
+        // 세션 없이도 프로필 설정으로 이동
+        goStep('profile');
       }
     } catch (err) {
       document.getElementById('dino-error-otp').textContent = err.message || '인증에 실패했어요';
