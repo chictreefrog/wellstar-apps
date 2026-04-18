@@ -402,12 +402,15 @@ window.DinoAuth = (function() {
       if (profileErr) throw profileErr;
 
       if (inviteCode) {
-        const { data: joinResult } = await supabase.rpc('join_team_by_code', { code: inviteCode });
-        if (joinResult?.error) {
-          document.getElementById('dino-error-profile').textContent = joinResult.error;
-          btn.disabled = false;
-          btn.textContent = '시작하기';
-          return;
+        try {
+          const { data: joinResult } = await supabase.rpc('join_team_by_code', { code: inviteCode });
+          if (joinResult?.error) {
+            document.getElementById('dino-error-profile').textContent = joinResult.error;
+            // 에러가 나도 프로필은 이미 저장됨 — 초대코드만 실패
+            // 버튼은 계속 사용 가능하게 유지
+          }
+        } catch {
+          // 초대코드 실패해도 가입은 진행
         }
       }
 
