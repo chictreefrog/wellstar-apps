@@ -677,9 +677,7 @@ function selectScenario(el) {
 
   // Show quick replies for new scenario
   removeQuickReplies();
-  if (conversationHistory.length === 0) {
-    showInitialQuickReplies();
-  }
+  showInitialQuickReplies();
 }
 
 function showInitialQuickReplies() {
@@ -1100,6 +1098,5 @@ init();
 <script src="/shared/auth.js"></script>
 <script src="/shared/login-gate.js"></script>
 <script>DinoAuth.init();</script>
-<script src="/shared/nav.js"></script>
 </body>
 </html>
