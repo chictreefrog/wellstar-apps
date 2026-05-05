@@ -204,6 +204,38 @@ textarea.form-input { min-height:100px; resize:vertical; }
       <div id="inviteMemberList"></div>
     </div>
 
+    <!-- ═══ LEADS TAB ═══ -->
+    <div class="tab-content" id="tab-leads">
+      <!-- 내 리드마그넷 링크 -->
+      <div class="invite-box" style="border-color:rgba(191,90,242,0.3)">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:6px">🔮 내 사주 리드마그넷 링크</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:12px">잠재고객에게 공유하면 내 DB로 자동 수집돼요</div>
+        <div id="myRefLink" style="font-size:12px;color:#BF5AF2;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:10px 12px;word-break:break-all;font-family:'Courier New',monospace;line-height:1.5">로딩 중...</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#BF5AF2,#9B59B6)" onclick="copyMyLink()">링크 복사</button>
+          <button class="btn btn-ghost" style="flex:1" onclick="shareMyLink()">카톡 공유</button>
+        </div>
+        <div style="margin-top:12px;text-align:center">
+          <span style="font-size:12px;color:var(--text3)">수집된 잠재고객 </span>
+          <span style="font-size:16px;font-weight:800;color:#BF5AF2" id="myLeadCount">0</span>
+          <span style="font-size:12px;color:var(--text3)">명</span>
+        </div>
+      </div>
+
+      <!-- 리드 메시지 템플릿 -->
+      <div class="section-title" style="margin-top:4px">💬 공유 메시지 템플릿</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--text2);line-height:1.7" id="shareTemplate">로딩 중...</div>
+        <button class="btn btn-ghost" style="margin-top:12px;padding:10px" onclick="copyShareTemplate()">템플릿 복사</button>
+      </div>
+
+      <!-- 리더 전용: 파트너별 리드 현황 -->
+      <div id="leaderLeadStats" style="display:none">
+        <div class="section-title" style="margin-top:4px">👥 파트너별 수집 현황</div>
+        <div id="partnerLeadList"></div>
+      </div>
+    </div>
+
   </div>
 
   <nav class="bottom-nav" id="bottomNav" style="display:none">
@@ -218,6 +250,9 @@ textarea.form-input { min-height:100px; resize:vertical; }
     </button>
     <button class="nav-item" onclick="switchTab('invite')" data-tab="invite">
       <span class="nav-icon">🔗</span><span>초대</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('leads')" data-tab="leads">
+      <span class="nav-icon">🔮</span><span>리드</span>
     </button>
   </nav>
 </div>
@@ -286,6 +321,9 @@ async function loadDashboard() {
 
   // Load schedules
   loadSchedules(teamId);
+
+  // Load lead stats
+  loadLeadStats(members || []);
 
   // Show forms if leader
   if (isLeader) {
@@ -415,6 +453,95 @@ function copyInviteCode() {
   } else {
     navigator.clipboard.writeText(text).then(() => showToast('초대 코드가 복사되었습니다'));
   }
+}
+
+// ═══ LEADS / REFERRAL ═══
+function getRefCode(profile) {
+  if (profile.business_code) return profile.business_code;
+  return profile.id.replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
+function getSajuLink(profile) {
+  return `https://wellstar.life/saju/?ref=${encodeURIComponent(getRefCode(profile))}`;
+}
+
+async function loadLeadStats(members) {
+  if (!myProfile) return;
+  const ref = getRefCode(myProfile);
+  const link = getSajuLink(myProfile);
+
+  document.getElementById('myRefLink').textContent = link;
+  document.getElementById('shareTemplate').textContent =
+    `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
+
+  const { count } = await sb.from('leads')
+    .select('*', { count: 'exact', head: true })
+    .filter('quiz_result->>ref_code', 'eq', ref);
+  document.getElementById('myLeadCount').textContent = count || 0;
+
+  if (isLeader && members?.length) {
+    document.getElementById('leaderLeadStats').style.display = 'block';
+    await renderPartnerLeadStats(members);
+  }
+}
+
+async function renderPartnerLeadStats(members) {
+  const partners = members.filter(m => m.role !== 'leader' && m.role !== 'admin');
+  if (!partners.length) {
+    document.getElementById('partnerLeadList').innerHTML =
+      '<div class="empty"><div class="empty-icon">👥</div>파트너가 없어요</div>';
+    return;
+  }
+
+  const refCodes = partners.map(m => getRefCode(m));
+  const { data: allLeads } = await sb.from('leads')
+    .select('quiz_result')
+    .in('source', ['saju'])
+    .not('quiz_result->>ref_code', 'is', null);
+
+  const countMap = {};
+  (allLeads || []).forEach(l => {
+    const r = l.quiz_result?.ref_code;
+    if (r) countMap[r] = (countMap[r] || 0) + 1;
+  });
+
+  document.getElementById('partnerLeadList').innerHTML = partners.map(m => {
+    const ref = getRefCode(m);
+    const cnt = countMap[ref] || 0;
+    return `<div class="member-card">
+      <div class="member-avatar" style="background:linear-gradient(135deg,#BF5AF2,#9B59B6)">${(m.display_name || '?')[0]}</div>
+      <div class="member-info">
+        <div class="member-name">${m.display_name || '이름 없음'}</div>
+        <div class="member-meta">ref: ${ref}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:20px;font-weight:900;color:#BF5AF2">${cnt}</div>
+        <div style="font-size:11px;color:var(--text3)">리드</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyMyLink() {
+  if (!myProfile) return;
+  const link = getSajuLink(myProfile);
+  navigator.clipboard.writeText(link).then(() => showToast('링크가 복사되었습니다'));
+}
+
+function shareMyLink() {
+  if (!myProfile) return;
+  const link = getSajuLink(myProfile);
+  const text = `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
+  if (navigator.share) {
+    navigator.share({ title: '사주 성공 DNA 진단', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었습니다'));
+  }
+}
+
+function copyShareTemplate() {
+  const t = document.getElementById('shareTemplate').textContent;
+  navigator.clipboard.writeText(t).then(() => showToast('템플릿이 복사되었습니다'));
 }
 
 // ═══ INIT ═══
