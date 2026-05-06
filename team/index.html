@@ -193,15 +193,31 @@ textarea.form-input { min-height:100px; resize:vertical; }
 
     <!-- ═══ INVITE TAB ═══ -->
     <div class="tab-content" id="tab-invite">
-      <div class="invite-box">
-        <div style="font-size:14px;font-weight:700;margin-bottom:4px">팀 초대 코드</div>
-        <div class="invite-code" id="inviteCode">------</div>
-        <div class="invite-hint">이 코드를 팀원에게 공유하세요</div>
-        <button class="btn btn-primary" style="margin-top:16px" onclick="copyInviteCode()">코드 복사하기</button>
+
+      <!-- 팀장만 보이는 팀 초대코드 -->
+      <div id="leaderInviteSection" style="display:none">
+        <div class="invite-box">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px">팀 초대 코드</div>
+          <div class="invite-code" id="inviteCode">------</div>
+          <div class="invite-hint">파트너를 등록할 때 이 코드를 공유하세요</div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="copyInviteCode()">코드 복사하기</button>
+        </div>
+        <div class="section-title">👥 파트너 목록 <span class="badge" id="memberCount">0/30</span></div>
+        <div id="inviteMemberList"></div>
       </div>
 
-      <div class="section-title">👥 팀원 목록 <span class="badge" id="memberCount">0/30</span></div>
-      <div id="inviteMemberList"></div>
+      <!-- 파트너만 보이는 예비파트너 초대코드 -->
+      <div id="partnerInviteSection" style="display:none">
+        <div class="invite-box" style="border-color:rgba(255,107,53,0.4)">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:6px">🤝 내 예비파트너 초대코드</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:12px">관심있는 분께 이 코드를 알려주세요<br>나를 통해 가입하면 자동으로 연결돼요</div>
+          <div class="invite-code" id="partnerRefCode" style="font-size:22px;letter-spacing:3px;color:var(--accent)">------</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="partnerBizLabel"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="copyPartnerCode()">코드 복사하기</button>
+          <button class="btn btn-ghost" style="margin-top:8px" onclick="sharePartnerCode()">카톡으로 공유하기</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- ═══ LEADS TAB ═══ -->
@@ -324,6 +340,9 @@ async function loadDashboard() {
 
   // Load lead stats
   loadLeadStats(members || []);
+
+  // Render invite section based on role
+  renderInviteSection();
 
   // Show forms if leader
   if (isLeader) {
@@ -452,6 +471,39 @@ function copyInviteCode() {
     navigator.share({ title: '팀 초대', text });
   } else {
     navigator.clipboard.writeText(text).then(() => showToast('초대 코드가 복사되었습니다'));
+  }
+}
+
+function copyPartnerCode() {
+  const code = document.getElementById('partnerRefCode').textContent;
+  if (code === '------') return;
+  navigator.clipboard.writeText(code).then(() => showToast('초대코드가 복사되었습니다'));
+}
+
+function sharePartnerCode() {
+  const code = document.getElementById('partnerRefCode').textContent;
+  if (code === '------') return;
+  const text = `안녕하세요! AI 세일즈 시스템에 초대드려요 🦕\n\n회원가입 시 아래 초대코드를 입력해주세요:\n초대코드: ${code}\n\n👉 app.wellstar.life/team/`;
+  if (navigator.share) {
+    navigator.share({ title: '파트너 초대', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었습니다'));
+  }
+}
+
+function renderInviteSection() {
+  if (!myProfile) return;
+  if (isLeader) {
+    document.getElementById('leaderInviteSection').style.display = 'block';
+    document.getElementById('partnerInviteSection').style.display = 'none';
+  } else {
+    document.getElementById('leaderInviteSection').style.display = 'none';
+    document.getElementById('partnerInviteSection').style.display = 'block';
+    const code = myProfile.business_code || myProfile.id.replace(/-/g, '').slice(0, 8).toUpperCase();
+    document.getElementById('partnerRefCode').textContent = code;
+    document.getElementById('partnerBizLabel').textContent = myProfile.business_code
+      ? `사업자번호 기반 코드`
+      : `자동 생성 코드 (사업자번호 등록 시 변경됩니다)`;
   }
 }
 
