@@ -944,6 +944,12 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
         </div>
 
         <div class="my-menu-title">계정</div>
+        <!-- 팀 대시보드 (팀 소속일 때만 표시) -->
+        <div class="my-menu-item" id="teamDashboardMenuItem" style="display:none" onclick="window.location.href='/team/'">
+          <span class="my-menu-icon">👥</span>
+          <span class="my-menu-text">팀 대시보드</span>
+          <span class="my-menu-arrow">›</span>
+        </div>
         <div class="my-menu-item" id="authMenuItem" onclick="handleAuthMenu()">
           <span class="my-menu-icon">🔑</span>
           <span class="my-menu-text" id="authMenuText">로그인 / 팀 합류</span>
@@ -1270,9 +1276,15 @@ function updateAuthUI(user, profile) {
           badge.textContent = badgeText;
           myMemberBadge.textContent = badgeText;
         });
+      // 팀 대시보드 메뉴 표시 (팀 소속일 때만)
+      const teamBtn = document.getElementById('teamDashboardMenuItem');
+      if (teamBtn) teamBtn.style.display = 'flex';
     } else {
       badge.textContent = roleLabel;
       myMemberBadge.textContent = roleLabel;
+      // 팀 없으면 대시보드 버튼 숨김
+      const teamBtn = document.getElementById('teamDashboardMenuItem');
+      if (teamBtn) teamBtn.style.display = 'none';
     }
     badge.style.display = '';
 
@@ -1283,6 +1295,9 @@ function updateAuthUI(user, profile) {
     myEmail.textContent = '';
     myBizCode.textContent = '';
     myMemberBadge.textContent = 'Guest';
+    // 로그아웃 시 대시보드 버튼 숨김
+    const teamBtn = document.getElementById('teamDashboardMenuItem');
+    if (teamBtn) teamBtn.style.display = 'none';
   }
 }
 
