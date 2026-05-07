@@ -616,15 +616,26 @@ function renderLeadCards(leads) {
   if (!leads.length) return '<div style="text-align:center;padding:20px;color:var(--text3)">아직 수집된 잠재고객이 없어요</div>';
   return leads.map(l => {
     const date = l.created_at ? new Date(l.created_at).toLocaleDateString('ko-KR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-    const masked = l.email ? l.email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + b.replace(/./g, '*') + c) : '';
+    // 이름이 없으면 사주 유형으로 대체
+    const displayName = l.name || (l.day_master ? `${l.day_master}일간` : '잠재고객');
+    // 이메일 마스킹: 앞 2자 + *** + @도메인
+    const masked = l.email ? l.email.replace(/^(.{2})([^@]*)(@.*)$/, (_, a, b, c) => a + b.replace(/./g, '*') + c) : '';
+    // 생년월일 포맷 정리 (1990-3-5 → 1990년 3월 5일)
+    let birthDisplay = '';
+    if (l.birth_date) {
+      const parts = l.birth_date.split('-');
+      birthDisplay = parts.length === 3 ? `${parts[0]}년 ${parseInt(parts[1])}월 ${parseInt(parts[2])}일` : l.birth_date;
+    }
     return `<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div style="font-size:14px;font-weight:600">${l.name || '이름 없음'}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:14px;font-weight:600">${displayName}</div>
+          ${l.saju_type ? `<div style="font-size:11px;background:rgba(191,90,242,0.15);color:#BF5AF2;border-radius:6px;padding:2px 7px">${l.saju_type}</div>` : ''}
+        </div>
         <div style="font-size:11px;color:var(--text3)">${date}</div>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">📧 ${masked}</div>
-      ${l.birth_date ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px">🎂 ${l.birth_date}</div>` : ''}
-      ${l.saju_type ? `<div style="display:inline-block;font-size:11px;background:rgba(191,90,242,0.15);color:#BF5AF2;border-radius:6px;padding:3px 8px">${l.day_master || ''} · ${l.saju_type}</div>` : ''}
+      <div style="font-size:12px;color:var(--text2);margin-bottom:${birthDisplay ? '4px' : '0'}">📧 ${masked}</div>
+      ${birthDisplay ? `<div style="font-size:12px;color:var(--text3)">🎂 ${birthDisplay}</div>` : ''}
     </div>`;
   }).join('');
 }
