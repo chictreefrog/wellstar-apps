@@ -518,7 +518,7 @@ function getSajuLink(profile) {
 }
 
 async function loadLeadStats(members) {
-  if (!myProfile) return;
+  if (!myProfile || !myProfile.team_id) return;
   const ref = getRefCode(myProfile);
   const link = getSajuLink(myProfile);
 
@@ -526,36 +526,29 @@ async function loadLeadStats(members) {
   document.getElementById('shareTemplate').textContent =
     `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
 
-  const { count } = await sb.from('leads')
-    .select('*', { count: 'exact', head: true })
-    .filter('quiz_result->>ref_code', 'eq', ref);
-  document.getElementById('myLeadCount').textContent = count || 0;
+  // 서버 API를 통해 리드 통계 조회 (RLS 우회)
+  try {
+    const res = await fetch(`/api/lead-stats?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
+    const data = await res.json();
+    document.getElementById('myLeadCount').textContent = data.myCount ?? 0;
 
-  if (isLeader && members?.length) {
-    document.getElementById('leaderLeadStats').style.display = 'block';
-    await renderPartnerLeadStats(members);
+    if (isLeader && members?.length) {
+      document.getElementById('leaderLeadStats').style.display = 'block';
+      renderPartnerLeadStats(members, data.countMap || {});
+    }
+  } catch (e) {
+    console.error('lead-stats fetch error:', e);
+    document.getElementById('myLeadCount').textContent = 0;
   }
 }
 
-async function renderPartnerLeadStats(members) {
+function renderPartnerLeadStats(members, countMap) {
   const partners = members.filter(m => m.role !== 'leader' && m.role !== 'admin');
   if (!partners.length) {
     document.getElementById('partnerLeadList').innerHTML =
       '<div class="empty"><div class="empty-icon">👥</div>파트너가 없어요</div>';
     return;
   }
-
-  const refCodes = partners.map(m => getRefCode(m));
-  const { data: allLeads } = await sb.from('leads')
-    .select('quiz_result')
-    .in('source', ['saju'])
-    .not('quiz_result->>ref_code', 'is', null);
-
-  const countMap = {};
-  (allLeads || []).forEach(l => {
-    const r = l.quiz_result?.ref_code;
-    if (r) countMap[r] = (countMap[r] || 0) + 1;
-  });
 
   document.getElementById('partnerLeadList').innerHTML = partners.map(m => {
     const ref = getRefCode(m);
