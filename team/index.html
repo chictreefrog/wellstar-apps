@@ -675,10 +675,12 @@ function shareMyLink() {
   if (!myProfile) return;
   const link = getSajuLink(myProfile);
   const text = `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
-  if (navigator.share) {
+  // 모바일에서만 네이티브 공유 시트 사용 (PC는 Windows 시트가 뜨고 카카오톡이 없음)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile && navigator.share) {
     navigator.share({ title: '사주 성공 DNA 진단', text });
   } else {
-    navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었습니다'));
+    navigator.clipboard.writeText(text).then(() => showToast('📋 복사됐어요! 카카오톡에 붙여넣기 하세요'));
   }
 }
 
