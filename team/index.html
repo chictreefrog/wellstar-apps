@@ -231,11 +231,16 @@ textarea.form-input { min-height:100px; resize:vertical; }
           <button class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#BF5AF2,#9B59B6)" onclick="copyMyLink()">링크 복사</button>
           <button class="btn btn-ghost" style="flex:1" onclick="shareMyLink()">카톡 공유</button>
         </div>
-        <div style="margin-top:12px;text-align:center">
-          <span style="font-size:12px;color:var(--text3)">수집된 잠재고객 </span>
-          <span style="font-size:16px;font-weight:800;color:#BF5AF2" id="myLeadCount">0</span>
-          <span style="font-size:12px;color:var(--text3)">명</span>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <span style="font-size:12px;color:var(--text3)">수집된 잠재고객 </span>
+            <span style="font-size:16px;font-weight:800;color:#BF5AF2" id="myLeadCount">0</span>
+            <span style="font-size:12px;color:var(--text3)">명</span>
+          </div>
+          <button id="myLeadListBtn" onclick="toggleMyLeadList()" style="display:none;font-size:12px;color:#BF5AF2;background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.25);border-radius:8px;padding:5px 12px;cursor:pointer">목록 보기 ▾</button>
         </div>
+        <!-- 내 리드 목록 (접힘/펼침) -->
+        <div id="myLeadListPanel" style="display:none;margin-top:10px"></div>
       </div>
 
       <!-- 리드 메시지 템플릿 -->
@@ -249,6 +254,20 @@ textarea.form-input { min-height:100px; resize:vertical; }
       <div id="leaderLeadStats" style="display:none">
         <div class="section-title" style="margin-top:4px">👥 파트너별 수집 현황</div>
         <div id="partnerLeadList"></div>
+      </div>
+    </div>
+
+    <!-- 리드 목록 모달 -->
+    <div id="leadModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)" onclick="closeLeadModal(event)">
+      <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#12122a;border-radius:20px 20px 0 0;max-height:80vh;display:flex;flex-direction:column">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:15px;font-weight:700" id="leadModalTitle">잠재고객 목록</div>
+            <div style="font-size:12px;color:var(--text3)" id="leadModalSub"></div>
+          </div>
+          <button onclick="closeLeadModal()" style="background:rgba(255,255,255,0.08);border:none;color:var(--text);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer">✕</button>
+        </div>
+        <div id="leadModalList" style="overflow-y:auto;padding:16px 20px;flex:1"></div>
       </div>
     </div>
 
@@ -530,7 +549,11 @@ async function loadLeadStats(members) {
   try {
     const res = await fetch(`/api/lead-stats?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
     const data = await res.json();
-    document.getElementById('myLeadCount').textContent = data.myCount ?? 0;
+    const cnt = data.myCount ?? 0;
+    document.getElementById('myLeadCount').textContent = cnt;
+    // 목록 보기 버튼: 리드가 있을 때만 표시
+    const btn = document.getElementById('myLeadListBtn');
+    if (btn) btn.style.display = cnt > 0 ? 'block' : 'none';
 
     if (isLeader && members?.length) {
       document.getElementById('leaderLeadStats').style.display = 'block';
@@ -540,6 +563,70 @@ async function loadLeadStats(members) {
     console.error('lead-stats fetch error:', e);
     document.getElementById('myLeadCount').textContent = 0;
   }
+}
+
+let myLeadListOpen = false;
+async function toggleMyLeadList() {
+  const panel = document.getElementById('myLeadListPanel');
+  const btn = document.getElementById('myLeadListBtn');
+  if (myLeadListOpen) {
+    panel.style.display = 'none';
+    btn.textContent = '목록 보기 ▾';
+    myLeadListOpen = false;
+    return;
+  }
+  btn.textContent = '로딩 중...';
+  const ref = getRefCode(myProfile);
+  try {
+    const res = await fetch(`/api/lead-list?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
+    const data = await res.json();
+    panel.innerHTML = renderLeadCards(data.leads || []);
+    panel.style.display = 'block';
+    btn.textContent = '접기 ▴';
+    myLeadListOpen = true;
+  } catch (e) {
+    btn.textContent = '목록 보기 ▾';
+    showToast('목록을 불러오지 못했어요');
+  }
+}
+
+async function openPartnerLeads(ref, name) {
+  document.getElementById('leadModalTitle').textContent = `${name}의 잠재고객`;
+  document.getElementById('leadModalSub').textContent = '로딩 중...';
+  document.getElementById('leadModalList').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3)">불러오는 중...</div>';
+  document.getElementById('leadModal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  try {
+    const res = await fetch(`/api/lead-list?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
+    const data = await res.json();
+    document.getElementById('leadModalSub').textContent = `총 ${data.total}명`;
+    document.getElementById('leadModalList').innerHTML = renderLeadCards(data.leads || []);
+  } catch (e) {
+    document.getElementById('leadModalList').innerHTML = '<div style="text-align:center;padding:30px;color:var(--red)">불러오기 실패</div>';
+  }
+}
+
+function closeLeadModal(e) {
+  if (e && e.target !== document.getElementById('leadModal')) return;
+  document.getElementById('leadModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderLeadCards(leads) {
+  if (!leads.length) return '<div style="text-align:center;padding:20px;color:var(--text3)">아직 수집된 잠재고객이 없어요</div>';
+  return leads.map(l => {
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('ko-KR', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+    const masked = l.email ? l.email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + b.replace(/./g, '*') + c) : '';
+    return `<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:600">${l.name || '이름 없음'}</div>
+        <div style="font-size:11px;color:var(--text3)">${date}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">📧 ${masked}</div>
+      ${l.birth_date ? `<div style="font-size:12px;color:var(--text2);margin-bottom:4px">🎂 ${l.birth_date}</div>` : ''}
+      ${l.saju_type ? `<div style="display:inline-block;font-size:11px;background:rgba(191,90,242,0.15);color:#BF5AF2;border-radius:6px;padding:3px 8px">${l.day_master || ''} · ${l.saju_type}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function renderPartnerLeadStats(members, countMap) {
@@ -553,7 +640,7 @@ function renderPartnerLeadStats(members, countMap) {
   document.getElementById('partnerLeadList').innerHTML = partners.map(m => {
     const ref = getRefCode(m);
     const cnt = countMap[ref] || 0;
-    return `<div class="member-card">
+    return `<div class="member-card" onclick="${cnt > 0 ? `openPartnerLeads('${ref}','${(m.display_name||'파트너').replace(/'/g,"\\'")}')` : ''}">
       <div class="member-avatar" style="background:linear-gradient(135deg,#BF5AF2,#9B59B6)">${(m.display_name || '?')[0]}</div>
       <div class="member-info">
         <div class="member-name">${m.display_name || '이름 없음'}</div>
@@ -561,7 +648,7 @@ function renderPartnerLeadStats(members, countMap) {
       </div>
       <div style="text-align:right">
         <div style="font-size:20px;font-weight:900;color:#BF5AF2">${cnt}</div>
-        <div style="font-size:11px;color:var(--text3)">리드</div>
+        <div style="font-size:11px;color:var(--text3)">${cnt > 0 ? '리드 ▶' : '리드'}</div>
       </div>
     </div>`;
   }).join('');
