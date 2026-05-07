@@ -222,37 +222,13 @@ textarea.form-input { min-height:100px; resize:vertical; }
 
     <!-- ═══ LEADS TAB ═══ -->
     <div class="tab-content" id="tab-leads">
-      <!-- 내 리드마그넷 링크 -->
-      <div class="invite-box" style="border-color:rgba(191,90,242,0.3)">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:6px">🔮 내 사주 리드마그넷 링크</div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:12px">잠재고객에게 공유하면 내 DB로 자동 수집돼요</div>
-        <div id="myRefLink" style="font-size:12px;color:#BF5AF2;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:10px 12px;word-break:break-all;font-family:'Courier New',monospace;line-height:1.5">로딩 중...</div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#BF5AF2,#9B59B6)" onclick="copyMyLink()">링크 복사</button>
-          <button class="btn btn-ghost" style="flex:1" onclick="shareMyLink()">공유</button>
-        </div>
-        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <span style="font-size:12px;color:var(--text3)">수집된 잠재고객 </span>
-            <span style="font-size:16px;font-weight:800;color:#BF5AF2" id="myLeadCount">0</span>
-            <span style="font-size:12px;color:var(--text3)">명</span>
-          </div>
-          <button id="myLeadListBtn" onclick="toggleMyLeadList()" style="display:none;font-size:12px;color:#BF5AF2;background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.25);border-radius:8px;padding:5px 12px;cursor:pointer">목록 보기 ▾</button>
-        </div>
-        <!-- 내 리드 목록 (접힘/펼침) -->
-        <div id="myLeadListPanel" style="display:none;margin-top:10px"></div>
-      </div>
-
-      <!-- 리드 메시지 템플릿 -->
-      <div class="section-title" style="margin-top:4px">💬 공유 메시지 템플릿</div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px">
-        <div style="font-size:13px;color:var(--text2);line-height:1.7" id="shareTemplate">로딩 중...</div>
-        <button class="btn btn-ghost" style="margin-top:12px;padding:10px" onclick="copyShareTemplate()">템플릿 복사</button>
-      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">잠재고객에게 공유하면 내 DB로 자동 수집돼요</div>
+      <!-- 리드마그넷 카드 (JS로 동적 렌더링) -->
+      <div id="leadMagnetCards"></div>
 
       <!-- 리더 전용: 파트너별 리드 현황 -->
-      <div id="leaderLeadStats" style="display:none">
-        <div class="section-title" style="margin-top:4px">👥 파트너별 수집 현황</div>
+      <div id="leaderLeadStats" style="display:none;margin-top:4px">
+        <div class="section-title">👥 파트너별 수집 현황</div>
         <div id="partnerLeadList"></div>
       </div>
     </div>
@@ -526,56 +502,90 @@ function renderInviteSection() {
   }
 }
 
+// ═══ LEAD MAGNET CONFIG ═══
+// 리드마그넷 추가 시 이 배열에만 항목 추가하면 끝!
+const LEAD_MAGNETS = [
+  {
+    id: 'saju',
+    icon: '🔮',
+    name: '사주 성공 DNA',
+    source: 'saju',
+    url: (ref) => `https://wellstar.life/saju/?ref=${encodeURIComponent(ref)}`,
+    message: (link) =>
+      `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`,
+  },
+  // ── 리드마그넷 추가 예시 ──────────────────────────────────────────
+  // {
+  //   id: 'quiz',
+  //   icon: '🧬',
+  //   name: '영업 유형 진단',
+  //   source: 'quiz',
+  //   url: (ref) => `https://app.wellstar.life/quiz/?ref=${encodeURIComponent(ref)}`,
+  //   message: (link) => `🧬 나는 어떤 영업 유형일까?\n\n무료 진단 해봐!\n👉 ${link}`,
+  // },
+];
+
 // ═══ LEADS / REFERRAL ═══
 function getRefCode(profile) {
   if (profile.business_code) return profile.business_code;
   return profile.id.replace(/-/g, '').slice(0, 8).toUpperCase();
 }
 
-function getSajuLink(profile) {
-  return `https://wellstar.life/saju/?ref=${encodeURIComponent(getRefCode(profile))}`;
+// 리드마그넷 카드 전체 렌더링
+function renderLeadMagnetCards(countMap) {
+  const ref = getRefCode(myProfile);
+  const container = document.getElementById('leadMagnetCards');
+  if (!container) return;
+  container.innerHTML = LEAD_MAGNETS.map(magnet => {
+    const link = magnet.url(ref);
+    const cnt = countMap[ref] || 0;
+    return `
+    <div style="background:var(--card);border:1px solid rgba(191,90,242,0.3);border-radius:16px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700">${magnet.icon} ${magnet.name}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px;font-weight:800;color:#BF5AF2">${cnt}명</span>
+          <button id="listBtn-${magnet.id}" onclick="toggleLeadList('${magnet.id}')"
+            style="display:${cnt > 0 ? 'block' : 'none'};font-size:11px;color:#BF5AF2;background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.25);border-radius:6px;padding:3px 10px;cursor:pointer">목록 ▾</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#BF5AF2;background:rgba(191,90,242,0.08);border:1px solid rgba(191,90,242,0.15);border-radius:8px;padding:8px 10px;word-break:break-all;font-family:'Courier New',monospace;margin-bottom:10px">${link}</div>
+      <button onclick="shareMagnet('${magnet.id}')"
+        style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#BF5AF2,#9B59B6);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        📤 공유 메시지 복사
+      </button>
+      <div id="leadList-${magnet.id}" style="display:none;margin-top:10px"></div>
+    </div>`;
+  }).join('');
 }
 
-async function loadLeadStats(members) {
-  if (!myProfile || !myProfile.team_id) return;
+// 공유 버튼: 메시지+링크 한번에 복사 (모바일은 네이티브 공유)
+function shareMagnet(magnetId) {
+  const magnet = LEAD_MAGNETS.find(m => m.id === magnetId);
+  if (!magnet || !myProfile) return;
   const ref = getRefCode(myProfile);
-  const link = getSajuLink(myProfile);
-
-  document.getElementById('myRefLink').textContent = link;
-  document.getElementById('shareTemplate').textContent =
-    `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
-
-  // 서버 API를 통해 리드 통계 조회 (RLS 우회)
-  try {
-    const res = await fetch(`/api/lead-stats?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
-    const data = await res.json();
-    const cnt = data.myCount ?? 0;
-    document.getElementById('myLeadCount').textContent = cnt;
-    // 목록 보기 버튼: 리드가 있을 때만 표시
-    const btn = document.getElementById('myLeadListBtn');
-    if (btn) btn.style.display = cnt > 0 ? 'block' : 'none';
-
-    if (isLeader && members?.length) {
-      document.getElementById('leaderLeadStats').style.display = 'block';
-      renderPartnerLeadStats(members, data.countMap || {});
-    }
-  } catch (e) {
-    console.error('lead-stats fetch error:', e);
-    document.getElementById('myLeadCount').textContent = 0;
+  const link = magnet.url(ref);
+  const text = magnet.message(link);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile && navigator.share) {
+    navigator.share({ title: magnet.name, text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 복사됐어요! 카카오톡에 붙여넣기 하세요'));
   }
 }
 
-let myLeadListOpen = false;
-async function toggleMyLeadList() {
-  const panel = document.getElementById('myLeadListPanel');
-  const btn = document.getElementById('myLeadListBtn');
-  if (myLeadListOpen) {
+const leadListOpen = {};
+async function toggleLeadList(magnetId) {
+  const panel = document.getElementById(`leadList-${magnetId}`);
+  const btn = document.getElementById(`listBtn-${magnetId}`);
+  if (!panel || !btn) return;
+  if (leadListOpen[magnetId]) {
     panel.style.display = 'none';
-    btn.textContent = '목록 보기 ▾';
-    myLeadListOpen = false;
+    btn.textContent = '목록 ▾';
+    leadListOpen[magnetId] = false;
     return;
   }
-  btn.textContent = '로딩 중...';
+  btn.textContent = '로딩...';
   const ref = getRefCode(myProfile);
   try {
     const res = await fetch(`/api/lead-list?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
@@ -583,10 +593,27 @@ async function toggleMyLeadList() {
     panel.innerHTML = renderLeadCards(data.leads || []);
     panel.style.display = 'block';
     btn.textContent = '접기 ▴';
-    myLeadListOpen = true;
+    leadListOpen[magnetId] = true;
   } catch (e) {
-    btn.textContent = '목록 보기 ▾';
+    btn.textContent = '목록 ▾';
     showToast('목록을 불러오지 못했어요');
+  }
+}
+
+async function loadLeadStats(members) {
+  if (!myProfile || !myProfile.team_id) return;
+  const ref = getRefCode(myProfile);
+  try {
+    const res = await fetch(`/api/lead-stats?team_id=${encodeURIComponent(myProfile.team_id)}&ref_code=${encodeURIComponent(ref)}`);
+    const data = await res.json();
+    renderLeadMagnetCards(data.countMap || {});
+    if (isLeader && members?.length) {
+      document.getElementById('leaderLeadStats').style.display = 'block';
+      renderPartnerLeadStats(members, data.countMap || {});
+    }
+  } catch (e) {
+    console.error('lead-stats fetch error:', e);
+    renderLeadMagnetCards({});
   }
 }
 
@@ -663,30 +690,6 @@ function renderPartnerLeadStats(members, countMap) {
       </div>
     </div>`;
   }).join('');
-}
-
-function copyMyLink() {
-  if (!myProfile) return;
-  const link = getSajuLink(myProfile);
-  navigator.clipboard.writeText(link).then(() => showToast('링크가 복사되었습니다'));
-}
-
-function shareMyLink() {
-  if (!myProfile) return;
-  const link = getSajuLink(myProfile);
-  const text = `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`;
-  // 모바일에서만 네이티브 공유 시트 사용 (PC는 Windows 시트가 뜨고 카카오톡이 없음)
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile && navigator.share) {
-    navigator.share({ title: '사주 성공 DNA 진단', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => showToast('📋 복사됐어요! 카카오톡에 붙여넣기 하세요'));
-  }
-}
-
-function copyShareTemplate() {
-  const t = document.getElementById('shareTemplate').textContent;
-  navigator.clipboard.writeText(t).then(() => showToast('템플릿이 복사되었습니다'));
 }
 
 // ═══ INIT ═══
