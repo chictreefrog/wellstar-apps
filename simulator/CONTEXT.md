@@ -1,40 +1,43 @@
-# 수입 시뮬레이터 — Claude Code 컨텍스트
+# 웰런스 수입 시뮬레이터 — Claude Code 컨텍스트
 
 ## 앱 정보
 - **URL**: app.wellstar.life/simulator/
 - **저장소**: chictreefrog/wellstar-apps / simulator/ 폴더
-- **대상**: 영업자 (NM, 보험, 방문판매, 기타)
-- **목적**: 활동량 → 수입 계산 + 목표 수입 → AI 역산 플랜
+- **대상**: 웰런스 사업자회원(WP) 전용
+- **목적**: 활동량 → 5가지 수당 + 직급 자동판정 + 예상 수입 계산
+- **기준**: 웰런스 공식 보상 구조(2024)
 
-## 탭 구조
-1. **수입 계산 탭** — 슬라이더로 활동량 입력 → 예상 수입 계산
-2. **목표 플래너 탭** — 목표 금액 설정 → AI 역산 플랜 생성
+## 개편 이력
+- v1 (legacy): 4업종 범용 시뮬레이터 → `legacy-simulator.html` 로 보존
+- v2 (현재): 웰런스 전용 정밀 시뮬레이터로 전면 개편 (요청서 v1.0)
 
-## 업종 4가지 (변경 금지)
-- nm: 네트워크마케팅 (PV 기준 수당 계산)
-- insurance: 보험 영업 (초회/유지 수수료)
-- direct: 방문판매 (마진율 기반)
-- custom: 직접 입력
+## 파일 구조
+- `index.html` — 모드A(단발 계산) UI
+- `engine.js` — 계산 엔진 (브라우저 `window.WellanceEngine` / Node `require`)
+- `verify.js` — 검증 테스트 (요청서 SECTION 09 4건). 실행: `node simulator/verify.js`
+- `legacy-simulator.html` — 구 4업종 시뮬레이터 (Phase 2 재확장 참고용)
 
-## AI 역산 플랜 API
-- Endpoint: blogtool.wellstar.life/api/income-plan (⏳ 미구현)
-- 실패 시 로컬 폴백 자동 실행 (generateLocalPlan 함수)
-- Request: { targetAmount, industry, industryName }
-- Response: { plan: [{ icon, title, content }] }
+## 계산 엔진 (engine.js)
+5가지 수당:
+- ① 팩추천 커미션 = 신규 직추 팩 결제액 × 15%
+- ② 후원수당(팀커미션) = 소실적 주간 CV × 직급별 지급율, 주극점 상한
+- ③ 추천매칭 = 팀커미션 매칭 (세대별 1G~5G 다운라인 팀수당 × 직급별 매칭율)
+  - 구매실적 매칭은 구매(팩/단품) 금액을 특정할 수 없어 미산정 — 결과 화면 안내문구로 보완
+- ④ 랭크업 보너스 = 직급 상승 시 최초 1회
+- ⑤ 직급유지(랭크 퀄리파이) = 4주 간격 주급
 
-## AI 다이어리 연동
-- localStorage 'diary_goals' 키에 income_target, industry, income_plan 저장
-- 다이어리 앱과 같은 브라우저에서 열면 자동 연동
+직급 판정: 최근 4주 누적 소실적 QV = min(좌QV, 우QV) 기준, 10단계 greedy 판정.
 
-## ✅ 완료
-- 4개 업종 수입 계산 (슬라이더)
-- 목표 금액 역산 플래너 (로컬 폴백 포함)
-- 달성 타임라인 시각화
-- AI 다이어리 연동 (localStorage)
-- 옆집디노 브랜딩
+## feature flag
+- `index.html` 의 `SHOW_INDUSTRY_SELECTOR = false` — Phase 2 영업인 일반용 재확장 토글
 
-## ⏳ TODO
-- [ ] **income-plan API**: blogtool에 api/income-plan.ts 추가 → Gemini로 더 정교한 플랜 생성
-- [ ] **업종별 수당 커스터마이징**: 사용자가 수당 구조 직접 설정 저장
-- [ ] **히스토리**: 계산 결과 저장 및 비교
-- [ ] **앱 허브 랜딩 업데이트**: simulator 카드 추가
+## 검증 상태 (verify.js — PASS 24 / FAIL 0)
+- PART A: TC-1~4 직급·①·②·④·⑤ 전 항목 일치 ✅
+- PART B: ③ 팀커미션 매칭 공식 검증 — STEP3·4 ③값(92,175/217,350원) 재현 확인 ✅
+- ③ 추천매칭은 세대별 팀수당 입력에 따라 산출 (입력 의존)
+
+## ⏳ TODO (Phase 2)
+- [ ] 모드B — 주당 N명 모집 52주 시뮬레이션 + 주차별 그래프
+- [ ] 브론즈 초기 4주 다운라인 볼륨 내림(유지금액 차감 후 1회 롤다운) 반영
+- [ ] PDF 다운로드 / 마일스톤 카드
+- [ ] 모집 깔때기 연동 (CTA, 리드마그넷)

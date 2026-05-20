@@ -2,651 +2,793 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0D0D1A">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>수입 시뮬레이터</title>
+<meta name="description" content="웰런스 수입 시뮬레이터 — 내 활동량으로 5가지 수당과 직급, 예상 수입을 정확히 계산합니다.">
+<title>웰런스 수입 시뮬레이터</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
 :root {
-  --bg: #0D0D1A;
-  --bg2: #13131F;
-  --card: #1A1A2E;
-  --card2: #1E1E35;
-  --border: rgba(255,255,255,0.08);
-  --accent: #FF6B35;
-  --text: #F0F0F8;
-  --text2: #9999BB;
-  --text3: #5555AA;
-  --green: #27AE60;
-  --gold: #FFD700;
-  --tab-h: 60px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ink: #0d1b2a;
+  --ink-2: #1b263b;
+  --line: #e3e1d6;
+  --bg: #fdfcf7;
+  --bg-2: #f5f3eb;
+  --card: #ffffff;
+  --blue: #1e3a5f;
+  --blue-2: #3a5a8a;
+  --gold: #b8893d;
+  --gold-soft: #f5ecdb;
+  --green: #2d7d46;
+  --green-soft: #e6f2ea;
+  --red: #b8413d;
+  --red-soft: #fdf0ee;
+  --mute: #5f6b7a;
+  --shadow-s: 0 1px 3px rgba(13,27,42,0.06);
+  --shadow-m: 0 6px 20px rgba(13,27,42,0.10);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
-#app { height: 100%; display: flex; flex-direction: column; }
-.screen { flex: 1; overflow-y: auto; padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); display: none; }
-.screen.active { display: block; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 560px; margin: 0 auto; padding-bottom: 60px; }
 
-/* 탭바 */
-.tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--tab-h) + var(--safe-bottom)); background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: var(--safe-bottom); }
-.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text3); border: none; background: none; font-family: 'Noto Sans KR', sans-serif; transition: color 0.2s; }
-.tab-btn.active { color: var(--accent); }
-.tab-btn .tab-icon { font-size: 20px; }
-.tab-btn .tab-label { font-size: 10px; font-weight: 500; }
+/* ── 헤더 ── */
+.app-header {
+  background: linear-gradient(135deg, var(--blue), #14283f);
+  color: #fff;
+  padding: 26px 22px 22px;
+  border-bottom: 4px solid var(--gold);
+}
+.app-header .eyebrow {
+  font-size: 12px; letter-spacing: 0.22em; color: var(--gold);
+  font-weight: 700; text-transform: uppercase; margin-bottom: 7px;
+}
+.app-header h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; }
+.app-header .sub { font-size: 14.5px; color: #c5d2e2; margin-top: 5px; }
 
-/* 헤더 */
-.page-header { position: sticky; top: 0; z-index: 50; background: var(--bg2); padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
-.page-header h1 { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
-.page-header .subtitle { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* ── 도움말 배너 ── */
+.guide {
+  background: var(--gold-soft);
+  border: 1px solid #e8d6b0;
+  border-radius: 12px;
+  margin: 16px 16px 0;
+  padding: 14px 16px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+.guide b { color: var(--blue); }
+.guide .guide-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; color: var(--blue); cursor: pointer;
+}
+.guide .guide-body { margin-top: 8px; }
+.guide ol { margin: 6px 0 0 20px; }
+.guide li { margin-bottom: 3px; }
+.guide.collapsed .guide-body { display: none; }
+.guide .toggle-ic { font-size: 13px; color: var(--gold); }
 
-/* 공통 */
-.section-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 1px; padding: 16px 20px 8px; }
-.card { background: var(--card); border-radius: 14px; padding: 16px; margin: 0 16px 12px; }
-.card-label { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px; }
-.form-group { margin-bottom: 14px; }
-.form-label { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
-input, select { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 15px; padding: 11px 14px; width: 100%; outline: none; transition: border-color 0.2s; }
-input:focus, select:focus { border-color: var(--accent); }
-select option { background: var(--bg2); }
-.btn-primary { background: var(--accent); color: white; border: none; border-radius: 10px; padding: 14px 20px; font-size: 15px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; transition: opacity 0.15s; }
-.btn-primary:active { opacity: 0.8; }
-.btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; width: 100%; }
+/* ── 섹션 / 카드 ── */
+.section-title {
+  font-size: 13px; font-weight: 800; color: var(--gold);
+  letter-spacing: 0.12em; padding: 22px 20px 6px; text-transform: uppercase;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin: 0 16px 12px;
+  padding: 18px;
+  box-shadow: var(--shadow-s);
+}
+.card h3 { font-size: 17px; font-weight: 800; color: var(--blue); margin-bottom: 4px; }
+.card .card-desc { font-size: 13.5px; color: var(--mute); margin-bottom: 14px; }
 
-/* 업종 선택 */
-.industry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 16px; }
-.industry-btn { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
-.industry-btn.selected { border-color: var(--accent); background: rgba(255,107,53,0.1); }
-.industry-btn .ind-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-.industry-btn .ind-name { font-size: 14px; font-weight: 700; }
-.industry-btn .ind-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+/* ── 필드 ── */
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 15px; font-weight: 700; color: var(--ink-2); margin-bottom: 7px;
+}
+.help-btn {
+  width: 21px; height: 21px; border-radius: 50%;
+  border: 1.5px solid var(--gold); background: #fff; color: var(--gold);
+  font-size: 12px; font-weight: 800; cursor: pointer; flex-shrink: 0;
+  line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+.hint {
+  display: none; font-size: 13.5px; color: var(--ink-2);
+  background: var(--bg-2); border-left: 3px solid var(--gold);
+  padding: 9px 12px; border-radius: 0 8px 8px 0; margin: 0 0 9px;
+}
+.hint.show { display: block; }
+input[type=text], select {
+  width: 100%; min-height: 54px;
+  background: #fff; border: 1.5px solid var(--line); border-radius: 11px;
+  color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 600;
+  padding: 12px 15px; outline: none; transition: border-color 0.15s;
+}
+input[type=text]:focus, select:focus { border-color: var(--blue); }
+input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.field .unit { font-size: 13px; color: var(--mute); font-weight: 600; margin-left: 4px; }
+.input-suffix { position: relative; }
+.input-suffix .suffix {
+  position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; color: var(--mute); font-weight: 700; pointer-events: none;
+}
+.input-suffix input { padding-right: 46px; }
 
-/* 슬라이더 */
-.slider-group { margin-bottom: 16px; }
-.slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.slider-label { font-size: 13px; font-weight: 600; color: var(--text2); }
-.slider-value { font-size: 16px; font-weight: 900; color: var(--accent); font-family: 'Bebas Neue', sans-serif; }
-input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: var(--card2); outline: none; border: none; padding: 0; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 2px 8px rgba(255,107,53,0.4); }
+/* ── 토글 (액티브 자격) ── */
+.toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 13px 0; border-bottom: 1px solid var(--line);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-row .t-label { font-size: 15.5px; font-weight: 700; color: var(--ink-2); }
+.toggle-row .t-label small { display: block; font-size: 12.5px; color: var(--mute); font-weight: 500; }
+.switch { position: relative; width: 82px; height: 44px; flex-shrink: 0; cursor: pointer; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .track {
+  position: absolute; inset: 0; background: #d4d2c6; border-radius: 22px;
+  transition: background 0.2s;
+}
+.switch .knob {
+  position: absolute; top: 4px; left: 4px; width: 36px; height: 36px;
+  background: #fff; border-radius: 50%; transition: left 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+}
+.switch .txt {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-size: 12px; font-weight: 800; color: #fff;
+}
+.switch .txt.on  { left: 11px; opacity: 0; }
+.switch .txt.off { right: 9px; color: #6a6a5e; }
+.switch input:checked + .track { background: var(--green); }
+.switch input:checked + .track + .knob,
+.switch input:checked ~ .knob { left: 42px; }
+.switch input:checked ~ .txt.on { opacity: 1; }
+.switch input:checked ~ .txt.off { opacity: 0; }
 
-/* 수입 결과 카드 */
-.income-result { background: linear-gradient(135deg, #1A1A2E, #2D1A0E); border: 1px solid rgba(255,107,53,0.3); border-radius: 18px; padding: 24px; margin: 0 16px 12px; }
-.income-main { text-align: center; margin-bottom: 20px; }
-.income-label { font-size: 12px; color: var(--text2); letter-spacing: 1px; margin-bottom: 8px; }
-.income-amount { font-size: 48px; font-weight: 900; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: -1px; }
-.income-unit { font-size: 16px; color: var(--text2); }
-.income-year { font-size: 14px; color: var(--text2); margin-top: 4px; }
-.income-breakdown { display: flex; flex-direction: column; gap: 8px; }
-.breakdown-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.breakdown-item:last-child { border-bottom: none; }
-.breakdown-name { font-size: 13px; color: var(--text2); }
-.breakdown-amount { font-size: 14px; font-weight: 700; color: var(--text); }
+/* ── 스테퍼 ── */
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button {
+  width: 52px; height: 52px; border-radius: 12px;
+  border: 1.5px solid var(--blue); background: #fff; color: var(--blue);
+  font-size: 26px; font-weight: 700; cursor: pointer; line-height: 1;
+}
+.stepper button:active { background: var(--bg-2); }
+.stepper .count {
+  flex: 1; text-align: center; font-size: 22px; font-weight: 800;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.stepper .count small { font-size: 14px; color: var(--mute); font-weight: 600; }
 
-/* AI 플랜 */
-.ai-plan-section { margin: 0 16px 12px; }
-.ai-plan-card { background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(123,94,167,0.1)); border: 1px solid rgba(255,107,53,0.3); border-radius: 16px; padding: 20px; }
-.ai-plan-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; margin-bottom: 14px; }
-.ai-plan-content { font-size: 14px; line-height: 1.8; color: var(--text); }
-.ai-plan-item { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; }
-.ai-plan-icon { font-size: 18px; flex-shrink: 0; }
-.ai-plan-text { font-size: 13px; line-height: 1.6; }
-.ai-plan-text strong { color: var(--accent); }
-.ai-loading { display: flex; align-items: center; gap: 10px; color: var(--text2); font-size: 14px; }
-.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ── 콜아웃 ── */
+.callout {
+  background: var(--red-soft); border-left: 4px solid var(--red);
+  border-radius: 0 8px 8px 0; padding: 11px 14px; font-size: 13.5px;
+  color: var(--ink-2); margin-top: 12px;
+}
+.callout b { color: var(--red); }
+.callout.blue { background: #eef4fb; border-left-color: var(--blue); }
+.callout.blue b { color: var(--blue); }
 
-/* 목표 역산 탭 */
-.target-input-wrap { padding: 16px; }
-.target-amount-display { text-align: center; padding: 24px 0; }
-.target-label { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
-.target-amount { font-size: 56px; font-weight: 900; color: var(--gold); font-family: 'Bebas Neue', sans-serif; }
-.target-unit { font-size: 18px; color: var(--text2); }
-.preset-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
-.preset-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--card2); color: var(--text2); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
-.preset-btn.selected { background: rgba(255,215,0,0.15); border-color: var(--gold); color: var(--gold); }
+/* ── 라인 그리드 ── */
+.line-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.line-box {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px;
+}
+.line-box .line-name {
+  font-size: 13px; font-weight: 800; letter-spacing: 0.04em;
+  margin-bottom: 12px; text-transform: uppercase;
+}
+.line-box.left  .line-name { color: var(--blue); }
+.line-box.right .line-name { color: var(--gold); }
 
-/* 달성 기간 */
-.timeline-bar { display: flex; gap: 6px; margin: 12px 0; }
-.timeline-item { flex: 1; text-align: center; }
-.timeline-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin: 0 auto 4px; }
-.timeline-circle.done { background: var(--green); color: white; }
-.timeline-circle.active { background: var(--accent); color: white; }
-.timeline-circle.future { background: var(--card2); color: var(--text3); }
-.timeline-month { font-size: 10px; color: var(--text2); }
-.timeline-label { font-size: 9px; color: var(--text3); }
+/* ── 세대별 입력 그리드 ── */
+.gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.callout a { color: var(--blue); font-weight: 700; }
+.match-note {
+  font-size: 13px; color: var(--mute); line-height: 1.6;
+  margin: 0 16px 12px; padding: 0 4px;
+}
+.match-note a { color: var(--blue); font-weight: 700; }
 
-/* 다이어리 연동 */
-.diary-connect-card { background: linear-gradient(135deg, rgba(39,174,96,0.1), rgba(39,174,96,0.05)); border: 1px solid rgba(39,174,96,0.3); border-radius: 14px; padding: 16px; margin: 0 16px 16px; display: flex; align-items: center; gap: 14px; }
-.diary-connect-icon { font-size: 32px; flex-shrink: 0; }
-.diary-connect-text { flex: 1; }
-.diary-connect-title { font-size: 14px; font-weight: 700; color: var(--text); }
-.diary-connect-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.btn-connect { background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; white-space: nowrap; }
+/* ── 버튼 ── */
+.btn-calc {
+  display: block; width: calc(100% - 32px); margin: 8px 16px 4px;
+  background: linear-gradient(135deg, var(--gold), #9c7330);
+  color: #fff; border: none; border-radius: 13px;
+  padding: 18px; font-size: 18.5px; font-weight: 800; font-family: inherit;
+  cursor: pointer; box-shadow: var(--shadow-m); letter-spacing: -0.01em;
+}
+.btn-calc:active { transform: translateY(1px); }
+.btn-ghost {
+  width: 100%; min-height: 50px; background: #fff;
+  border: 1.5px solid var(--line); border-radius: 11px;
+  color: var(--blue); font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer;
+}
 
-/* 토스트 */
-.toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; border: 1px solid var(--border); }
+/* ── 결과 ── */
+#result { display: none; }
+.result-hero {
+  background: linear-gradient(150deg, var(--blue), #14283f);
+  color: #fff; border-radius: 18px; margin: 16px 16px 12px;
+  padding: 26px 22px; text-align: center; box-shadow: var(--shadow-m);
+}
+.rank-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(184,137,61,0.2); border: 1.5px solid var(--gold);
+  color: #f0d9aa; border-radius: 100px; padding: 7px 18px;
+  font-size: 15px; font-weight: 800; margin-bottom: 16px;
+}
+.rank-badge .ic { font-size: 19px; }
+.result-hero .total-label { font-size: 13.5px; color: #c5d2e2; letter-spacing: 0.05em; }
+.result-hero .total-amount {
+  font-size: 46px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px;
+  font-variant-numeric: tabular-nums;
+}
+.result-hero .total-amount .won { font-size: 22px; font-weight: 700; }
+.result-hero .yearly { font-size: 14px; color: #c5d2e2; }
+
+.breakdown { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 8px 18px; box-shadow: var(--shadow-s); }
+.bd-item {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--line); gap: 12px;
+}
+.bd-item:last-child { border-bottom: none; }
+.bd-name { font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.bd-name small { display: block; font-size: 12.5px; color: var(--mute); font-weight: 500; }
+.bd-amount { font-size: 18px; font-weight: 800; color: var(--blue); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bd-amount.zero { color: #b3b0a3; }
+
+/* ── 진척도 ── */
+.progress-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 18px; box-shadow: var(--shadow-s); }
+.progress-card h4 { font-size: 14px; font-weight: 800; color: var(--blue); margin-bottom: 4px; }
+.progress-card .next-name { font-size: 13.5px; color: var(--mute); margin-bottom: 12px; }
+.progress-card .next-name b { color: var(--gold); }
+.bar { height: 16px; background: var(--bg-2); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #d4a55a); border-radius: 8px; transition: width 0.5s; }
+.bar-pct { text-align: right; font-size: 13px; font-weight: 800; color: var(--gold); margin-top: 5px; }
+.need-row { font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+.need-row b { color: var(--blue); }
+
+/* ── 자격유지 상태 ── */
+.qstatus { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 16px 18px; box-shadow: var(--shadow-s); }
+.qstatus h4 { font-size: 14px; font-weight: 800; color: var(--blue); margin-bottom: 10px; }
+.qstatus .q-row { display: flex; gap: 8px; }
+.q-chip {
+  flex: 1; text-align: center; padding: 10px 4px; border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+}
+.q-chip.ok { background: var(--green-soft); color: var(--green); border: 1px solid #bcdcc6; }
+.q-chip.no { background: var(--red-soft); color: var(--red); border: 1px solid #e6bdb9; }
+.q-chip .q-ic { display: block; font-size: 18px; margin-bottom: 2px; }
+
+.result-actions { display: flex; gap: 10px; margin: 4px 16px 0; }
+
+/* ── 토스트 ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--ink); color: #fff; padding: 12px 22px;
+  border-radius: 100px; font-size: 14.5px; font-weight: 600;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s; z-index: 300;
+  pointer-events: none; box-shadow: var(--shadow-m);
+}
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* 브랜딩 */
-.brand-footer { text-align: center; padding: 16px 20px 8px; color: var(--text3); font-size: 12px; }
+.brand-footer { text-align: center; padding: 24px 20px; color: var(--mute); font-size: 13px; }
+.brand-footer b { color: var(--blue); }
+
+@media (max-width: 380px) {
+  body { font-size: 16px; }
+  .result-hero .total-amount { font-size: 38px; }
+  .line-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
-<div id="app">
+<div class="wrap">
 
-  <!-- ── 시뮬레이터 탭 ── -->
-  <div id="screen-sim" class="screen active">
-    <div class="page-header">
-      <h1>💰 수입 시뮬레이터</h1>
-      <div class="subtitle">내 활동량으로 예상 수입 계산</div>
+  <header class="app-header">
+    <div class="eyebrow">Wellance Income Simulator</div>
+    <h1>💰 웰런스 수입 시뮬레이터</h1>
+    <div class="sub">내 활동량으로 5가지 수당과 직급을 정확히 계산해요</div>
+  </header>
+
+  <!-- 도움말 -->
+  <div class="guide" id="guide">
+    <div class="guide-head" onclick="toggleGuide()">
+      <span>📌 처음 사용하시나요?</span>
+      <span class="toggle-ic" id="guide-ic">접기 ▾</span>
     </div>
-
-    <!-- 업종 선택 -->
-    <div class="section-title">업종 선택</div>
-    <div class="industry-grid">
-      <div class="industry-btn selected" onclick="selectIndustry('nm')" id="ind-nm">
-        <span class="ind-icon">🌐</span>
-        <div class="ind-name">네트워크마케팅</div>
-        <div class="ind-desc">NM / 다단계</div>
-      </div>
-      <div class="industry-btn" onclick="selectIndustry('insurance')" id="ind-insurance">
-        <span class="ind-icon">🛡️</span>
-        <div class="ind-name">보험 영업</div>
-        <div class="ind-desc">생명/손해보험</div>
-      </div>
-      <div class="industry-btn" onclick="selectIndustry('direct')" id="ind-direct">
-        <span class="ind-icon">🚪</span>
-        <div class="ind-name">방문판매</div>
-        <div class="ind-desc">렌탈/방판/대리점</div>
-      </div>
-      <div class="industry-btn" onclick="selectIndustry('custom')" id="ind-custom">
-        <span class="ind-icon">✏️</span>
-        <div class="ind-name">직접 입력</div>
-        <div class="ind-desc">기타 모든 업종</div>
-      </div>
+    <div class="guide-body">
+      <p>이 시뮬레이터는 <b>웰런스 사업자(WP)</b>의 <b>이번 주 예상 수당</b>을 계산합니다.</p>
+      <ol>
+        <li>아래 칸에 <b>이번 주 활동량</b>을 입력하세요.</li>
+        <li>각 칸 옆 <b>ⓘ</b> 버튼을 누르면 설명이 나옵니다.</li>
+        <li>맨 아래 <b>계산하기</b> 버튼을 누르면 결과가 나와요.</li>
+      </ol>
+      <p style="margin-top:8px;font-size:13px;color:var(--mute)">입력값은 자동 저장되어 다음 방문 시 그대로 불러옵니다.</p>
     </div>
-
-    <!-- 활동 입력 -->
-    <div class="card" id="activity-inputs">
-      <div class="card-label">활동량 입력</div>
-      <div id="input-fields"></div>
-    </div>
-
-    <!-- 계산 버튼 -->
-    <div style="padding:0 16px;margin-bottom:12px">
-      <button class="btn-primary" onclick="calculate()">📊 예상 수입 계산하기</button>
-    </div>
-
-    <!-- 결과 -->
-    <div id="result-section" style="display:none">
-      <div class="income-result">
-        <div class="income-main">
-          <div class="income-label">예상 월 수입</div>
-          <div>
-            <span class="income-amount" id="result-monthly">0</span>
-            <span class="income-unit">만원</span>
-          </div>
-          <div class="income-year" id="result-yearly"></div>
-        </div>
-        <div class="income-breakdown" id="result-breakdown"></div>
-      </div>
-
-      <!-- 다이어리 연동 -->
-      <div class="diary-connect-card">
-        <div class="diary-connect-icon">📊</div>
-        <div class="diary-connect-text">
-          <div class="diary-connect-title">AI 다이어리에 목표 저장</div>
-          <div class="diary-connect-sub">이 수입을 목표로 다이어리에 연동해요</div>
-        </div>
-        <button class="btn-connect" onclick="saveToDiary()">저장</button>
-      </div>
-    </div>
-
-    <!-- 브랜딩 -->
-    <div class="brand-footer">🦕 옆집디노 · wellstar.life</div>
   </div>
 
-  <!-- ── 역산 플래너 탭 ── -->
-  <div id="screen-plan" class="screen">
-    <div class="page-header">
-      <h1>🎯 목표 역산 플래너</h1>
-      <div class="subtitle">목표 수입 → AI가 플랜 설계</div>
+  <!-- ───── 입력: 자격 유지 ───── -->
+  <div class="section-title">STEP 1 · 자격 유지 상태</div>
+  <div class="card">
+    <h3>액티브 자격</h3>
+    <p class="card-desc">본인과 좌·우 직추 파트너가 모두 액티브여야 수당이 발생합니다.</p>
+    <div class="toggle-row">
+      <div class="t-label">본인 액티브
+        <small>직전 4주간 8만 1,600원 이상 구매 완료</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="selfActive" checked>
+        <span class="track"></span><span class="knob"></span>
+        <span class="txt on">ON</span><span class="txt off">OFF</span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <div class="t-label">좌측 직추 파트너 액티브
+        <small>왼쪽 라인 직접추천 파트너</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="leftRecruitActive" checked>
+        <span class="track"></span><span class="knob"></span>
+        <span class="txt on">ON</span><span class="txt off">OFF</span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <div class="t-label">우측 직추 파트너 액티브
+        <small>오른쪽 라인 직접추천 파트너</small>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="rightRecruitActive" checked>
+        <span class="track"></span><span class="knob"></span>
+        <span class="txt on">ON</span><span class="txt off">OFF</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ───── 입력: 신규 팩 추천 ───── -->
+  <div class="section-title">STEP 2 · 이번 주 신규 팩 추천</div>
+  <div class="card">
+    <h3>내가 직접 추천한 신규 사업자</h3>
+    <p class="card-desc">이번 주에 본인이 직접 추천하여 팩을 결제한 신규 인원입니다.</p>
+
+    <div class="field">
+      <label>패스트팩 (165팩) 신규 인원
+        <button type="button" class="help-btn" onclick="toggleHint('h-fast')">i</button>
+      </label>
+      <div class="hint" id="h-fast">165팩 1명당 <b>247,500원</b>의 팩추천 커미션이 즉시 발생합니다. (165만원 × 15%)</div>
+      <div class="stepper">
+        <button type="button" onclick="step('newFastPack',-1)">−</button>
+        <div class="count"><span id="newFastPack">0</span><small> 명</small></div>
+        <button type="button" onclick="step('newFastPack',1)">+</button>
+      </div>
     </div>
 
-    <!-- 목표 금액 설정 -->
-    <div class="card">
-      <div class="card-label">목표 월 수입</div>
-      <div class="target-amount-display">
-        <div class="target-label">나는 매달 얼마를 벌고 싶은가?</div>
-        <div>
-          <span class="target-amount" id="target-display">300</span>
-          <span class="target-unit">만원</span>
+    <div class="field">
+      <label>베이직팩 신규 인원
+        <button type="button" class="help-btn" onclick="toggleHint('h-basic')">i</button>
+      </label>
+      <div class="hint" id="h-basic">베이직팩 1명당 <b>62,250원</b>의 팩추천 커미션이 발생합니다. (41만 5천원 × 15%)</div>
+      <div class="stepper">
+        <button type="button" onclick="step('newBasicPack',-1)">−</button>
+        <div class="count"><span id="newBasicPack">0</span><small> 명</small></div>
+        <button type="button" onclick="step('newBasicPack',1)">+</button>
+      </div>
+    </div>
+
+    <div class="callout"><b>주의</b> · 패스트팩(165팩)은 한 사람당 <b>평생 1회만</b> 구매할 수 있습니다.</div>
+  </div>
+
+  <!-- ───── 입력: 좌우 라인 실적 ───── -->
+  <div class="section-title">STEP 3 · 좌·우 라인 실적</div>
+  <div class="card">
+    <h3>라인별 QV / CV 입력</h3>
+    <p class="card-desc">QV는 직급 판정용, CV는 수당 계산용 실적입니다.</p>
+
+    <div class="field" style="margin-bottom:12px">
+      <label>실적 단위 안내
+        <button type="button" class="help-btn" onclick="toggleHint('h-qvcv')">i</button>
+      </label>
+      <div class="hint" id="h-qvcv">
+        <b>QV</b> (자격 실적) — 직급 자격 판정에 사용. 최근 4주 누적값을 입력하세요.<br>
+        <b>CV</b> (수당 실적) — 팀수당 계산에 사용. <b>이번 주</b> 발생분을 입력하세요.
+      </div>
+    </div>
+
+    <div class="line-grid">
+      <div class="line-box left">
+        <div class="line-name">◀ 좌측 라인</div>
+        <div class="field">
+          <label>누적 QV <span class="unit">최근 4주</span></label>
+          <div class="input-suffix">
+            <input type="text" inputmode="numeric" class="numeric" id="cumLeftQV" placeholder="0">
+            <span class="suffix">QV</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>이번 주 CV</label>
+          <div class="input-suffix">
+            <input type="text" inputmode="numeric" class="numeric" id="weeklyLeftCV" placeholder="0">
+            <span class="suffix">CV</span>
+          </div>
         </div>
       </div>
-      <div class="slider-group">
-        <input type="range" id="target-slider" min="50" max="3000" step="50" value="300" oninput="updateTarget(this.value)">
-      </div>
-      <div class="preset-btns">
-        <button class="preset-btn" onclick="setTarget(100)">100만</button>
-        <button class="preset-btn" onclick="setTarget(300)">300만</button>
-        <button class="preset-btn selected" onclick="setTarget(500)">500만</button>
-        <button class="preset-btn" onclick="setTarget(1000)">1000만</button>
-        <button class="preset-btn" onclick="setTarget(2000)">2000만</button>
+      <div class="line-box right">
+        <div class="line-name">우측 라인 ▶</div>
+        <div class="field">
+          <label>누적 QV <span class="unit">최근 4주</span></label>
+          <div class="input-suffix">
+            <input type="text" inputmode="numeric" class="numeric" id="cumRightQV" placeholder="0">
+            <span class="suffix">QV</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>이번 주 CV</label>
+          <div class="input-suffix">
+            <input type="text" inputmode="numeric" class="numeric" id="weeklyRightCV" placeholder="0">
+            <span class="suffix">CV</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 업종 선택 -->
-    <div class="card">
-      <div class="card-label">업종</div>
-      <select id="plan-industry" onchange="clearPlan()">
-        <option value="nm">네트워크마케팅 (NM)</option>
-        <option value="insurance">보험 영업</option>
-        <option value="direct">방문판매</option>
-        <option value="custom">기타 (범용)</option>
+  </div>
+
+  <!-- ───── 입력: 추천매칭 ───── -->
+  <div class="section-title">STEP 4 · 추천매칭 입력</div>
+  <div class="card">
+    <h3>다운라인 세대별 팀수당</h3>
+    <p class="card-desc">추천매칭 커미션은 직추 파트너의 세대별(1G~5G) 팀수당을 매칭해 지급됩니다. 아는 만큼만 입력하세요 — 모르면 0으로 둡니다.</p>
+    <div class="gen-grid">
+      <div class="field" style="margin:0">
+        <label>1세대(1G) 팀수당</label>
+        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC1" placeholder="0"><span class="suffix">원</span></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>2세대(2G) 팀수당</label>
+        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC2" placeholder="0"><span class="suffix">원</span></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>3세대(3G) 팀수당</label>
+        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC3" placeholder="0"><span class="suffix">원</span></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>4세대(4G) 팀수당</label>
+        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC4" placeholder="0"><span class="suffix">원</span></div>
+      </div>
+      <div class="field" style="margin:0">
+        <label>5세대(5G) 팀수당</label>
+        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC5" placeholder="0"><span class="suffix">원</span></div>
+      </div>
+    </div>
+    <div class="callout blue">
+      <b>안내</b> · 추천매칭은 <b>팀커미션 매칭</b> 기준으로 계산됩니다. 구매실적(팩·단품) 매칭 금액이 더 클 경우, 실제 지급은 더 큰 금액으로 이뤄집니다.
+      정확한 수수료는 웰런스 홈페이지에서 확인할 수 있습니다 —
+      <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">후원수당 확인 페이지</a>
+    </div>
+  </div>
+
+  <!-- ───── 입력: 직급 정보 ───── -->
+  <div class="section-title">STEP 5 · 직급 정보</div>
+  <div class="card">
+    <div class="field">
+      <label>직전 주 직급
+        <button type="button" class="help-btn" onclick="toggleHint('h-prev')">i</button>
+      </label>
+      <div class="hint" id="h-prev">랭크업 보너스(직급달성 보너스)는 직급이 올라갔을 때 <b>최초 1회</b>만 지급됩니다. 중복 지급을 막기 위해 직전 직급을 선택하세요.</div>
+      <select id="previousRank">
+        <option value="unqualified">아직 직급 없음 (신규)</option>
       </select>
     </div>
-
-    <!-- AI 플랜 생성 -->
-    <div style="padding:0 16px;margin-bottom:16px">
-      <button class="btn-primary" onclick="generatePlan()">🦕 AI 플랜 생성하기</button>
-    </div>
-
-    <!-- AI 플랜 결과 -->
-    <div class="ai-plan-section" id="plan-result" style="display:none">
-      <div class="ai-plan-card">
-        <div class="ai-plan-title">
-          <span>🦕</span>
-          <span id="plan-title">AI 맞춤 플랜</span>
-        </div>
-        <div id="plan-content"></div>
-      </div>
-
-      <!-- 달성 타임라인 -->
-      <div class="card" style="margin-top:12px">
-        <div class="card-label">예상 달성 타임라인</div>
-        <div class="timeline-bar" id="timeline-bar"></div>
-      </div>
-
-      <!-- 다이어리 연동 -->
-      <div class="diary-connect-card" style="margin-top:0">
-        <div class="diary-connect-icon">📊</div>
-        <div class="diary-connect-text">
-          <div class="diary-connect-title">AI 다이어리에 플랜 저장</div>
-          <div class="diary-connect-sub">이 목표와 플랜을 다이어리 목표에 저장해요</div>
-        </div>
-        <button class="btn-connect" onclick="savePlanToDiary()">저장</button>
+    <div class="field" style="margin-bottom:0">
+      <label>직급 유지 경과 주차
+        <button type="button" class="help-btn" onclick="toggleHint('h-mw')">i</button>
+      </label>
+      <div class="hint" id="h-mw">최초 직급 성취 후 몇 주가 지났는지입니다. 직급유지 수당(랭크 퀄리파이)은 <b>4주 간격</b>으로 지급됩니다. 성취한 주는 0입니다.</div>
+      <div class="stepper">
+        <button type="button" onclick="step('maintainWeek',-1)">−</button>
+        <div class="count"><span id="maintainWeek">0</span><small> 주차</small></div>
+        <button type="button" onclick="step('maintainWeek',1)">+</button>
       </div>
     </div>
-
-    <div class="brand-footer">🦕 옆집디노 · wellstar.life</div>
   </div>
 
-  <!-- 탭바 -->
-  <nav class="tabbar">
-    <button class="tab-btn active" onclick="switchTab('sim')" id="tab-sim">
-      <span class="tab-icon">💰</span>
-      <span class="tab-label">수입 계산</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('plan')" id="tab-plan">
-      <span class="tab-icon">🎯</span>
-      <span class="tab-label">목표 플래너</span>
-    </button>
-  </nav>
+  <button class="btn-calc" onclick="calculate()">📊 이번 주 수당 계산하기</button>
+  <div style="padding:6px 16px 0">
+    <button type="button" class="btn-ghost" onclick="resetInputs()">입력값 초기화</button>
+  </div>
+
+  <!-- ───── 결과 ───── -->
+  <div id="result">
+    <div class="result-hero">
+      <div class="rank-badge"><span class="ic" id="r-rank-ic">🥉</span><span id="r-rank-name">브론즈 엘리트</span></div>
+      <div class="total-label">이번 주 예상 총 수당</div>
+      <div class="total-amount"><span id="r-total">0</span><span class="won"> 원</span></div>
+      <div class="yearly" id="r-context"></div>
+    </div>
+
+    <div class="breakdown" id="r-breakdown"></div>
+
+    <div class="match-note">
+      ※ ③ 추천매칭은 <b>팀커미션 매칭</b> 기준으로 계산됩니다. 구매실적(팩·단품) 매칭 금액이 더 클 경우, 실제 지급은 더 큰 금액으로 이뤄집니다.
+      정확한 수수료는 <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">웰런스 후원수당 확인 페이지</a>에서 확인하세요.
+    </div>
+
+    <div class="progress-card" id="r-progress">
+      <h4>다음 직급까지</h4>
+      <div class="next-name" id="r-next-name"></div>
+      <div class="bar"><div class="bar-fill" id="r-bar"></div></div>
+      <div class="bar-pct" id="r-bar-pct">0%</div>
+      <div class="need-row" id="r-need"></div>
+    </div>
+
+    <div class="qstatus">
+      <h4>자격 유지 상태</h4>
+      <div class="q-row" id="r-qstatus"></div>
+    </div>
+
+    <div class="result-actions">
+      <button type="button" class="btn-ghost" onclick="shareResult()">📤 결과 공유</button>
+    </div>
+  </div>
+
+  <div class="brand-footer">🦕 <b>옆집디노</b> · wellstar.life<br>웰런스 공식 보상 구조(2024) 기준</div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div class="toast" id="toast"></div>
 
+<!-- 계산 엔진 -->
+<script src="engine.js"></script>
 <script>
-// ══════════════════════════════
-// 업종별 설정
-// ══════════════════════════════
-const INDUSTRIES = {
-  nm: {
-    name: '네트워크마케팅',
-    fields: [
-      { key: 'personal_pv', label: '내 월 판매량 (PV)', min: 0, max: 500, step: 10, default: 100, unit: 'PV', hint: '1PV ≈ 3,000원' },
-      { key: 'pv_rate', label: '판매 수당율', min: 3, max: 25, step: 1, default: 12, unit: '%' },
-      { key: 'team_count', label: '팀원 수', min: 0, max: 100, step: 1, default: 5, unit: '명' },
-      { key: 'team_pv', label: '팀원 1인 평균 판매량', min: 0, max: 200, step: 10, default: 50, unit: 'PV' },
-      { key: 'team_rate', label: '팀 수당율', min: 0, max: 10, step: 0.5, default: 3, unit: '%' },
-    ],
-    calculate: (v) => {
-      const pvPrice = 3000;
-      const personal = (v.personal_pv * pvPrice * v.pv_rate / 100) / 10000;
-      const team = (v.team_count * v.team_pv * pvPrice * v.team_rate / 100) / 10000;
-      return {
-        total: personal + team,
-        breakdown: [
-          { name: '개인 판매 수당', amount: personal },
-          { name: '팀 수당', amount: team },
-        ]
-      };
-    }
-  },
-  insurance: {
-    name: '보험 영업',
-    fields: [
-      { key: 'contracts', label: '월 신규 계약 건수', min: 0, max: 30, step: 1, default: 5, unit: '건' },
-      { key: 'avg_premium', label: '평균 초회 보험료', min: 5, max: 100, step: 5, default: 30, unit: '만원' },
-      { key: 'first_rate', label: '초회 수수료율', min: 10, max: 100, step: 5, default: 50, unit: '%' },
-      { key: 'maintain_income', label: '유지 수수료 (월)', min: 0, max: 500, step: 10, default: 50, unit: '만원' },
-      { key: 'team_override', label: '팀장 오버라이드 수당', min: 0, max: 300, step: 10, default: 0, unit: '만원' },
-    ],
-    calculate: (v) => {
-      const first = v.contracts * v.avg_premium * v.first_rate / 100;
-      const maintain = v.maintain_income;
-      const team = v.team_override;
-      return {
-        total: first + maintain + team,
-        breakdown: [
-          { name: '초회 수수료', amount: first },
-          { name: '유지 수수료', amount: maintain },
-          { name: '팀장 오버라이드', amount: team },
-        ]
-      };
-    }
-  },
-  direct: {
-    name: '방문판매',
-    fields: [
-      { key: 'sales', label: '월 매출', min: 0, max: 5000, step: 100, default: 500, unit: '만원' },
-      { key: 'margin', label: '마진율', min: 5, max: 50, step: 1, default: 20, unit: '%' },
-      { key: 'team_sales', label: '팀 매출', min: 0, max: 10000, step: 100, default: 0, unit: '만원' },
-      { key: 'team_margin', label: '팀 수당율', min: 0, max: 15, step: 0.5, default: 3, unit: '%' },
-      { key: 'bonus', label: '성과 보너스', min: 0, max: 500, step: 10, default: 0, unit: '만원' },
-    ],
-    calculate: (v) => {
-      const personal = v.sales * v.margin / 100;
-      const team = v.team_sales * v.team_margin / 100;
-      const bonus = v.bonus;
-      return {
-        total: personal + team + bonus,
-        breakdown: [
-          { name: '개인 판매 마진', amount: personal },
-          { name: '팀 수당', amount: team },
-          { name: '성과 보너스', amount: bonus },
-        ]
-      };
-    }
-  },
-  custom: {
-    name: '직접 입력',
-    fields: [
-      { key: 'income1', label: '수입 항목 1', min: 0, max: 1000, step: 10, default: 100, unit: '만원' },
-      { key: 'income2', label: '수입 항목 2', min: 0, max: 1000, step: 10, default: 50, unit: '만원' },
-      { key: 'income3', label: '수입 항목 3', min: 0, max: 1000, step: 10, default: 0, unit: '만원' },
-      { key: 'income4', label: '수입 항목 4', min: 0, max: 1000, step: 10, default: 0, unit: '만원' },
-    ],
-    calculate: (v) => {
-      const items = [v.income1, v.income2, v.income3, v.income4];
-      return {
-        total: items.reduce((a,b) => a+b, 0),
-        breakdown: [
-          { name: '항목 1', amount: v.income1 },
-          { name: '항목 2', amount: v.income2 },
-          { name: '항목 3', amount: v.income3 },
-          { name: '항목 4', amount: v.income4 },
-        ]
-      };
-    }
-  }
+/* ============================================================
+ * Phase 2 재확장용 feature flag.
+ * true 로 바꾸면 영업인 일반용(보험·방문판매 등) 업종 선택 모드 활성화.
+ * 업종별 모듈은 legacy-simulator.html 의 INDUSTRIES 설정 참고.
+ * ============================================================ */
+var SHOW_INDUSTRY_SELECTOR = false;
+
+var E = window.WellanceEngine;
+var STORAGE_KEY = 'wellance_sim_inputs';
+var GUIDE_KEY = 'wellance_sim_guide_collapsed';
+
+var RANK_ICON = {
+  bronze:'🥉', silver:'🥈', gold:'🥇', platinum:'💎', emerald:'💚',
+  diamond:'💠', royaldiamond:'👑', crown:'👑', royalcrown:'👑', imperial:'🏆',
+  unqualified:'⚠️'
 };
 
-// ══════════════════════════════
-// 상태
-// ══════════════════════════════
-let currentIndustry = 'nm';
-let fieldValues = {};
-let currentResult = null;
-let targetAmount = 300;
-let currentPlan = null;
+var TEXT_IDS  = ['cumLeftQV','cumRightQV','weeklyLeftCV','weeklyRightCV',
+                 'genTC1','genTC2','genTC3','genTC4','genTC5'];
+var STEP_IDS  = ['newFastPack','newBasicPack','maintainWeek'];
+var BOOL_IDS  = ['selfActive','leftRecruitActive','rightRecruitActive'];
 
-// ══════════════════════════════
-// 초기화
-// ══════════════════════════════
-function init() {
-  selectIndustry('nm');
-  updateTarget(300);
-}
-
-// ══════════════════════════════
-// 업종 선택
-// ══════════════════════════════
-function selectIndustry(id) {
-  currentIndustry = id;
-  document.querySelectorAll('.industry-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('ind-' + id).classList.add('selected');
-  renderFields();
-  document.getElementById('result-section').style.display = 'none';
-}
-
-function renderFields() {
-  const ind = INDUSTRIES[currentIndustry];
-  fieldValues = {};
-  ind.fields.forEach(f => fieldValues[f.key] = f.default);
-
-  document.getElementById('input-fields').innerHTML = ind.fields.map(f => `
-    <div class="slider-group">
-      <div class="slider-header">
-        <span class="slider-label">${f.label}${f.hint ? ' <span style="font-size:11px;color:var(--text3)">'+f.hint+'</span>' : ''}</span>
-        <span class="slider-value" id="val-${f.key}">${f.default}${f.unit}</span>
-      </div>
-      <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.default}"
-        oninput="updateField('${f.key}', this.value, '${f.unit}')">
-    </div>
-  `).join('');
-}
-
-function updateField(key, val, unit) {
-  fieldValues[key] = parseFloat(val);
-  const el = document.getElementById('val-' + key);
-  if (el) el.textContent = parseFloat(val) + unit;
-}
-
-// ══════════════════════════════
-// 계산
-// ══════════════════════════════
-function calculate() {
-  const ind = INDUSTRIES[currentIndustry];
-  const result = ind.calculate(fieldValues);
-  currentResult = result;
-
-  const monthly = Math.round(result.total * 10) / 10;
-  const yearly = Math.round(monthly * 12);
-
-  document.getElementById('result-monthly').textContent = formatNum(monthly);
-  document.getElementById('result-yearly').textContent = `연간 약 ${formatNum(yearly)}만원`;
-
-  const breakdown = result.breakdown.filter(b => b.amount > 0);
-  document.getElementById('result-breakdown').innerHTML = breakdown.map(b => `
-    <div class="breakdown-item">
-      <span class="breakdown-name">${b.name}</span>
-      <span class="breakdown-amount">${formatNum(Math.round(b.amount * 10)/10)}만원</span>
-    </div>
-  `).join('');
-
-  document.getElementById('result-section').style.display = 'block';
-  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function formatNum(n) {
-  return n.toLocaleString('ko-KR');
-}
-
-// ══════════════════════════════
-// 목표 역산
-// ══════════════════════════════
-function updateTarget(val) {
-  targetAmount = parseInt(val);
-  document.getElementById('target-display').textContent = formatNum(targetAmount);
-  document.getElementById('target-slider').value = val;
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
-}
-
-function setTarget(val) {
-  targetAmount = val;
-  document.getElementById('target-display').textContent = formatNum(val);
-  document.getElementById('target-slider').value = val;
-  document.querySelectorAll('.preset-btn').forEach(b => {
-    b.classList.toggle('selected', parseInt(b.textContent) === val || b.textContent === val + '만');
+/* ── 직급 선택 옵션 채우기 ── */
+function initRankSelect() {
+  var sel = document.getElementById('previousRank');
+  E.RANKS.forEach(function (r) {
+    var o = document.createElement('option');
+    o.value = r.id; o.textContent = r.name + ' 엘리트';
+    sel.appendChild(o);
   });
 }
 
-function clearPlan() {
-  document.getElementById('plan-result').style.display = 'none';
-}
+/* ── 숫자 포맷 ── */
+function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+function parseNum(str) { var n = parseInt(String(str).replace(/[^0-9]/g, ''), 10); return isFinite(n) ? n : 0; }
 
-async function generatePlan() {
-  const industry = document.getElementById('plan-industry').value;
-  const indName = INDUSTRIES[industry].name;
-  const planResult = document.getElementById('plan-result');
-  const planContent = document.getElementById('plan-content');
-
-  planResult.style.display = 'block';
-  planContent.innerHTML = `<div class="ai-loading"><div class="spinner"></div>AI가 ${formatNum(targetAmount)}만원 달성 플랜을 설계 중이에요...</div>`;
-  document.getElementById('plan-title').textContent = `월 ${formatNum(targetAmount)}만원 달성 플랜`;
-  planResult.scrollIntoView({ behavior: 'smooth' });
-
-  try {
-    const res = await fetch('https://blogtool.wellstar.life/api/income-plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetAmount, industry, industryName: indName })
+/* ── 콤마 입력 처리 ── */
+function bindNumberInputs() {
+  TEXT_IDS.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () {
+      var raw = parseNum(el.value);
+      el.value = raw ? raw.toLocaleString('ko-KR') : '';
+      saveInputs();
     });
-
-    if (!res.ok) throw new Error('API 오류');
-    const data = await res.json();
-    renderPlan(data.plan);
-    currentPlan = data.plan;
-  } catch {
-    renderPlan(generateLocalPlan(targetAmount, industry));
-    currentPlan = generateLocalPlan(targetAmount, industry);
-    showToast('오프라인 모드로 플랜을 생성했어요');
-  }
-
-  // 타임라인
-  renderTimeline(targetAmount);
-}
-
-function generateLocalPlan(target, industry) {
-  const plans = {
-    nm: [
-      { icon: '👥', title: '팀 구성 목표', content: `월 ${Math.ceil(target/100)}명 신규 추천 → ${Math.ceil(target/30)}명 활성 팀원 목표` },
-      { icon: '📞', title: '일일 활동량', content: `하루 <strong>${Math.ceil(target/50)}명</strong> 신규 접촉 + <strong>${Math.ceil(target/30)}명</strong> 팔로업` },
-      { icon: '💎', title: '개인 판매 목표', content: `월 <strong>${Math.ceil(target*3)}PV</strong> 달성 → 예상 개인 수당 ${Math.round(target*0.3)}만원` },
-      { icon: '📈', title: '승급 전략', content: `${Math.ceil(target/200)}개월 내 다음 직급 승급 목표 → 수당율 상승으로 수입 자동 증가` },
-    ],
-    insurance: [
-      { icon: '📋', title: '월 계약 목표', content: `월 <strong>${Math.ceil(target/30)}건</strong> 신규 계약 체결 목표` },
-      { icon: '📞', title: '일일 활동량', content: `하루 <strong>${Math.ceil(target/20)}명</strong> 고객 상담 + 주 <strong>${Math.ceil(target/50)}건</strong> 소개 요청` },
-      { icon: '🔄', title: '유지율 관리', content: `기존 고객 월 1회 연락 → 유지 수수료 ${Math.round(target*0.3)}만원 목표` },
-      { icon: '👥', title: '팀 구성', content: `팀원 ${Math.ceil(target/100)}명 육성 → 오버라이드 수당 추가 확보` },
-    ],
-    direct: [
-      { icon: '🎯', title: '월 매출 목표', content: `월 매출 <strong>${Math.ceil(target/0.2)}만원</strong> 달성 (마진율 20% 기준)` },
-      { icon: '🚪', title: '일일 방문 목표', content: `하루 <strong>${Math.ceil(target/15)}가구</strong> 방문 + 전환율 30% 목표` },
-      { icon: '📦', title: '상품 구성', content: `고단가 상품 월 ${Math.ceil(target/50)}건 + 소모품 재구매 고객 ${Math.ceil(target/10)}명 확보` },
-      { icon: '🌱', title: '고객 관리', content: `기존 고객 월 1회 방문 → 재구매율 40% 목표 → 안정적 수입 기반 구축` },
-    ],
-    custom: [
-      { icon: '🎯', title: '목표 분해', content: `월 ${formatNum(target)}만원 = 주 ${Math.round(target/4)}만원 = 일 ${Math.round(target/22)}만원` },
-      { icon: '📞', title: '핵심 활동', content: `하루 <strong>${Math.ceil(target/30)}건</strong> 영업 활동 → 전환율 20% 기준 월 목표 달성` },
-      { icon: '📈', title: '성장 전략', content: `1개월: 기반 구축 → 2개월: 목표의 50% → 3개월: 목표 100% 달성` },
-      { icon: '💡', title: '차별화 포인트', content: `AI 다이어리로 고객 추적 → 팔로업 자동화 → 성사율 향상` },
-    ]
-  };
-  return plans[industry] || plans.custom;
-}
-
-function renderPlan(plan) {
-  const planContent = document.getElementById('plan-content');
-  if (Array.isArray(plan)) {
-    planContent.innerHTML = plan.map(item => `
-      <div class="ai-plan-item">
-        <div class="ai-plan-icon">${item.icon}</div>
-        <div class="ai-plan-text"><strong>${item.title}</strong><br>${item.content}</div>
-      </div>
-    `).join('');
-  } else {
-    planContent.innerHTML = `<div class="ai-plan-content">${plan}</div>`;
-  }
-}
-
-function renderTimeline(target) {
-  const months = target <= 100 ? 1 : target <= 300 ? 2 : target <= 500 ? 3 : target <= 1000 ? 6 : 12;
-  const now = new Date();
-  const items = Array.from({length: Math.min(months + 2, 6)}, (_, i) => {
-    const d = new Date(now); d.setMonth(d.getMonth() + i);
-    const label = i === 0 ? '시작' : i === months ? '달성!' : `${Math.round(target * i / months)}만`;
-    const type = i === 0 ? 'done' : i === months ? 'active' : 'future';
-    return { month: `${d.getMonth()+1}월`, label, type };
   });
-  document.getElementById('timeline-bar').innerHTML = items.map(item => `
-    <div class="timeline-item">
-      <div class="timeline-circle ${item.type}">${item.type === 'active' ? '🎯' : item.type === 'done' ? '✓' : item.month.replace('월','')}</div>
-      <div class="timeline-month">${item.month}</div>
-      <div class="timeline-label">${item.label}</div>
-    </div>
-  `).join('');
 }
 
-// ══════════════════════════════
-// 다이어리 연동
-// ══════════════════════════════
-function saveToDiary() {
-  if (!currentResult) return;
-  const monthly = Math.round(currentResult.total * 10) / 10;
-  const goals = JSON.parse(localStorage.getItem('diary_goals') || '{}');
-  goals.income_target = monthly;
-  goals.industry = currentIndustry;
-  localStorage.setItem('diary_goals', JSON.stringify(goals));
-  showToast('AI 다이어리에 목표 저장됨 📊');
+/* ── 스테퍼 ── */
+function step(id, delta) {
+  var el = document.getElementById(id);
+  var v = Math.max(0, (parseInt(el.textContent, 10) || 0) + delta);
+  el.textContent = v;
+  saveInputs();
 }
 
-function savePlanToDiary() {
-  const goals = JSON.parse(localStorage.getItem('diary_goals') || '{}');
-  goals.income_target = targetAmount;
-  goals.income_plan = currentPlan;
-  goals.industry = document.getElementById('plan-industry').value;
-  localStorage.setItem('diary_goals', JSON.stringify(goals));
-  showToast('플랜이 AI 다이어리에 저장됨 🎯');
+/* ── 힌트 / 가이드 토글 ── */
+function toggleHint(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
+function toggleGuide() {
+  var g = document.getElementById('guide');
+  g.classList.toggle('collapsed');
+  var collapsed = g.classList.contains('collapsed');
+  document.getElementById('guide-ic').textContent = collapsed ? '펼치기 ▸' : '접기 ▾';
+  try { localStorage.setItem(GUIDE_KEY, collapsed ? '1' : '0'); } catch (e) {}
 }
 
-// ══════════════════════════════
-// 탭 전환
-// ══════════════════════════════
-function switchTab(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+/* ── 입력값 수집 ── */
+function collectState() {
+  var s = {};
+  BOOL_IDS.forEach(function (id) { s[id] = document.getElementById(id).checked; });
+  TEXT_IDS.forEach(function (id) { s[id] = parseNum(document.getElementById(id).value); });
+  STEP_IDS.forEach(function (id) { s[id] = parseInt(document.getElementById(id).textContent, 10) || 0; });
+  s.previousRank = document.getElementById('previousRank').value;
+  s.generationTeamCommission = [s.genTC1, s.genTC2, s.genTC3, s.genTC4, s.genTC5];
+  return s;
 }
 
-// ══════════════════════════════
-// 토스트
-// ══════════════════════════════
-let toastTimer;
+/* ── localStorage 저장 / 복원 ── */
+function saveInputs() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState())); } catch (e) {}
+}
+function loadInputs() {
+  var raw;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+  if (!raw) return;
+  var s;
+  try { s = JSON.parse(raw); } catch (e) { return; }
+  BOOL_IDS.forEach(function (id) { if (id in s) document.getElementById(id).checked = !!s[id]; });
+  TEXT_IDS.forEach(function (id) {
+    if (s[id]) document.getElementById(id).value = Number(s[id]).toLocaleString('ko-KR');
+  });
+  STEP_IDS.forEach(function (id) { if (id in s) document.getElementById(id).textContent = s[id] || 0; });
+  if (s.previousRank) document.getElementById('previousRank').value = s.previousRank;
+}
+function resetInputs() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  BOOL_IDS.forEach(function (id) { document.getElementById(id).checked = true; });
+  TEXT_IDS.forEach(function (id) { document.getElementById(id).value = ''; });
+  STEP_IDS.forEach(function (id) { document.getElementById(id).textContent = '0'; });
+  document.getElementById('previousRank').value = 'unqualified';
+  document.getElementById('result').style.display = 'none';
+  showToast('입력값을 초기화했어요');
+}
+
+/* ── 계산 ── */
+var lastResult = null;
+function calculate() {
+  var s = collectState();
+  var r = E.simulate(s);
+  lastResult = r;
+  renderResult(r, s);
+  saveInputs();
+  var box = document.getElementById('result');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderResult(r, s) {
+  document.getElementById('r-rank-ic').textContent = RANK_ICON[r.rankId] || '🏅';
+  document.getElementById('r-rank-name').textContent = r.displayName;
+  document.getElementById('r-total').textContent = fmt(r.total);
+
+  var ctx = document.getElementById('r-context');
+  if (!r.qualified) {
+    ctx.textContent = r.reason;
+  } else {
+    ctx.textContent = '월 환산 약 ' + fmt(r.total * 4) + '원 (주 4회 기준)';
+  }
+
+  // 5개 수당 상세
+  var items = [
+    { n: '① 팩 추천 커미션', d: '신규 직추 팩 결제 15%', v: r.packCommission },
+    { n: '② 후원수당 (팀커미션)', d: '소실적 주간 CV 기준', v: r.teamCommission },
+    { n: '③ 추천매칭 커미션', d: '팀커미션 매칭 기준', v: r.matchCommission },
+    { n: '④ 랭크업 보너스', d: r.rankUpInstant ? '직급달성 보너스 (최초 1회)' : '50% 즉시 · 50%는 13주 후 지급', v: r.rankUpBonus },
+    { n: '⑤ 직급유지 (랭크 퀄리파이)', d: '4주 간격 지급', v: r.maintainCommission }
+  ];
+  document.getElementById('r-breakdown').innerHTML = items.map(function (it) {
+    var zero = it.v <= 0 ? ' zero' : '';
+    return '<div class="bd-item"><div class="bd-name">' + it.n +
+      '<small>' + it.d + '</small></div>' +
+      '<div class="bd-amount' + zero + '">' + fmt(it.v) + '원</div></div>';
+  }).join('');
+
+  // 다음 직급 진척도
+  var prog = document.getElementById('r-progress');
+  if (r.qualified && r.nextRank) {
+    prog.style.display = 'block';
+    document.getElementById('r-next-name').innerHTML = '다음 직급 · <b>' + r.nextRank.displayName + '</b>';
+    document.getElementById('r-bar').style.width = r.nextRank.percent + '%';
+    document.getElementById('r-bar-pct').textContent = r.nextRank.percent + '% 도달';
+    document.getElementById('r-need').innerHTML =
+      '필요 QV — 좌측 <b>+' + fmt(r.nextRank.needLeftQV) + '</b> · 우측 <b>+' + fmt(r.nextRank.needRightQV) + '</b>';
+  } else {
+    prog.style.display = r.qualified ? 'block' : 'none';
+    if (r.qualified && !r.nextRank) {
+      document.getElementById('r-next-name').innerHTML = '🏆 최고 직급에 도달했습니다!';
+      document.getElementById('r-bar').style.width = '100%';
+      document.getElementById('r-bar-pct').textContent = '100%';
+      document.getElementById('r-need').textContent = '';
+    }
+  }
+
+  // 자격유지 상태
+  var qs = [
+    { label: '본인', ok: s.selfActive },
+    { label: '좌측 직추', ok: s.leftRecruitActive },
+    { label: '우측 직추', ok: s.rightRecruitActive }
+  ];
+  document.getElementById('r-qstatus').innerHTML = qs.map(function (q) {
+    return '<div class="q-chip ' + (q.ok ? 'ok' : 'no') + '">' +
+      '<span class="q-ic">' + (q.ok ? '✓' : '✕') + '</span>' + q.label + '</div>';
+  }).join('');
+}
+
+/* ── 결과 공유 ── */
+function shareResult() {
+  if (!lastResult) return;
+  var r = lastResult;
+  var txt = '[웰런스 수입 시뮬레이터]\n' +
+    '현재 직급: ' + r.displayName + '\n' +
+    '이번 주 예상 총 수당: ' + fmt(r.total) + '원\n' +
+    '① 팩추천 ' + fmt(r.packCommission) + '원 / ② 팀수당 ' + fmt(r.teamCommission) + '원\n' +
+    '③ 매칭 ' + fmt(r.matchCommission) + '원 / ④ 랭크업 ' + fmt(r.rankUpBonus) + '원 / ⑤ 직급유지 ' + fmt(r.maintainCommission) + '원\n' +
+    'app.wellstar.life/simulator';
+  if (navigator.share) {
+    navigator.share({ title: '웰런스 수입 시뮬레이터', text: txt }).catch(function () {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(function () { showToast('결과를 복사했어요'); });
+  } else {
+    showToast('공유를 지원하지 않는 환경입니다');
+  }
+}
+
+/* ── 토스트 ── */
+var toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
 }
+
+/* ── 초기화 ── */
+function init() {
+  initRankSelect();
+  bindNumberInputs();
+  loadInputs();
+  BOOL_IDS.forEach(function (id) {
+    document.getElementById(id).addEventListener('change', saveInputs);
+  });
+  document.getElementById('previousRank').addEventListener('change', saveInputs);
+  try {
+    if (localStorage.getItem(GUIDE_KEY) === '1') toggleGuide();
+  } catch (e) {}
+}
+init();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch(function () {});
 }
-
-init();
 </script>
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
 <script src="/shared/login-gate.js"></script>
 <script>DinoAuth.init();</script>
-<script src="/shared/theme-toggle.js"></script>
 <script src="/shared/nav.js"></script>
 </body>
 </html>

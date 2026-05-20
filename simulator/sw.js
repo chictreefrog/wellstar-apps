@@ -1,10 +1,10 @@
-const CACHE_NAME = 'sim-v2';
+const CACHE_NAME = 'sim-v3';
 const APP_PATH = '/simulator/';
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then(c => c.addAll([APP_PATH, APP_PATH + 'index.html']))
+      .then(c => c.addAll([APP_PATH, APP_PATH + 'index.html', APP_PATH + 'engine.js']))
       .then(() => self.skipWaiting())
   );
 });
