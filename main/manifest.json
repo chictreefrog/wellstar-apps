@@ -3,7 +3,7 @@
   "short_name": "옆집디노",
   "description": "AI가 매일 당신의 세일즈를 코칭합니다",
   "start_url": "/main/",
-  "scope": "/main/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a14",
   "theme_color": "#0a0a14",

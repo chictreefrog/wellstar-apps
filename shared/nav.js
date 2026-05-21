@@ -17,10 +17,12 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    .dino-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(10,10,20,0.95);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.08);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:9990}
-    .dino-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0;text-decoration:none;color:rgba(255,255,255,0.35);font-size:10px;font-family:'Noto Sans KR',-apple-system,sans-serif}
-    .dino-nav a .dn-icon{font-size:20px}
+    .dino-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(64px + env(safe-area-inset-bottom,0px));padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(10,10,20,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;z-index:9990}
+    .dino-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;text-decoration:none;color:rgba(255,255,255,0.35);font-size:10px;font-weight:600;letter-spacing:-0.3px;font-family:'Noto Sans KR',-apple-system,sans-serif}
+    .dino-nav a .dn-icon{font-size:22px;line-height:1}
     .dino-nav a.active{color:#FF6B35}
+    body.light-theme .dino-nav{background:rgba(245,245,250,0.95);border-top-color:rgba(0,0,0,0.08)}
+    body.light-theme .dino-nav a{color:rgba(0,0,0,0.4)}
   `;
   document.head.appendChild(style);
 
