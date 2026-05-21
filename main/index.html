@@ -51,17 +51,16 @@ body.light-theme {
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
-  height: 100%;
   background: var(--bg-primary);
   font-family: 'Noto Sans KR', -apple-system, sans-serif;
   color: var(--text-primary);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
+body { min-height: 100dvh; }
 
 /* ==================== APP CONTAINER ==================== */
 .app {
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   max-width: 480px;

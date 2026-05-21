@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dino-main-v3';
+const CACHE_NAME = 'dino-main-v4';
 const APP_PATH = '/main/';
 
 self.addEventListener('install', e => {
