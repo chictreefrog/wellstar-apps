@@ -28,6 +28,7 @@
   --accent-pink: #ff6eb4;
   --nav-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 /* ==================== LIGHT THEME ==================== */
@@ -74,6 +75,7 @@ html, body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  padding-top: var(--safe-top);
   padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
 }
 
