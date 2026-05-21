@@ -476,6 +476,7 @@ window.DinoAuth = (function() {
     if (supabase) await supabase.auth.signOut();
     currentUser = null;
     currentProfile = null;
+    try { localStorage.removeItem('dino_user_name'); } catch(e) {}
     notifyAuthChange();
   }
 

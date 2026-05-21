@@ -406,14 +406,6 @@ body { min-height: 100dvh; }
   transform: translateY(-50%);
   font-size: 14px;
 }
-.tool-count {
-  text-align: right;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-.tool-count strong { color: var(--accent-orange); }
-
 .tool-category {
   padding: 0 20px;
   margin-top: 20px;
@@ -779,7 +771,6 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
         <div class="tools-search-wrap">
           <input type="text" class="tools-search" placeholder="도구 검색..." id="toolSearch" oninput="filterTools()">
         </div>
-        <div class="tool-count">사용 가능한 도구 <strong id="toolCountNum">7</strong>개</div>
       </div>
 
       <!-- 인기 도구 -->
@@ -1042,13 +1033,36 @@ const INSIGHTS = [
   { text: '"첫 만남에서 팔지 마세요.\n관계를 먼저 쌓으세요."', quote: '— 신뢰 기반 세일즈' },
   { text: '"SNS에 하루 1개 게시물.\n6개월 후 당신은 전문가입니다."', quote: '— 디지털 세일즈 전략' },
   { text: '"팔로업은 귀찮은 게 아니라,\n고객을 향한 관심의 표현이에요."', quote: '— 옆집디노 코치' },
+  { text: '"말을 줄이고 질문을 늘리세요.\n고객은 답하면서 스스로 설득됩니다."', quote: '— 30초 만에 YES' },
+  { text: '"완벽한 타이밍은 없어요.\n지금 연락하는 사람이 이깁니다."', quote: '— 세일즈 법칙' },
+  { text: '"제품을 설명하지 말고,\n고객의 내일을 그려주세요."', quote: '— 관계 영업의 기술' },
+  { text: '"거절한 고객도 명단에 남기세요.\n3개월 뒤 상황은 달라집니다."', quote: '— 옆집디노 코치' },
+  { text: '"하루 한 명에게 진심을 전하면,\n1년 뒤 365개의 인연이 남습니다."', quote: '— 성공하는 영업인의 습관' },
+  { text: '"팔리지 않는 날에도\n씨앗은 심어지고 있어요."', quote: '— 옆집디노 코치' },
+  { text: '"고객의 이름을 기억하세요.\n그것만으로 신뢰는 시작됩니다."', quote: '— 신뢰 기반 세일즈' },
+  { text: '"남과 비교하지 마세요.\n어제의 나보다 한 걸음만 앞서면 됩니다."', quote: '— 성공하는 영업인의 습관' },
+  { text: '"들어주는 것도 영업입니다.\n때론 그게 가장 강력한 영업이에요."', quote: '— 30초 만에 YES' },
+  { text: '"메시지 하나 보내는 용기,\n그게 바로 매출의 시작입니다."', quote: '— 디지털 세일즈 전략' },
+  { text: '"고객은 완벽한 사람이 아니라\n믿을 수 있는 사람에게 삽니다."', quote: '— 신뢰 기반 세일즈' },
+  { text: '"오늘의 거절은\n내일의 노하우가 됩니다."', quote: '— 세일즈 법칙' },
+  { text: '"혼자 잘하려 하지 마세요.\n함께 가는 팀이 더 멀리 갑니다."', quote: '— 옆집디노 코치' },
+  { text: '"고객의 No는 Not now일 때가 많아요.\n문을 닫지 말고 살짝 열어두세요."', quote: '— 30초 만에 YES' },
+  { text: '"작은 약속을 지키는 사람이\n큰 거래를 얻습니다."', quote: '— 신뢰 기반 세일즈' },
+  { text: '"두려움은 준비가 부족하다는 신호.\n준비하면 떨림은 설렘이 됩니다."', quote: '— 성공하는 영업인의 습관' },
+  { text: '"팔려고 만나면 부담스럽고,\n도우려고 만나면 반갑습니다."', quote: '— 관계 영업의 기술' },
+  { text: '"콘텐츠는 24시간 일하는\n당신의 또 다른 분신입니다."', quote: '— 디지털 세일즈 전략' },
+  { text: '"성과가 안 보이는 시기가\n사실 가장 많이 자라는 시기예요."', quote: '— 옆집디노 코치' },
+  { text: '"한 명의 진짜 팬이\n열 명의 구경꾼보다 강합니다."', quote: '— 관계 영업의 기술' },
+  { text: '"오늘 연락 못 한 한 사람,\n그가 내일의 기회였을 수 있어요."', quote: '— 세일즈 법칙' },
+  { text: '"꿈을 말하는 사람을 만나고,\n그 꿈의 다음 장면을 함께 그려주세요."', quote: '— 옆집디노 코치' },
+  { text: '"거절은 당신을 거부한 게 아니라\n제안을 거부한 것뿐이에요."', quote: '— 30초 만에 YES' },
+  { text: '"오늘 심은 한 마디가\n6개월 뒤 계약이 되어 돌아옵니다."', quote: '— 성공하는 영업인의 습관' },
+  { text: '"고객을 설득하려 하지 말고,\n고객이 결심하도록 도와주세요."', quote: '— 신뢰 기반 세일즈' },
+  { text: '"잘 파는 사람이 아니라\n오래 남는 사람이 이깁니다."', quote: '— 옆집디노 코치' },
 ];
 
 function showRandomInsight() {
-  const today = new Date().toDateString();
-  let idx = 0;
-  for (let i = 0; i < today.length; i++) idx += today.charCodeAt(i);
-  idx = idx % INSIGHTS.length;
+  const idx = Math.floor(Math.random() * INSIGHTS.length);
   const insight = INSIGHTS[idx];
   document.getElementById('insightText').textContent = insight.text;
   document.getElementById('insightQuote').textContent = insight.quote;
@@ -1086,15 +1100,10 @@ function loadFollowups() {
 // ==================== TOOL SEARCH ====================
 function filterTools() {
   const query = document.getElementById('toolSearch').value.toLowerCase().trim();
-  const items = document.querySelectorAll('.tool-list-item');
-  let visible = 0;
-  items.forEach(item => {
+  document.querySelectorAll('.tool-list-item').forEach(item => {
     const name = (item.getAttribute('data-name') || '').toLowerCase();
-    const show = !query || name.includes(query);
-    item.style.display = show ? 'flex' : 'none';
-    if (show) visible++;
+    item.style.display = (!query || name.includes(query)) ? 'flex' : 'none';
   });
-  document.getElementById('toolCountNum').textContent = visible;
 }
 
 // ==================== RECENT ACTIVITY ====================
@@ -1295,6 +1304,9 @@ function updateAuthUI(user, profile) {
     myEmail.textContent = '';
     myBizCode.textContent = '';
     myMemberBadge.textContent = 'Guest';
+    // 로그아웃 시 이름 초기화
+    greetingName.textContent = '사용자님';
+    nameEl.textContent = '사용자';
     // 로그아웃 시 대시보드 버튼 숨김
     const teamBtn = document.getElementById('teamDashboardMenuItem');
     if (teamBtn) teamBtn.style.display = 'none';
