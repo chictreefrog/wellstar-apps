@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#1e3a5f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="description" content="웰런스 수입 시뮬레이터 — 내 활동량으로 5가지 수당과 직급, 예상 수입을 정확히 계산합니다.">
+<meta name="description" content="웰런스 수입 시뮬레이터 — 추천 인원만 입력하면 예상 직급·수입과 성장 시뮬레이션을 한눈에.">
 <title>웰런스 수입 시뮬레이터</title>
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
@@ -55,14 +54,25 @@ body {
   font-weight: 700; text-transform: uppercase; margin-bottom: 7px;
 }
 .app-header h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; }
-.app-header .sub { font-size: 14.5px; color: #c5d2e2; margin-top: 5px; }
+.app-header .sub { font-size: 15px; color: #c5d2e2; margin-top: 6px; }
+
+/* ── 탭 ── */
+.tabbar { display: flex; gap: 8px; margin: 14px 16px 0; }
+.tab-btn {
+  flex: 1; min-height: 52px; padding: 10px; cursor: pointer;
+  border: 1.5px solid var(--line); background: #fff; border-radius: 12px;
+  font-family: inherit; font-size: 15px; font-weight: 700; color: var(--mute);
+}
+.tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.screen { display: none; }
+.screen.active { display: block; }
 
 /* ── 도움말 배너 ── */
 .guide {
   background: var(--gold-soft);
   border: 1px solid #e8d6b0;
   border-radius: 12px;
-  margin: 16px 16px 0;
+  margin: 14px 16px 0;
   padding: 14px 16px;
   font-size: 14.5px;
   color: var(--ink-2);
@@ -94,13 +104,14 @@ body {
 .card h3 { font-size: 17px; font-weight: 800; color: var(--blue); margin-bottom: 4px; }
 .card .card-desc { font-size: 13.5px; color: var(--mute); margin-bottom: 14px; }
 
-/* ── 필드 ── */
-.field { margin-bottom: 16px; }
+/* ── 필드 / 스테퍼 ── */
+.field { margin-bottom: 20px; }
 .field:last-child { margin-bottom: 0; }
 .field label {
   display: flex; align-items: center; gap: 6px;
-  font-size: 15px; font-weight: 700; color: var(--ink-2); margin-bottom: 7px;
+  font-size: 16px; font-weight: 700; color: var(--ink-2); margin-bottom: 4px;
 }
+.field .sub-label { font-size: 13px; color: var(--mute); margin-bottom: 9px; }
 .help-btn {
   width: 21px; height: 21px; border-radius: 50%;
   border: 1.5px solid var(--gold); background: #fff; color: var(--gold);
@@ -110,108 +121,60 @@ body {
 .hint {
   display: none; font-size: 13.5px; color: var(--ink-2);
   background: var(--bg-2); border-left: 3px solid var(--gold);
-  padding: 9px 12px; border-radius: 0 8px 8px 0; margin: 0 0 9px;
+  padding: 9px 12px; border-radius: 0 8px 8px 0; margin: 0 0 10px;
 }
 .hint.show { display: block; }
-input[type=text], select {
-  width: 100%; min-height: 54px;
-  background: #fff; border: 1.5px solid var(--line); border-radius: 11px;
-  color: var(--ink); font-family: inherit; font-size: 18px; font-weight: 600;
-  padding: 12px 15px; outline: none; transition: border-color 0.15s;
-}
-input[type=text]:focus, select:focus { border-color: var(--blue); }
-input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums; }
-.field .unit { font-size: 13px; color: var(--mute); font-weight: 600; margin-left: 4px; }
-.input-suffix { position: relative; }
-.input-suffix .suffix {
-  position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
-  font-size: 14px; color: var(--mute); font-weight: 700; pointer-events: none;
-}
-.input-suffix input { padding-right: 46px; }
 
-/* ── 토글 (액티브 자격) ── */
-.toggle-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 13px 0; border-bottom: 1px solid var(--line);
-}
-.toggle-row:last-child { border-bottom: none; }
-.toggle-row .t-label { font-size: 15.5px; font-weight: 700; color: var(--ink-2); }
-.toggle-row .t-label small { display: block; font-size: 12.5px; color: var(--mute); font-weight: 500; }
-.switch { position: relative; width: 82px; height: 44px; flex-shrink: 0; cursor: pointer; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.switch .track {
-  position: absolute; inset: 0; background: #d4d2c6; border-radius: 22px;
-  transition: background 0.2s;
-}
-.switch .knob {
-  position: absolute; top: 4px; left: 4px; width: 36px; height: 36px;
-  background: #fff; border-radius: 50%; transition: left 0.2s;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
-}
-.switch .txt {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  font-size: 12px; font-weight: 800; color: #fff;
-}
-.switch .txt.on  { left: 11px; opacity: 0; }
-.switch .txt.off { right: 9px; color: #6a6a5e; }
-.switch input:checked + .track { background: var(--green); }
-.switch input:checked + .track + .knob,
-.switch input:checked ~ .knob { left: 42px; }
-.switch input:checked ~ .txt.on { opacity: 1; }
-.switch input:checked ~ .txt.off { opacity: 0; }
-
-/* ── 스테퍼 ── */
 .stepper { display: flex; align-items: center; gap: 12px; }
 .stepper button {
-  width: 52px; height: 52px; border-radius: 12px;
+  width: 56px; height: 56px; border-radius: 12px;
   border: 1.5px solid var(--blue); background: #fff; color: var(--blue);
-  font-size: 26px; font-weight: 700; cursor: pointer; line-height: 1;
+  font-size: 28px; font-weight: 700; cursor: pointer; line-height: 1;
 }
 .stepper button:active { background: var(--bg-2); }
 .stepper .count {
-  flex: 1; text-align: center; font-size: 22px; font-weight: 800;
+  flex: 1; text-align: center; font-size: 26px; font-weight: 800;
   color: var(--ink); font-variant-numeric: tabular-nums;
 }
-.stepper .count small { font-size: 14px; color: var(--mute); font-weight: 600; }
+.stepper .count small { font-size: 15px; color: var(--mute); font-weight: 600; }
+
+/* ── 세그먼트 선택 ── */
+.seg { display: flex; gap: 8px; }
+.seg-btn {
+  flex: 1; min-height: 50px; padding: 8px; cursor: pointer;
+  border: 1.5px solid var(--line); background: #fff; border-radius: 11px;
+  font-family: inherit; font-size: 14.5px; font-weight: 700; color: var(--mute);
+}
+.seg-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* ── 프리셋 칩 ── */
+.presets { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.preset-chip {
+  flex: 1; min-width: 88px; min-height: 44px;
+  border: 1.5px solid var(--line); background: var(--bg-2);
+  border-radius: 10px; color: var(--ink-2); font-family: inherit;
+  font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px;
+}
+.preset-chip b { display: block; font-size: 15px; color: var(--blue); }
+.preset-chip:active { background: var(--gold-soft); }
 
 /* ── 콜아웃 ── */
 .callout {
   background: var(--red-soft); border-left: 4px solid var(--red);
   border-radius: 0 8px 8px 0; padding: 11px 14px; font-size: 13.5px;
-  color: var(--ink-2); margin-top: 12px;
+  color: var(--ink-2); margin-top: 14px;
 }
 .callout b { color: var(--red); }
 .callout.blue { background: #eef4fb; border-left-color: var(--blue); }
 .callout.blue b { color: var(--blue); }
-
-/* ── 라인 그리드 ── */
-.line-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.line-box {
-  background: var(--bg-2); border: 1px solid var(--line);
-  border-radius: 12px; padding: 14px;
-}
-.line-box .line-name {
-  font-size: 13px; font-weight: 800; letter-spacing: 0.04em;
-  margin-bottom: 12px; text-transform: uppercase;
-}
-.line-box.left  .line-name { color: var(--blue); }
-.line-box.right .line-name { color: var(--gold); }
-
-/* ── 세대별 입력 그리드 ── */
-.gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .callout a { color: var(--blue); font-weight: 700; }
-.match-note {
-  font-size: 13px; color: var(--mute); line-height: 1.6;
-  margin: 0 16px 12px; padding: 0 4px;
-}
-.match-note a { color: var(--blue); font-weight: 700; }
 
 /* ── 버튼 ── */
 .btn-calc {
   display: block; width: calc(100% - 32px); margin: 8px 16px 4px;
   background: linear-gradient(135deg, var(--gold), #9c7330);
   color: #fff; border: none; border-radius: 13px;
-  padding: 18px; font-size: 18.5px; font-weight: 800; font-family: inherit;
+  padding: 19px; font-size: 19px; font-weight: 800; font-family: inherit;
   cursor: pointer; box-shadow: var(--shadow-m); letter-spacing: -0.01em;
 }
 .btn-calc:active { transform: translateY(1px); }
@@ -222,8 +185,7 @@ input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums
   cursor: pointer;
 }
 
-/* ── 결과 ── */
-#result { display: none; }
+/* ── 결과 공통 ── */
 .result-hero {
   background: linear-gradient(150deg, var(--blue), #14283f);
   color: #fff; border-radius: 18px; margin: 16px 16px 12px;
@@ -238,11 +200,25 @@ input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums
 .rank-badge .ic { font-size: 19px; }
 .result-hero .total-label { font-size: 13.5px; color: #c5d2e2; letter-spacing: 0.05em; }
 .result-hero .total-amount {
-  font-size: 46px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px;
+  font-size: 42px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px;
   font-variant-numeric: tabular-nums;
 }
-.result-hero .total-amount .won { font-size: 22px; font-weight: 700; }
+.result-hero .total-amount .won { font-size: 21px; font-weight: 700; }
 .result-hero .yearly { font-size: 14px; color: #c5d2e2; }
+
+#result { display: none; }
+#grow-result { display: none; }
+
+/* ── 자동 환산 ── */
+.autocalc {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  margin: 0 16px 12px; padding: 14px 18px; box-shadow: var(--shadow-s);
+  display: flex; justify-content: space-around; text-align: center;
+}
+.autocalc .ac-item { flex: 1; }
+.autocalc .ac-label { font-size: 12px; color: var(--mute); font-weight: 600; }
+.autocalc .ac-value { font-size: 16px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.autocalc .ac-sep { width: 1px; background: var(--line); margin: 0 6px; }
 
 .breakdown { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 8px 18px; box-shadow: var(--shadow-s); }
 .bd-item {
@@ -255,30 +231,57 @@ input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums
 .bd-amount { font-size: 18px; font-weight: 800; color: var(--blue); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .bd-amount.zero { color: #b3b0a3; }
 
+.note {
+  font-size: 13px; color: var(--mute); line-height: 1.6;
+  margin: 0 16px 12px; padding: 0 4px;
+}
+.note a { color: var(--blue); font-weight: 700; }
+
 /* ── 진척도 ── */
-.progress-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 18px; box-shadow: var(--shadow-s); }
-.progress-card h4 { font-size: 14px; font-weight: 800; color: var(--blue); margin-bottom: 4px; }
-.progress-card .next-name { font-size: 13.5px; color: var(--mute); margin-bottom: 12px; }
-.progress-card .next-name b { color: var(--gold); }
-.bar { height: 16px; background: var(--bg-2); border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.progress-card { background: linear-gradient(135deg, var(--gold-soft), #fff); border: 1px solid #e8d6b0; border-radius: 14px; margin: 0 16px 12px; padding: 18px; box-shadow: var(--shadow-s); }
+.progress-card h4 { font-size: 17px; font-weight: 800; color: var(--blue); margin-bottom: 10px; }
+.progress-card h4 b { color: var(--gold); }
+.bar { height: 16px; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
 .bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), #d4a55a); border-radius: 8px; transition: width 0.5s; }
 .bar-pct { text-align: right; font-size: 13px; font-weight: 800; color: var(--gold); margin-top: 5px; }
-.need-row { font-size: 13px; color: var(--ink-2); margin-top: 8px; }
-.need-row b { color: var(--blue); }
-
-/* ── 자격유지 상태 ── */
-.qstatus { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 0 16px 12px; padding: 16px 18px; box-shadow: var(--shadow-s); }
-.qstatus h4 { font-size: 14px; font-weight: 800; color: var(--blue); margin-bottom: 10px; }
-.qstatus .q-row { display: flex; gap: 8px; }
-.q-chip {
-  flex: 1; text-align: center; padding: 10px 4px; border-radius: 10px;
-  font-size: 13px; font-weight: 700;
-}
-.q-chip.ok { background: var(--green-soft); color: var(--green); border: 1px solid #bcdcc6; }
-.q-chip.no { background: var(--red-soft); color: var(--red); border: 1px solid #e6bdb9; }
-.q-chip .q-ic { display: block; font-size: 18px; margin-bottom: 2px; }
 
 .result-actions { display: flex; gap: 10px; margin: 4px 16px 0; }
+
+/* ── 성장 시뮬레이션 ── */
+.card h4.block-title { font-size: 15px; font-weight: 800; color: var(--blue); margin-bottom: 12px; }
+.milestone {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; gap: 10px;
+}
+.milestone:last-child { border-bottom: none; }
+.milestone .ms-rank { font-weight: 700; color: var(--ink-2); }
+.milestone .ms-week { font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 12px; }
+.bar-row .bl { width: 46px; color: var(--mute); font-weight: 600; flex-shrink: 0; }
+.bar-row .bt { flex: 1; background: var(--bg-2); border-radius: 5px; height: 20px; overflow: hidden; }
+.bar-row .bf { display: block; height: 100%; background: linear-gradient(90deg, var(--blue-2), var(--gold)); border-radius: 5px; }
+.bar-row .bv { width: 96px; text-align: right; font-weight: 700; color: var(--blue); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+.dtable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dtable th { background: var(--blue); color: #fff; padding: 9px 5px; font-size: 12px; font-weight: 700; }
+.dtable td { padding: 8px 5px; border-bottom: 1px solid var(--line); text-align: center; color: var(--ink-2); }
+.dtable td.r { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dtable tr:nth-child(even) td { background: var(--bg-2); }
+
+details.week-detail { margin: 0 16px 12px; }
+details.week-detail summary {
+  cursor: pointer; list-style: none; padding: 14px 18px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  font-size: 15px; font-weight: 700; color: var(--blue); box-shadow: var(--shadow-s);
+}
+details.week-detail summary::-webkit-details-marker { display: none; }
+details.week-detail summary::before { content: '▸ '; color: var(--gold); }
+details.week-detail[open] summary::before { content: '▾ '; }
+details.week-detail .week-box {
+  border: 1px solid var(--line); border-top: none;
+  border-radius: 0 0 12px 12px; overflow: hidden; max-height: 360px; overflow-y: auto;
+}
 
 /* ── 토스트 ── */
 .toast {
@@ -296,8 +299,8 @@ input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums
 
 @media (max-width: 380px) {
   body { font-size: 16px; }
-  .result-hero .total-amount { font-size: 38px; }
-  .line-grid { grid-template-columns: 1fr; }
+  .result-hero .total-amount { font-size: 34px; }
+  .bar-row .bv { width: 82px; }
 }
 </style>
 </head>
@@ -307,256 +310,213 @@ input[type=text].numeric { text-align: right; font-variant-numeric: tabular-nums
   <header class="app-header">
     <div class="eyebrow">Wellance Income Simulator</div>
     <h1>💰 웰런스 수입 시뮬레이터</h1>
-    <div class="sub">내 활동량으로 5가지 수당과 직급을 정확히 계산해요</div>
+    <div class="sub">이렇게 활동하면, 얼마를 벌 수 있을까?</div>
   </header>
 
-  <!-- 도움말 -->
-  <div class="guide" id="guide">
-    <div class="guide-head" onclick="toggleGuide()">
-      <span>📌 처음 사용하시나요?</span>
-      <span class="toggle-ic" id="guide-ic">접기 ▾</span>
-    </div>
-    <div class="guide-body">
-      <p>이 시뮬레이터는 <b>웰런스 사업자(WP)</b>의 <b>이번 주 예상 수당</b>을 계산합니다.</p>
-      <ol>
-        <li>아래 칸에 <b>이번 주 활동량</b>을 입력하세요.</li>
-        <li>각 칸 옆 <b>ⓘ</b> 버튼을 누르면 설명이 나옵니다.</li>
-        <li>맨 아래 <b>계산하기</b> 버튼을 누르면 결과가 나와요.</li>
-      </ol>
-      <p style="margin-top:8px;font-size:13px;color:var(--mute)">입력값은 자동 저장되어 다음 방문 시 그대로 불러옵니다.</p>
-    </div>
+  <!-- 탭 -->
+  <div class="tabbar">
+    <button class="tab-btn active" id="tab-a" onclick="switchTab('a')">💰 수당 계산</button>
+    <button class="tab-btn" id="tab-b" onclick="switchTab('b')">📈 성장 시뮬레이션</button>
   </div>
 
-  <!-- ───── 입력: 자격 유지 ───── -->
-  <div class="section-title">STEP 1 · 자격 유지 상태</div>
-  <div class="card">
-    <h3>액티브 자격</h3>
-    <p class="card-desc">본인과 좌·우 직추 파트너가 모두 액티브여야 수당이 발생합니다.</p>
-    <div class="toggle-row">
-      <div class="t-label">본인 액티브
-        <small>직전 4주간 8만 1,600원 이상 구매 완료</small>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="selfActive" checked>
-        <span class="track"></span><span class="knob"></span>
-        <span class="txt on">ON</span><span class="txt off">OFF</span>
-      </label>
-    </div>
-    <div class="toggle-row">
-      <div class="t-label">좌측 직추 파트너 액티브
-        <small>왼쪽 라인 직접추천 파트너</small>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="leftRecruitActive" checked>
-        <span class="track"></span><span class="knob"></span>
-        <span class="txt on">ON</span><span class="txt off">OFF</span>
-      </label>
-    </div>
-    <div class="toggle-row">
-      <div class="t-label">우측 직추 파트너 액티브
-        <small>오른쪽 라인 직접추천 파트너</small>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="rightRecruitActive" checked>
-        <span class="track"></span><span class="knob"></span>
-        <span class="txt on">ON</span><span class="txt off">OFF</span>
-      </label>
-    </div>
-  </div>
+  <!-- ════════ 화면 A · 수당 계산 ════════ -->
+  <div id="screen-a" class="screen active">
 
-  <!-- ───── 입력: 신규 팩 추천 ───── -->
-  <div class="section-title">STEP 2 · 이번 주 신규 팩 추천</div>
-  <div class="card">
-    <h3>내가 직접 추천한 신규 사업자</h3>
-    <p class="card-desc">이번 주에 본인이 직접 추천하여 팩을 결제한 신규 인원입니다.</p>
-
-    <div class="field">
-      <label>패스트팩 (165팩) 신규 인원
-        <button type="button" class="help-btn" onclick="toggleHint('h-fast')">i</button>
-      </label>
-      <div class="hint" id="h-fast">165팩 1명당 <b>247,500원</b>의 팩추천 커미션이 즉시 발생합니다. (165만원 × 15%)</div>
-      <div class="stepper">
-        <button type="button" onclick="step('newFastPack',-1)">−</button>
-        <div class="count"><span id="newFastPack">0</span><small> 명</small></div>
-        <button type="button" onclick="step('newFastPack',1)">+</button>
+    <div class="guide" id="guide">
+      <div class="guide-head" onclick="toggleGuide()">
+        <span>📌 처음 사용하시나요?</span>
+        <span class="toggle-ic" id="guide-ic">접기 ▾</span>
+      </div>
+      <div class="guide-body">
+        <p><b>패스트팩 추천 인원</b>과 <b>정기구독 인원</b> 두 가지만 입력하면, 예상 직급과 수입이 한눈에 나옵니다.</p>
+        <ol>
+          <li>한 주에 몇 명을 추천할지 <b>+ / −</b> 버튼으로 정하세요.</li>
+          <li>아래 <b>예상 수입 보기</b> 버튼을 누르세요.</li>
+          <li>QV·CV·직급·수당이 자동으로 계산됩니다.</li>
+        </ol>
+        <p style="margin-top:8px;font-size:13px;color:var(--mute)">예: 패스트팩 3명 → 브론즈, 7명 → 실버, 15명 → 골드</p>
       </div>
     </div>
 
-    <div class="field">
-      <label>베이직팩 신규 인원
-        <button type="button" class="help-btn" onclick="toggleHint('h-basic')">i</button>
-      </label>
-      <div class="hint" id="h-basic">베이직팩 1명당 <b>62,250원</b>의 팩추천 커미션이 발생합니다. (41만 5천원 × 15%)</div>
-      <div class="stepper">
-        <button type="button" onclick="step('newBasicPack',-1)">−</button>
-        <div class="count"><span id="newBasicPack">0</span><small> 명</small></div>
-        <button type="button" onclick="step('newBasicPack',1)">+</button>
-      </div>
-    </div>
-
-    <div class="callout"><b>주의</b> · 패스트팩(165팩)은 한 사람당 <b>평생 1회만</b> 구매할 수 있습니다.</div>
-  </div>
-
-  <!-- ───── 입력: 좌우 라인 실적 ───── -->
-  <div class="section-title">STEP 3 · 좌·우 라인 실적</div>
-  <div class="card">
-    <h3>라인별 QV / CV 입력</h3>
-    <p class="card-desc">QV는 직급 판정용, CV는 수당 계산용 실적입니다.</p>
-
-    <div class="field" style="margin-bottom:12px">
-      <label>실적 단위 안내
-        <button type="button" class="help-btn" onclick="toggleHint('h-qvcv')">i</button>
-      </label>
-      <div class="hint" id="h-qvcv">
-        <b>QV</b> (자격 실적) — 직급 자격 판정에 사용. 최근 4주 누적값을 입력하세요.<br>
-        <b>CV</b> (수당 실적) — 팀수당 계산에 사용. <b>이번 주</b> 발생분을 입력하세요.
-      </div>
-    </div>
-
-    <div class="line-grid">
-      <div class="line-box left">
-        <div class="line-name">◀ 좌측 라인</div>
-        <div class="field">
-          <label>누적 QV <span class="unit">최근 4주</span></label>
-          <div class="input-suffix">
-            <input type="text" inputmode="numeric" class="numeric" id="cumLeftQV" placeholder="0">
-            <span class="suffix">QV</span>
-          </div>
+    <div class="section-title">이렇게 활동하면</div>
+    <div class="card">
+      <div class="field">
+        <label>패스트팩 추천 인원
+          <button type="button" class="help-btn" onclick="toggleHint('h-fast')">i</button>
+        </label>
+        <div class="sub-label">165팩으로 시작하는 신규 사업자를 몇 명 추천할까요?</div>
+        <div class="hint" id="h-fast">패스트팩(165팩) 1명을 추천하면 <b>247,500원</b>의 팩 추천 커미션이 생기고, 좌·우 라인 실적(QV·CV)도 함께 쌓여 직급이 올라갑니다.</div>
+        <div class="stepper">
+          <button type="button" onclick="step('fastPackRecruits',-1)" aria-label="감소">−</button>
+          <div class="count"><span id="fastPackRecruits">3</span><small> 명</small></div>
+          <button type="button" onclick="step('fastPackRecruits',1)" aria-label="증가">+</button>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <label>이번 주 CV</label>
-          <div class="input-suffix">
-            <input type="text" inputmode="numeric" class="numeric" id="weeklyLeftCV" placeholder="0">
-            <span class="suffix">CV</span>
-          </div>
+        <div class="presets">
+          <button type="button" class="preset-chip" onclick="setVal('fastPackRecruits',3)"><b>3명</b>브론즈</button>
+          <button type="button" class="preset-chip" onclick="setVal('fastPackRecruits',7)"><b>7명</b>실버</button>
+          <button type="button" class="preset-chip" onclick="setVal('fastPackRecruits',15)"><b>15명</b>골드</button>
+          <button type="button" class="preset-chip" onclick="setVal('fastPackRecruits',29)"><b>29명</b>플래티넘</button>
         </div>
       </div>
-      <div class="line-box right">
-        <div class="line-name">우측 라인 ▶</div>
-        <div class="field">
-          <label>누적 QV <span class="unit">최근 4주</span></label>
-          <div class="input-suffix">
-            <input type="text" inputmode="numeric" class="numeric" id="cumRightQV" placeholder="0">
-            <span class="suffix">QV</span>
-          </div>
-        </div>
-        <div class="field" style="margin-bottom:0">
-          <label>이번 주 CV</label>
-          <div class="input-suffix">
-            <input type="text" inputmode="numeric" class="numeric" id="weeklyRightCV" placeholder="0">
-            <span class="suffix">CV</span>
-          </div>
+
+      <div class="field">
+        <label>정기구독 인원
+          <button type="button" class="help-btn" onclick="toggleHint('h-sub')">i</button>
+        </label>
+        <div class="sub-label">건기식 제품을 정기구독하는 고객·파트너는 몇 명인가요?</div>
+        <div class="hint" id="h-sub">건기식 제품(메타부스트 제니스 등)을 <b>12개월 약정(15% 할인가)</b>으로 정기구독하면, 그 실적이 라인 볼륨에 더해져 팀수당과 직급에 보탬이 됩니다. 직급 미달이어도 판매 실적이 있으면 수당이 발생합니다.</div>
+        <div class="stepper">
+          <button type="button" onclick="step('subscriptionRecruits',-1)" aria-label="감소">−</button>
+          <div class="count"><span id="subscriptionRecruits">0</span><small> 명</small></div>
+          <button type="button" onclick="step('subscriptionRecruits',1)" aria-label="증가">+</button>
         </div>
       </div>
+
+      <div class="callout"><b>참고</b> · 패스트팩(165팩)은 한 사람당 <b>평생 1회만</b> 구매할 수 있습니다.</div>
     </div>
 
-  </div>
+    <button class="btn-calc" onclick="calculate()">📊 내 예상 수입 보기</button>
+    <div style="padding:6px 16px 0">
+      <button type="button" class="btn-ghost" onclick="resetInputs()">처음부터 다시</button>
+    </div>
 
-  <!-- ───── 입력: 추천매칭 ───── -->
-  <div class="section-title">STEP 4 · 추천매칭 입력</div>
-  <div class="card">
-    <h3>다운라인 세대별 팀수당</h3>
-    <p class="card-desc">추천매칭 커미션은 직추 파트너의 세대별(1G~5G) 팀수당을 매칭해 지급됩니다. 아는 만큼만 입력하세요 — 모르면 0으로 둡니다.</p>
-    <div class="gen-grid">
-      <div class="field" style="margin:0">
-        <label>1세대(1G) 팀수당</label>
-        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC1" placeholder="0"><span class="suffix">원</span></div>
+    <div id="result">
+      <div class="result-hero">
+        <div class="rank-badge"><span class="ic" id="r-rank-ic">🥉</span><span id="r-rank-name">브론즈 엘리트</span></div>
+        <div class="total-label">예상 주간 수당</div>
+        <div class="total-amount"><span id="r-total">0</span><span class="won"> 원</span></div>
+        <div class="yearly" id="r-context"></div>
       </div>
-      <div class="field" style="margin:0">
-        <label>2세대(2G) 팀수당</label>
-        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC2" placeholder="0"><span class="suffix">원</span></div>
-      </div>
-      <div class="field" style="margin:0">
-        <label>3세대(3G) 팀수당</label>
-        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC3" placeholder="0"><span class="suffix">원</span></div>
-      </div>
-      <div class="field" style="margin:0">
-        <label>4세대(4G) 팀수당</label>
-        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC4" placeholder="0"><span class="suffix">원</span></div>
-      </div>
-      <div class="field" style="margin:0">
-        <label>5세대(5G) 팀수당</label>
-        <div class="input-suffix"><input type="text" inputmode="numeric" class="numeric" id="genTC5" placeholder="0"><span class="suffix">원</span></div>
-      </div>
-    </div>
-    <div class="callout blue">
-      <b>안내</b> · 추천매칭은 <b>팀커미션 매칭</b> 기준으로 계산됩니다. 구매실적(팩·단품) 매칭 금액이 더 클 경우, 실제 지급은 더 큰 금액으로 이뤄집니다.
-      정확한 수수료는 웰런스 홈페이지에서 확인할 수 있습니다 —
-      <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">후원수당 확인 페이지</a>
-    </div>
-  </div>
 
-  <!-- ───── 입력: 직급 정보 ───── -->
-  <div class="section-title">STEP 5 · 직급 정보</div>
-  <div class="card">
-    <div class="field">
-      <label>직전 주 직급
-        <button type="button" class="help-btn" onclick="toggleHint('h-prev')">i</button>
-      </label>
-      <div class="hint" id="h-prev">랭크업 보너스(직급달성 보너스)는 직급이 올라갔을 때 <b>최초 1회</b>만 지급됩니다. 중복 지급을 막기 위해 직전 직급을 선택하세요.</div>
-      <select id="previousRank">
-        <option value="unqualified">아직 직급 없음 (신규)</option>
-      </select>
-    </div>
-    <div class="field" style="margin-bottom:0">
-      <label>직급 유지 경과 주차
-        <button type="button" class="help-btn" onclick="toggleHint('h-mw')">i</button>
-      </label>
-      <div class="hint" id="h-mw">최초 직급 성취 후 몇 주가 지났는지입니다. 직급유지 수당(랭크 퀄리파이)은 <b>4주 간격</b>으로 지급됩니다. 성취한 주는 0입니다.</div>
-      <div class="stepper">
-        <button type="button" onclick="step('maintainWeek',-1)">−</button>
-        <div class="count"><span id="maintainWeek">0</span><small> 주차</small></div>
-        <button type="button" onclick="step('maintainWeek',1)">+</button>
+      <div class="autocalc">
+        <div class="ac-item"><div class="ac-label">소실적 QV</div><div class="ac-value" id="r-qv">0</div></div>
+        <div class="ac-sep"></div>
+        <div class="ac-item"><div class="ac-label">소실적 CV</div><div class="ac-value" id="r-cv">0</div></div>
+        <div class="ac-sep"></div>
+        <div class="ac-item"><div class="ac-label">달성 직급</div><div class="ac-value" id="r-rank2">—</div></div>
+      </div>
+
+      <div class="breakdown" id="r-breakdown"></div>
+
+      <div class="note">
+        ※ 소실적은 좌·우 중 <b>작은 라인</b> 기준이며, 리더 4주 유지금액(45,000)이 다운라인으로 이월되어 차감됩니다.<br>
+        ※ ③ 추천매칭은 <b>팀커미션 매칭</b> 기준으로 계산됩니다. 구매실적(팩·단품) 매칭 금액이 더 클 경우, 실제 지급은 더 큰 금액으로 이뤄집니다.<br>
+        ※ ⑤ 직급유지 수당은 <b>직전 4주 기준 직급 유지 시</b> 지급됩니다.<br>
+        정확한 수수료는 <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">웰런스 후원수당 확인 페이지</a>에서 확인하세요.
+      </div>
+
+      <div class="progress-card" id="r-progress">
+        <h4 id="r-next-title"></h4>
+        <div class="bar"><div class="bar-fill" id="r-bar"></div></div>
+        <div class="bar-pct" id="r-bar-pct">0%</div>
+      </div>
+
+      <div class="result-actions">
+        <button type="button" class="btn-ghost" onclick="shareResult()">📤 결과 공유하기</button>
       </div>
     </div>
   </div>
 
-  <button class="btn-calc" onclick="calculate()">📊 이번 주 수당 계산하기</button>
-  <div style="padding:6px 16px 0">
-    <button type="button" class="btn-ghost" onclick="resetInputs()">입력값 초기화</button>
+  <!-- ════════ 화면 B · 성장 시뮬레이션 ════════ -->
+  <div id="screen-b" class="screen">
+
+    <div class="section-title">성장 시뮬레이션</div>
+    <div class="card">
+      <h3>내 팀, 얼마나 커질까?</h3>
+      <p class="card-desc">사업자를 추천하면 팀원도 1명씩 복제하며 팀이 커지고, 정기구독을 모집하면 판매 실적이 차곡차곡 쌓입니다. 1~3년 후를 미리 봅니다.</p>
+
+      <div class="field">
+        <label>무엇을 늘릴까요?</label>
+        <div class="sub-label">사업자를 추천할지, 정기구독 회원을 모집할지</div>
+        <div class="seg" id="seg-type">
+          <button type="button" class="seg-btn active" onclick="setGrowType('partner')">📦 사업자 추천</button>
+          <button type="button" class="seg-btn" onclick="setGrowType('subscription')">🛍️ 정기구독 판매</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>추천 주기</label>
+        <div class="sub-label">매주 하기 부담되면 매월로 — 부담 없는 속도를 골라보세요</div>
+        <div class="seg" id="seg-unit">
+          <button type="button" class="seg-btn active" onclick="setGrowUnit('week')">매주</button>
+          <button type="button" class="seg-btn" onclick="setGrowUnit('month')">매월</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>시뮬레이션 기간</label>
+        <div class="sub-label">1년 이후의 흐름도 함께 볼 수 있어요</div>
+        <div class="seg" id="seg-years">
+          <button type="button" class="seg-btn active" onclick="setGrowYears(1)">1년</button>
+          <button type="button" class="seg-btn" onclick="setGrowYears(2)">2년</button>
+          <button type="button" class="seg-btn" onclick="setGrowYears(3)">3년</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:0">
+        <label id="grow-n-label">매주 추천 인원</label>
+        <div class="sub-label" id="grow-n-sub">한 번에 내가 직접 추천하는 인원</div>
+        <div class="stepper">
+          <button type="button" onclick="stepGrow(-1)" aria-label="감소">−</button>
+          <div class="count"><span id="growRecruits">1</span><small id="grow-n-unit"> 명 / 주</small></div>
+          <button type="button" onclick="stepGrow(1)" aria-label="증가">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-calc" onclick="runGrowth()">📈 시뮬레이션 보기</button>
+
+    <div id="grow-result">
+      <div class="result-hero">
+        <div class="rank-badge"><span class="ic" id="g-rank-ic">🏆</span><span id="g-rank-name">—</span></div>
+        <div class="total-label">누적 수입 (예상)</div>
+        <div class="total-amount" id="g-total">0</div>
+        <div class="yearly" id="g-context"></div>
+      </div>
+
+      <div class="card">
+        <h4 class="block-title">🏅 직급 도달 시점</h4>
+        <div id="g-milestones"></div>
+      </div>
+
+      <div class="card">
+        <h4 class="block-title">📅 월별 요약</h4>
+        <table class="dtable">
+          <thead><tr><th>개월</th><th id="g-th-size">팀 규모</th><th>직급</th><th>월 수당</th><th>누적 수입</th></tr></thead>
+          <tbody id="g-month-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4 class="block-title">📈 누적 수입 추이</h4>
+        <div id="g-barchart"></div>
+      </div>
+
+      <details class="week-detail">
+        <summary>주별 상세 보기</summary>
+        <div class="week-box">
+          <table class="dtable">
+            <thead><tr><th>주</th><th id="g-wth-size">팀</th><th>직급</th><th>주간 수당</th><th>누적 수입</th></tr></thead>
+            <tbody id="g-week-body"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <div class="note" id="g-note"></div>
+
+      <div class="result-actions">
+        <button type="button" class="btn-ghost" onclick="shareGrowth()">📤 시뮬레이션 공유하기</button>
+      </div>
+    </div>
   </div>
 
-  <!-- ───── 결과 ───── -->
-  <div id="result">
-    <div class="result-hero">
-      <div class="rank-badge"><span class="ic" id="r-rank-ic">🥉</span><span id="r-rank-name">브론즈 엘리트</span></div>
-      <div class="total-label">이번 주 예상 총 수당</div>
-      <div class="total-amount"><span id="r-total">0</span><span class="won"> 원</span></div>
-      <div class="yearly" id="r-context"></div>
-    </div>
-
-    <div class="breakdown" id="r-breakdown"></div>
-
-    <div class="match-note">
-      ※ ③ 추천매칭은 <b>팀커미션 매칭</b> 기준으로 계산됩니다. 구매실적(팩·단품) 매칭 금액이 더 클 경우, 실제 지급은 더 큰 금액으로 이뤄집니다.
-      정확한 수수료는 <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">웰런스 후원수당 확인 페이지</a>에서 확인하세요.
-    </div>
-
-    <div class="progress-card" id="r-progress">
-      <h4>다음 직급까지</h4>
-      <div class="next-name" id="r-next-name"></div>
-      <div class="bar"><div class="bar-fill" id="r-bar"></div></div>
-      <div class="bar-pct" id="r-bar-pct">0%</div>
-      <div class="need-row" id="r-need"></div>
-    </div>
-
-    <div class="qstatus">
-      <h4>자격 유지 상태</h4>
-      <div class="q-row" id="r-qstatus"></div>
-    </div>
-
-    <div class="result-actions">
-      <button type="button" class="btn-ghost" onclick="shareResult()">📤 결과 공유</button>
-    </div>
-  </div>
-
-  <div class="brand-footer">🦕 <b>옆집디노</b> · wellstar.life<br>웰런스 공식 보상 구조(2024) 기준</div>
+  <div class="brand-footer">🦕 <b>옆집디노</b> · wellstar.life<br>웰런스 공식 보상 구조(2026) 기준 · 실제 수당은 활동·시점에 따라 달라질 수 있습니다</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- 계산 엔진 -->
-<script src="engine.js"></script>
+<!-- 계산 엔진 (engine.js 갱신 시 ?v= 버전 올림) -->
+<script src="engine.js?v=5"></script>
 <script>
 /* ============================================================
  * Phase 2 재확장용 feature flag.
@@ -570,41 +530,41 @@ var STORAGE_KEY = 'wellance_sim_inputs';
 var GUIDE_KEY = 'wellance_sim_guide_collapsed';
 
 var RANK_ICON = {
+  partner:'🌱',
   bronze:'🥉', silver:'🥈', gold:'🥇', platinum:'💎', emerald:'💚',
   diamond:'💠', royaldiamond:'👑', crown:'👑', royalcrown:'👑', imperial:'🏆',
-  unqualified:'⚠️'
+  unqualified:'🔰'
 };
 
-var TEXT_IDS  = ['cumLeftQV','cumRightQV','weeklyLeftCV','weeklyRightCV',
-                 'genTC1','genTC2','genTC3','genTC4','genTC5'];
-var STEP_IDS  = ['newFastPack','newBasicPack','maintainWeek'];
-var BOOL_IDS  = ['selfActive','leftRecruitActive','rightRecruitActive'];
-
-/* ── 직급 선택 옵션 채우기 ── */
-function initRankSelect() {
-  var sel = document.getElementById('previousRank');
-  E.RANKS.forEach(function (r) {
-    var o = document.createElement('option');
-    o.value = r.id; o.textContent = r.name + ' 엘리트';
-    sel.appendChild(o);
-  });
-}
+var STEP_IDS = ['fastPackRecruits', 'subscriptionRecruits', 'growRecruits'];
+var growType = 'partner';   // 'partner' | 'subscription'
+var growUnit = 'week';      // 'week' | 'month'
+var growYears = 1;          // 1 | 2 | 3
 
 /* ── 숫자 포맷 ── */
 function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
-function parseNum(str) { var n = parseInt(String(str).replace(/[^0-9]/g, ''), 10); return isFinite(n) ? n : 0; }
+function fmtKor(n) {
+  n = Math.round(n);
+  if (n >= 100000000) {
+    var eok = Math.floor(n / 100000000);
+    var man = Math.floor((n % 100000000) / 10000);
+    return eok + '억' + (man > 0 ? ' ' + man.toLocaleString('ko-KR') + '만' : '') + '원';
+  }
+  if (n >= 10000) {
+    var man2 = Math.floor(n / 10000);
+    var won = n % 10000;
+    return man2.toLocaleString('ko-KR') + '만' + (won > 0 ? ' ' + fmt(won) : '') + '원';
+  }
+  return fmt(n) + '원';
+}
 
-/* ── 콤마 입력 처리 ── */
-function bindNumberInputs() {
-  TEXT_IDS.forEach(function (id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', function () {
-      var raw = parseNum(el.value);
-      el.value = raw ? raw.toLocaleString('ko-KR') : '';
-      saveInputs();
-    });
-  });
+/* ── 탭 ── */
+function switchTab(name) {
+  document.getElementById('screen-a').classList.toggle('active', name === 'a');
+  document.getElementById('screen-b').classList.toggle('active', name === 'b');
+  document.getElementById('tab-a').classList.toggle('active', name === 'a');
+  document.getElementById('tab-b').classList.toggle('active', name === 'b');
+  window.scrollTo(0, 0);
 }
 
 /* ── 스테퍼 ── */
@@ -614,8 +574,52 @@ function step(id, delta) {
   el.textContent = v;
   saveInputs();
 }
+function setVal(id, v) {
+  document.getElementById(id).textContent = Math.max(0, v);
+  saveInputs();
+}
+function stepGrow(delta) {
+  var el = document.getElementById('growRecruits');
+  var cur = parseInt(el.textContent, 10) || 1;
+  var stepSize = cur >= 10 ? 5 : 1;          // 10명 이상은 5단위로 빠르게
+  var v = Math.min(100, Math.max(1, cur + delta * stepSize));
+  el.textContent = v;
+  saveInputs();
+}
 
-/* ── 힌트 / 가이드 토글 ── */
+/* ── 성장 시뮬 옵션 ── */
+function setSeg(id, activeIdx) {
+  var b = document.getElementById(id).children;
+  for (var i = 0; i < b.length; i++) b[i].classList.toggle('active', i === activeIdx);
+}
+function setGrowType(t) {
+  growType = t;
+  setSeg('seg-type', t === 'partner' ? 0 : 1);
+  updateGrowLabels();
+  saveInputs();
+}
+function setGrowUnit(u) {
+  growUnit = u;
+  setSeg('seg-unit', u === 'week' ? 0 : 1);
+  updateGrowLabels();
+  saveInputs();
+}
+function setGrowYears(y) {
+  growYears = y;
+  setSeg('seg-years', y - 1);
+  saveInputs();
+}
+function updateGrowLabels() {
+  var period = (growUnit === 'week') ? '매주' : '매월';
+  var what = (growType === 'partner') ? '추천 인원' : '정기구독 모집 인원';
+  document.getElementById('grow-n-label').textContent = period + ' ' + what;
+  document.getElementById('grow-n-unit').textContent = ' 명 / ' + (growUnit === 'week' ? '주' : '월');
+  document.getElementById('grow-n-sub').textContent = (growType === 'partner')
+    ? '한 번에 내가 직접 추천하는 신규 사업자 수'
+    : '한 번에 내가 직접 모집하는 정기구독 회원 수';
+}
+
+/* ── 힌트 / 가이드 ── */
 function toggleHint(id) {
   var el = document.getElementById(id);
   if (el) el.classList.toggle('show');
@@ -628,20 +632,17 @@ function toggleGuide() {
   try { localStorage.setItem(GUIDE_KEY, collapsed ? '1' : '0'); } catch (e) {}
 }
 
-/* ── 입력값 수집 ── */
-function collectState() {
-  var s = {};
-  BOOL_IDS.forEach(function (id) { s[id] = document.getElementById(id).checked; });
-  TEXT_IDS.forEach(function (id) { s[id] = parseNum(document.getElementById(id).value); });
-  STEP_IDS.forEach(function (id) { s[id] = parseInt(document.getElementById(id).textContent, 10) || 0; });
-  s.previousRank = document.getElementById('previousRank').value;
-  s.generationTeamCommission = [s.genTC1, s.genTC2, s.genTC3, s.genTC4, s.genTC5];
-  return s;
+/* ── 입력 저장 / 복원 ── */
+function collectInput() {
+  return {
+    fastPackRecruits: parseInt(document.getElementById('fastPackRecruits').textContent, 10) || 0,
+    subscriptionRecruits: parseInt(document.getElementById('subscriptionRecruits').textContent, 10) || 0,
+    growRecruits: parseInt(document.getElementById('growRecruits').textContent, 10) || 1,
+    growType: growType, growUnit: growUnit, growYears: growYears
+  };
 }
-
-/* ── localStorage 저장 / 복원 ── */
 function saveInputs() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState())); } catch (e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collectInput())); } catch (e) {}
 }
 function loadInputs() {
   var raw;
@@ -649,55 +650,63 @@ function loadInputs() {
   if (!raw) return;
   var s;
   try { s = JSON.parse(raw); } catch (e) { return; }
-  BOOL_IDS.forEach(function (id) { if (id in s) document.getElementById(id).checked = !!s[id]; });
-  TEXT_IDS.forEach(function (id) {
-    if (s[id]) document.getElementById(id).value = Number(s[id]).toLocaleString('ko-KR');
+  STEP_IDS.forEach(function (id) {
+    if (typeof s[id] === 'number') document.getElementById(id).textContent = Math.max(0, s[id]);
   });
-  STEP_IDS.forEach(function (id) { if (id in s) document.getElementById(id).textContent = s[id] || 0; });
-  if (s.previousRank) document.getElementById('previousRank').value = s.previousRank;
+  if (s.growType === 'subscription') setGrowType('subscription');
+  if (s.growUnit === 'month') setGrowUnit('month');
+  if (s.growYears === 2 || s.growYears === 3) setGrowYears(s.growYears);
 }
 function resetInputs() {
   try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-  BOOL_IDS.forEach(function (id) { document.getElementById(id).checked = true; });
-  TEXT_IDS.forEach(function (id) { document.getElementById(id).value = ''; });
-  STEP_IDS.forEach(function (id) { document.getElementById(id).textContent = '0'; });
-  document.getElementById('previousRank').value = 'unqualified';
+  document.getElementById('fastPackRecruits').textContent = '3';
+  document.getElementById('subscriptionRecruits').textContent = '0';
   document.getElementById('result').style.display = 'none';
-  showToast('입력값을 초기화했어요');
+  showToast('처음 상태로 되돌렸어요');
 }
 
-/* ── 계산 ── */
+/* ── 화면 A · 수당 계산 ── */
 var lastResult = null;
 function calculate() {
-  var s = collectState();
-  var r = E.simulate(s);
+  var inp = collectInput();
+  var r = E.simulate({ fastPackRecruits: inp.fastPackRecruits, subscriptionRecruits: inp.subscriptionRecruits });
   lastResult = r;
-  renderResult(r, s);
+  renderResult(r);
   saveInputs();
   var box = document.getElementById('result');
   box.style.display = 'block';
   box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderResult(r, s) {
+function renderResult(r) {
   document.getElementById('r-rank-ic').textContent = RANK_ICON[r.rankId] || '🏅';
   document.getElementById('r-rank-name').textContent = r.displayName;
   document.getElementById('r-total').textContent = fmt(r.total);
+
+  document.getElementById('r-qv').textContent = fmt(r.smallQV);
+  document.getElementById('r-cv').textContent = fmt(r.smallCV);
+  document.getElementById('r-rank2').textContent = r.qualified ? r.rankName : '미달';
 
   var ctx = document.getElementById('r-context');
   if (!r.qualified) {
     ctx.textContent = r.reason;
   } else {
-    ctx.textContent = '월 환산 약 ' + fmt(r.total * 4) + '원 (주 4회 기준)';
+    ctx.textContent = '패스트팩 ' + r.fastPackRecruits + '명'
+      + (r.subscriptionRecruits ? ' · 정기구독 ' + r.subscriptionRecruits + '명' : '')
+      + ' 추천 시 (랭크업은 최초 1회)';
   }
 
-  // 5개 수당 상세
+  var matchPct = Math.round((r.matchRate || 0) * 100);
+  var dParts = [];
+  if (r.fastPackRecruits > 0) dParts.push('패스트팩 ' + r.fastPackRecruits + '명');
+  if (r.subscriptionRecruits > 0) dParts.push('정기구독 ' + r.subscriptionRecruits + '명');
+  var directDesc = dParts.length ? dParts.join(' + ') + ' 추천·판매' : '팩 추천 15% · 우대고객 15%';
   var items = [
-    { n: '① 팩 추천 커미션', d: '신규 직추 팩 결제 15%', v: r.packCommission },
-    { n: '② 후원수당 (팀커미션)', d: '소실적 주간 CV 기준', v: r.teamCommission },
-    { n: '③ 추천매칭 커미션', d: '팀커미션 매칭 기준', v: r.matchCommission },
-    { n: '④ 랭크업 보너스', d: r.rankUpInstant ? '직급달성 보너스 (최초 1회)' : '50% 즉시 · 50%는 13주 후 지급', v: r.rankUpBonus },
-    { n: '⑤ 직급유지 (랭크 퀄리파이)', d: '4주 간격 지급', v: r.maintainCommission }
+    { n: '① 팩 추천 · 우대고객 커미션', d: directDesc, v: r.directCommission },
+    { n: '② 후원수당 (팀커미션)', d: '소실적 CV 기준', v: r.teamCommission },
+    { n: '③ 추천매칭 커미션', d: r.qualified ? ('팀수당의 ' + matchPct + '% (또는 하위 팀커미션 금액의 ' + matchPct + '%)') : '팀커미션 매칭 기준', v: r.matchCommission },
+    { n: '④ 랭크업 보너스', d: r.rankUpInstant ? '직급 최초 달성 (1회 지급)' : '50% 즉시 · 50%는 13주 후', v: r.rankUpBonus },
+    { n: '⑤ 직급유지 (랭크 퀄리파이)', d: '직전 4주간 직급 유지 시 지급', v: r.maintainCommission }
   ];
   document.getElementById('r-breakdown').innerHTML = items.map(function (it) {
     var zero = it.v <= 0 ? ' zero' : '';
@@ -706,47 +715,139 @@ function renderResult(r, s) {
       '<div class="bd-amount' + zero + '">' + fmt(it.v) + '원</div></div>';
   }).join('');
 
-  // 다음 직급 진척도
   var prog = document.getElementById('r-progress');
-  if (r.qualified && r.nextRank) {
+  if (r.nextRank) {
     prog.style.display = 'block';
-    document.getElementById('r-next-name').innerHTML = '다음 직급 · <b>' + r.nextRank.displayName + '</b>';
+    document.getElementById('r-next-title').innerHTML =
+      '<b>' + r.nextRank.displayName + '</b>까지 — 패스트팩 ' + r.nextRank.moreFastPackRecruits + '명 더!';
     document.getElementById('r-bar').style.width = r.nextRank.percent + '%';
     document.getElementById('r-bar-pct').textContent = r.nextRank.percent + '% 도달';
-    document.getElementById('r-need').innerHTML =
-      '필요 QV — 좌측 <b>+' + fmt(r.nextRank.needLeftQV) + '</b> · 우측 <b>+' + fmt(r.nextRank.needRightQV) + '</b>';
+  } else if (r.qualified) {
+    prog.style.display = 'block';
+    document.getElementById('r-next-title').innerHTML = '🏆 최고 직급에 도달했습니다!';
+    document.getElementById('r-bar').style.width = '100%';
+    document.getElementById('r-bar-pct').textContent = '100%';
   } else {
-    prog.style.display = r.qualified ? 'block' : 'none';
-    if (r.qualified && !r.nextRank) {
-      document.getElementById('r-next-name').innerHTML = '🏆 최고 직급에 도달했습니다!';
-      document.getElementById('r-bar').style.width = '100%';
-      document.getElementById('r-bar-pct').textContent = '100%';
-      document.getElementById('r-need').textContent = '';
-    }
+    prog.style.display = 'none';
   }
-
-  // 자격유지 상태
-  var qs = [
-    { label: '본인', ok: s.selfActive },
-    { label: '좌측 직추', ok: s.leftRecruitActive },
-    { label: '우측 직추', ok: s.rightRecruitActive }
-  ];
-  document.getElementById('r-qstatus').innerHTML = qs.map(function (q) {
-    return '<div class="q-chip ' + (q.ok ? 'ok' : 'no') + '">' +
-      '<span class="q-ic">' + (q.ok ? '✓' : '✕') + '</span>' + q.label + '</div>';
-  }).join('');
 }
 
-/* ── 결과 공유 ── */
 function shareResult() {
   if (!lastResult) return;
   var r = lastResult;
   var txt = '[웰런스 수입 시뮬레이터]\n' +
-    '현재 직급: ' + r.displayName + '\n' +
-    '이번 주 예상 총 수당: ' + fmt(r.total) + '원\n' +
-    '① 팩추천 ' + fmt(r.packCommission) + '원 / ② 팀수당 ' + fmt(r.teamCommission) + '원\n' +
-    '③ 매칭 ' + fmt(r.matchCommission) + '원 / ④ 랭크업 ' + fmt(r.rankUpBonus) + '원 / ⑤ 직급유지 ' + fmt(r.maintainCommission) + '원\n' +
+    '패스트팩 ' + r.fastPackRecruits + '명 추천 시\n' +
+    '예상 직급: ' + r.displayName + '\n' +
+    '예상 주간 수당: ' + fmt(r.total) + '원\n' +
     'app.wellstar.life/simulator';
+  doShare(txt);
+}
+
+/* ── 화면 B · 성장 시뮬레이션 ── */
+var lastGrowth = null;
+function runGrowth() {
+  var N = parseInt(document.getElementById('growRecruits').textContent, 10) || 1;
+  var rows = E.simulateGrowth({ recruitsPerPeriod: N, periodUnit: growUnit, type: growType, years: growYears });
+  lastGrowth = rows;
+  renderGrowth(rows);
+  saveInputs();
+  var box = document.getElementById('grow-result');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderGrowth(rows) {
+  var last = rows[rows.length - 1];
+  var isPartner = (growType === 'partner');
+  var sizeLabel = isPartner ? '팀' : '정기구독 회원';
+  var totalMonths = last.month;
+
+  document.getElementById('g-th-size').textContent = isPartner ? '팀 규모' : '회원 수';
+  document.getElementById('g-wth-size').textContent = isPartner ? '팀' : '회원';
+
+  document.getElementById('g-rank-ic').textContent = RANK_ICON[last.rankId] || '🏆';
+  document.getElementById('g-rank-name').textContent = growYears + '년 후 · ' + last.displayName;
+  document.getElementById('g-total').textContent = fmtKor(last.cumulative);
+  document.getElementById('g-context').textContent =
+    sizeLabel + ' ' + fmt(last.team) + '명 · 마지막 주 주간 수당 약 ' + fmtKor(last.weekIncome);
+
+  // 직급 도달 시점 (+ 보너스)
+  var seen = {}, milestones = [];
+  rows.forEach(function (r) {
+    if (r.rankId !== 'unqualified' && !seen[r.rankId]) {
+      seen[r.rankId] = true;
+      milestones.push({ rankId: r.rankId, name: r.displayName, week: r.week, bonus: r.rankUpBonus });
+    }
+  });
+  document.getElementById('g-milestones').innerHTML = milestones.length
+    ? milestones.map(function (m) {
+        var bonus = m.bonus > 0
+          ? ' <span style="color:var(--mute);font-weight:600">· 보너스 ' + fmtKor(m.bonus) + '</span>' : '';
+        return '<div class="milestone"><span class="ms-rank">' + (RANK_ICON[m.rankId] || '') + ' ' +
+          m.name + bonus + '</span><span class="ms-week">' + m.week + '주차</span></div>';
+      }).join('')
+    : '<div class="milestone"><span class="ms-rank">아직 직급 미달</span></div>';
+
+  // 월별 요약 (월 수당 = 그 달 주간 수당 합계)
+  var months = [];
+  for (var m = 1; m <= totalMonths; m++) {
+    var mr = rows.filter(function (r) { return r.month === m; });
+    if (!mr.length) continue;
+    var end = mr[mr.length - 1];
+    var monthPay = mr.reduce(function (a, r) { return a + r.weekIncome; }, 0);
+    months.push({ month: m, team: end.team, rankName: end.rankName, pay: monthPay, cumulative: end.cumulative });
+  }
+  document.getElementById('g-month-body').innerHTML = months.map(function (m) {
+    return '<tr><td>' + m.month + '개월</td><td>' + fmt(m.team) + '명</td><td>' + m.rankName +
+      '</td><td class="r">' + fmtKor(m.pay) + '</td><td class="r">' + fmtKor(m.cumulative) + '</td></tr>';
+  }).join('');
+
+  // 누적 수입 바차트 (길면 최대 12개로 샘플링)
+  var barMonths = months;
+  if (months.length > 12) {
+    var stp = Math.ceil(months.length / 12);
+    barMonths = months.filter(function (m, i) { return ((i + 1) % stp === 0) || (i === months.length - 1); });
+  }
+  var maxCum = barMonths.reduce(function (a, m) { return Math.max(a, m.cumulative); }, 1);
+  document.getElementById('g-barchart').innerHTML = barMonths.map(function (m) {
+    var pct = Math.max(2, Math.round(m.cumulative / maxCum * 100));
+    return '<div class="bar-row"><span class="bl">' + m.month + '개월</span>' +
+      '<span class="bt"><span class="bf" style="width:' + pct + '%"></span></span>' +
+      '<span class="bv">' + fmtKor(m.cumulative) + '</span></div>';
+  }).join('');
+
+  // 주별 상세
+  document.getElementById('g-week-body').innerHTML = rows.map(function (r) {
+    return '<tr><td>' + r.week + '주</td><td>' + fmt(r.team) + '</td><td>' + r.rankName +
+      '</td><td class="r">' + fmtKor(r.weekIncome) + '</td><td class="r">' + fmtKor(r.cumulative) + '</td></tr>';
+  }).join('');
+
+  // 안내
+  var note = isPartner
+    ? '※ 새로 합류한 사업자가 모두 빠짐없이 1명씩 복제(추천)한다는 <b>이상적 가정</b>입니다.'
+    : '※ 정기구독 회원은 복제하지 않으며, <b>내가 직접 모집하는 선형 증가</b> 기준입니다.';
+  document.getElementById('g-note').innerHTML = note +
+    '<br>※ <b>월 수당</b>은 그 달 받는 전체 금액입니다 — ②팀수당·③매칭·⑤직급유지에 더해, 직급이 오른 달엔 <b>④직급달성보너스</b>까지 포함됩니다. (월 수당을 모두 더하면 누적 수입과 같음)' +
+    '<br>※ <b>월별 요약</b>과 <b>주별 상세</b>는 같은 데이터를 월·주 단위로 나눠 본 것입니다. 1개월 ≈ 4.3주.' +
+    '<br>정확한 수수료는 <a href="https://www.wellance.kr/myoffice/pay_info/pay_info_week.html" target="_blank" rel="noopener">웰런스 후원수당 확인 페이지</a>를 참고하세요.';
+}
+
+function shareGrowth() {
+  if (!lastGrowth) return;
+  var last = lastGrowth[lastGrowth.length - 1];
+  var N = parseInt(document.getElementById('growRecruits').textContent, 10) || 1;
+  var period = (growUnit === 'week') ? '매주' : '매월';
+  var what = (growType === 'partner') ? '명 추천' : '명 정기구독 모집';
+  var txt = '[웰런스 성장 시뮬레이션]\n' +
+    period + ' ' + N + what + ' · ' + growYears + '년 가정\n' +
+    growYears + '년 후: ' + fmt(last.team) + '명 · ' + last.displayName + '\n' +
+    '누적 예상 수입: ' + fmtKor(last.cumulative) + '\n' +
+    'app.wellstar.life/simulator';
+  doShare(txt);
+}
+
+/* ── 공유 / 토스트 ── */
+function doShare(txt) {
   if (navigator.share) {
     navigator.share({ title: '웰런스 수입 시뮬레이터', text: txt }).catch(function () {});
   } else if (navigator.clipboard) {
@@ -755,8 +856,6 @@ function shareResult() {
     showToast('공유를 지원하지 않는 환경입니다');
   }
 }
-
-/* ── 토스트 ── */
 var toastTimer;
 function showToast(msg) {
   var t = document.getElementById('toast');
@@ -768,16 +867,9 @@ function showToast(msg) {
 
 /* ── 초기화 ── */
 function init() {
-  initRankSelect();
-  bindNumberInputs();
   loadInputs();
-  BOOL_IDS.forEach(function (id) {
-    document.getElementById(id).addEventListener('change', saveInputs);
-  });
-  document.getElementById('previousRank').addEventListener('change', saveInputs);
-  try {
-    if (localStorage.getItem(GUIDE_KEY) === '1') toggleGuide();
-  } catch (e) {}
+  updateGrowLabels();
+  try { if (localStorage.getItem(GUIDE_KEY) === '1') toggleGuide(); } catch (e) {}
 }
 init();
 
@@ -785,9 +877,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function () {});
 }
 </script>
+<!-- 로그인 게이트 없음 — 예비 사업자 누구나 바로 사용 (모집 도구) -->
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
-<script src="/shared/login-gate.js"></script>
 <script>DinoAuth.init();</script>
 <script src="/shared/nav.js"></script>
 </body>
