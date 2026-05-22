@@ -12,7 +12,8 @@
     { "source": "/dm-generator", "destination": "/dm-generator/index.html" },
     { "source": "/content-maker", "destination": "/content-maker/index.html" },
     { "source": "/health-check", "destination": "/health-check/index.html" },
-    { "source": "/challenge", "destination": "/challenge/index.html" }
+    { "source": "/challenge", "destination": "/challenge/index.html" },
+    { "source": "/saju", "destination": "/saju/index.html" }
   ],
   "headers": [
     {
@@ -108,6 +109,19 @@
     },
     {
       "source": "/team/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/saju/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/saju/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/saju/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]

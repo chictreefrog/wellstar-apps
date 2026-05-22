@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>사주로 보는 나의 성공 스타일 | 옆집디노</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #DAA520; --gold-light: #FFD700;
+  --dark: #1a1a2e; --dark2: #16213e; --dark3: #0f3460;
+  --cream: #F0E6D3; --muted: #8899AA; --bg: #FAFAF8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); -webkit-font-smoothing: antialiased; }
+.serif { font-family: 'Noto Serif KR', Georgia, serif; }
+.step { display: none; min-height: 100vh; }
+.step.active { display: flex; flex-direction: column; }
+/* 공통 하단 네비(/shared/nav.js) 공간 확보 */
+#step-input, #step-analyzing, #step-email, #step-sending, #step-sent {
+  padding-bottom: calc(40px + 64px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* INTRO */
+#step-intro { align-items: center; justify-content: flex-start; padding: 100px 20px calc(100px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, var(--dark) 0%, var(--dark2) 40%, var(--dark3) 100%); position: relative; overflow: hidden; min-height: auto; }
+#step-intro .content { position: relative; z-index: 1; text-align: center; max-width: 500px; }
+.hero-icon { font-size: 64px; margin-bottom: 20px; animation: pulse 3s ease-in-out infinite; }
+.hero-title { font-size: 36px; font-weight: 900; color: var(--cream); line-height: 1.3; margin-bottom: 16px; animation: fadeInUp 0.8s ease-out; }
+.hero-sub { font-size: 17px; color: #B8C6DB; line-height: 1.7; margin-bottom: 10px; animation: fadeInUp 0.8s ease-out 0.2s both; }
+.hero-desc { font-size: 14px; color: #7B8DA6; line-height: 1.6; margin-bottom: 32px; animation: fadeInUp 0.8s ease-out 0.3s both; }
+.brand-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border-radius: 20px; padding: 8px 16px; margin-bottom: 28px; font-size: 14px; color: #B8C6DB; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.08); animation: fadeInUp 0.8s ease-out 0.35s both; }
+.brand-badge .sep { color: rgba(255,255,255,0.25); }
+.element-tags { display: flex; gap: 14px; justify-content: center; margin-bottom: 36px; animation: fadeInUp 0.8s ease-out 0.4s both; }
+.element-tag { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 10px 14px; font-size: 15px; color: #D4C5A9; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important; color: var(--dark) !important; border: none !important; border-radius: 50px; padding: 18px 52px; font-size: 18px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 4px 24px rgba(218,165,32,0.4); animation: fadeInUp 0.8s ease-out 0.5s both; transition: transform 0.2s; }
+.btn-gold:active { transform: scale(0.97); }
+.btn-gold:disabled { opacity: 0.4; cursor: default; }
+button:hover, a:hover, .btn-gold:hover, .btn-back:hover, .btn-retry:hover, .btn-prev:hover, .btn-submit:hover, .btn-white:hover { background-color: inherit !important; background: inherit !important; color: inherit !important; }
+.btn-gold:hover { background: linear-gradient(135deg, var(--gold), var(--gold-light)) !important; color: var(--dark) !important; }
+.btn-back:hover { background: transparent !important; color: rgba(255,255,255,0.5) !important; }
+.btn-retry:hover { background: transparent !important; color: #777 !important; }
+.btn-prev:hover { background: rgba(255,255,255,0.15) !important; color: var(--muted) !important; }
+.btn-submit:hover { background: linear-gradient(135deg, #FF6B6B, #FF8585) !important; color: #fff !important; }
+.btn-white:hover { background: #fff !important; }
+.footer-note { margin-top: 24px; font-size: 12px; color: var(--muted); }
+
+/* INPUT */
+#step-input { align-items: center; justify-content: center; padding: 40px 20px; background: linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%); }
+.input-card { background: rgba(255,255,255,0.06); border-radius: 24px; padding: 40px 32px; max-width: 420px; width: 100%; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); animation: fadeInUp 0.6s ease-out; }
+.input-card h2 { font-size: 22px; font-weight: 700; color: var(--cream); margin-top: 12px; }
+.input-card .sub { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.input-group { flex: 1; }
+.input-group.wide { flex: 1.2; }
+.input-group label { font-size: 12px; color: var(--muted); margin-bottom: 4px; display: block; }
+.input-field { width: 100%; padding: 14px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: var(--cream); font-size: 16px; outline: none; font-family: inherit; transition: border-color 0.3s; }
+.input-field:focus { border-color: rgba(218,165,32,0.6); }
+.input-field::placeholder { color: rgba(255,255,255,0.25); }
+select.input-field { cursor: pointer; color: var(--cream); }
+.time-btn { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 10px; padding: 14px 8px; font-size: 13px; color: rgba(255,255,255,0.5) !important; cursor: pointer; font-family: inherit; transition: all 0.2s; text-align: center; }
+.time-btn:hover { background: rgba(255,255,255,0.1) !important; color: var(--cream) !important; }
+.time-btn.active { background: rgba(218,165,32,0.2) !important; border-color: var(--gold) !important; color: var(--gold-light) !important; font-weight: 600; }
+.toggle-wrap { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.04); cursor: pointer; margin-bottom: 28px; font-size: 14px; color: var(--muted); }
+.toggle { width: 40px; height: 22px; border-radius: 11px; background: rgba(255,255,255,0.15); position: relative; transition: background 0.3s; flex-shrink: 0; }
+.toggle.on { background: rgba(218,165,32,0.8); }
+.toggle-dot { width: 18px; height: 18px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.3s; }
+.toggle.on .toggle-dot { left: 20px; }
+.btn-back { width: 100%; background: none !important; border: none !important; color: rgba(255,255,255,0.35) !important; font-size: 13px; cursor: pointer; margin-top: 16px; font-family: inherit; padding: 12px; }
+
+/* ANALYZING */
+#step-analyzing { align-items: center; justify-content: center; padding: 40px 20px; background: linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%); }
+.spinner { width: 80px; height: 80px; margin: 0 auto 24px; border: 3px solid rgba(218,165,32,0.3); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+.progress-bar { width: 100%; max-width: 360px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 20px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px; transition: width 0.1s; width: 0%; }
+
+/* RESULT */
+#step-result { display: none; }
+#step-result.active { display: block; }
+.result-hero { position: relative; padding: 60px 20px 50px; text-align: center; overflow: hidden; }
+.result-hero .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 16px; font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 12px; }
+.result-hero h1 { font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 8px; animation: fadeInUp 0.6s ease-out 0.2s both; }
+.result-hero .tagline { font-size: 16px; color: rgba(255,255,255,0.85); animation: fadeInUp 0.6s ease-out 0.3s both; }
+.result-body { max-width: 500px; margin: 0 auto; padding: 0 20px; }
+.card { background: #fff; border-radius: 20px; padding: 24px 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+.card-overlap { margin-top: -30px; position: relative; z-index: 2; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.card h3 { font-size: 14px; font-weight: 700; color: #999; margin-bottom: 16px; text-align: center; }
+.pillars { display: flex; justify-content: center; gap: 12px; }
+.pillar { text-align: center; flex: 1; }
+.pillar-label { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+.pillar-box { border-radius: 14px; padding: 12px 8px; border: 1px solid #eee; background: #f8f7f4; }
+.pillar-box.highlight { border: none; }
+.pillar-char { font-size: 22px; font-weight: 900; }
+.pillar-zodiac { font-size: 11px; color: #999; margin-top: 4px; }
+.daymaster-note { text-align: center; margin-top: 14px; font-size: 13px; font-weight: 600; }
+.ebar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ebar-label { width: 28px; font-weight: 700; font-size: 15px; }
+.ebar-track { flex: 1; height: 22px; background: #e8e8e8; border-radius: 11px; overflow: hidden; }
+.ebar-fill { height: 100%; border-radius: 11px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+.ebar-val { width: 32px; text-align: right; font-size: 13px; font-weight: 600; color: #666; }
+.str-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.str-item { border-radius: 12px; padding: 12px 14px; font-size: 14px; font-weight: 500; text-align: center; }
+.cta-box { background: linear-gradient(135deg, var(--dark), var(--dark2)); border-radius: 20px; padding: 32px 24px; text-align: center; margin-bottom: 20px; }
+.cta-box .icon { font-size: 32px; margin-bottom: 12px; }
+.cta-box .title { font-size: 16px; color: var(--cream); font-weight: 700; line-height: 1.6; margin-bottom: 8px; }
+.cta-box .desc { font-size: 14px; color: #B8C6DB; line-height: 1.7; margin-bottom: 6px; }
+.cta-box .highlight { font-size: 17px; color: var(--gold-light); font-weight: 700; margin-bottom: 24px; }
+.cta-box .note { font-size: 12px; color: #7B8DA6; margin-top: 14px; }
+.btn-retry { background: none !important; border: 1px solid #ddd !important; border-radius: 50px; padding: 12px 28px; font-size: 14px; color: #999 !important; cursor: pointer; font-family: inherit; }
+.footer-brand { display: inline-flex; align-items: center; gap: 8px; background: #f0efe8; border-radius: 20px; padding: 10px 20px; font-size: 13px; color: #888; }
+
+/* EMAIL */
+#step-email { align-items: center; justify-content: center; padding: 40px 20px; background: linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%); }
+.email-card { background: rgba(255,255,255,0.06); border-radius: 24px; padding: 40px 32px; max-width: 420px; width: 100%; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); animation: fadeInUp 0.6s ease-out; }
+.email-card h2 { font-size: 20px; font-weight: 700; color: var(--cream); line-height: 1.4; }
+.email-label { font-size: 13px; color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.email-label .tag { font-size: 11px; background: rgba(218,165,32,0.3); padding: 2px 8px; border-radius: 4px; color: var(--gold-light); }
+.email-input { width: 100%; padding: 16px 14px; border-radius: 12px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #333; font-size: 16px; outline: none; font-family: inherit; }
+.email-input::placeholder { color: #999; }
+.email-input:focus { border-color: rgba(218,165,32,0.6); }
+.email-input.error { border-color: #e74c3c; }
+.error-msg { font-size: 12px; color: #e74c3c; margin-top: 6px; display: none; }
+.btn-row { display: flex; gap: 10px; margin-top: 24px; }
+.btn-prev { flex: 1; background: rgba(255,255,255,0.1) !important; color: var(--muted) !important; border: none !important; border-radius: 50px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-submit { flex: 2; background: linear-gradient(135deg, #FF6B6B, #FF8585) !important; color: #fff !important; border: none !important; border-radius: 50px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 4px 16px rgba(255,107,107,0.4); }
+
+/* SENDING / SENT */
+#step-sending { align-items: center; justify-content: center; padding: 40px 20px; background: var(--bg); }
+.sending-card { background: #fff; border-radius: 24px; padding: 48px 32px; max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; }
+.dino-walk { font-size: 48px; animation: dinoWalk 0.6s ease-in-out infinite; }
+#step-sent { align-items: center; justify-content: center; padding: 40px 20px; background: var(--bg); }
+.sent-card { background: #fff; border-radius: 24px; padding: 40px 32px; max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; animation: fadeInUp 0.6s ease-out; }
+.sent-card .email-display { background: #f8f7f4; border-radius: 12px; padding: 14px 20px; font-size: 15px; color: #555; font-weight: 500; margin-bottom: 32px; }
+.next-cta { border-radius: 20px; padding: 28px 24px; margin-bottom: 24px; }
+.btn-white { background: #fff !important; border: none !important; border-radius: 50px; padding: 12px 28px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+/* Particles & Animations */
+.particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.particle { position: absolute; opacity: 0.15; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes dinoWalk { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@keyframes float0 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(10deg); } }
+@keyframes float1 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(-15deg); } }
+@keyframes float2 { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-25px) scale(1.1); } }
+
+/* ===== NEW: Biz Info Card ===== */
+.biz-card { background: #fff; border-radius: 20px; padding: 24px 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+.biz-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; text-align: left; }
+.biz-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.biz-row:last-child { border-bottom: none; }
+.biz-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.biz-label { font-size: 13px; color: #888; flex-shrink: 0; width: 100px; }
+.biz-val { flex: 1; font-size: 13px; font-weight: 600; color: #333; line-height: 1.5; }
+.biz-tip-box { background: linear-gradient(135deg, #FFF8E1, #FFF3E0); border: 1px solid #FFE0B2; border-radius: 12px; padding: 16px; margin-top: 12px; font-size: 14px; color: #E65100; line-height: 1.6; font-weight: 500; }
+
+/* ===== NEW: Element Balance ===== */
+.bal-section { margin-top: 16px; }
+.bal-item { border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+.bal-excess { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+.bal-lack { background: #E3F2FD; color: #0D47A1; border: 1px solid #BBDEFB; }
+.bal-ok { background: #E8F5E9; color: #1B5E20; border: 1px solid #C8E6C9; }
+
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="step-intro" class="step active">
+  <div class="particles" id="intro-particles"></div>
+  <div class="content">
+    <div class="hero-icon">☯️</div>
+    <h1 class="serif hero-title">사주로 보는<br>나의 성공 스타일</h1>
+    <p class="hero-sub">생년월일에 숨겨진 당신만의 성공 DNA</p>
+    <p class="hero-desc">동양 철학의 오행(木火土金水)으로<br>나에게 숨겨진 성공 DNA를 찾아드려요</p>
+    <div class="brand-badge"><span>🦕</span><span style="font-weight:600">옆집디노</span><span class="sep">|</span><span>by Allison</span></div>
+    <div class="element-tags">
+      <div class="element-tag">🌳 목</div><div class="element-tag">🔥 화</div>
+      <div class="element-tag">🏔 토</div><div class="element-tag">⚡ 금</div><div class="element-tag">🌊 수</div>
+    </div>
+    <button class="btn-gold" onclick="goTo('input')">내 성공 스타일 알아보기</button>
+    <p class="footer-note">🦕 옆집디노 · ⏱ 소요 시간 30초</p>
+  </div>
+</div>
+
+<!-- INPUT -->
+<div id="step-input" class="step">
+  <div class="input-card">
+    <div style="text-align:center; margin-bottom:32px;">
+      <span style="font-size:36px">🗓️</span>
+      <h2 class="serif">생년월일을 알려주세요</h2>
+      <p class="sub">정확할수록 진단이 정확해져요</p>
+    </div>
+    <div class="input-row">
+      <div class="input-group wide"><label>출생연도</label><input type="number" id="inp-year" class="input-field" placeholder="1985"></div>
+      <div class="input-group"><label>월</label><input type="number" id="inp-month" class="input-field" placeholder="3" min="1" max="12"></div>
+      <div class="input-group"><label>일</label><input type="number" id="inp-day" class="input-field" placeholder="15" min="1" max="31"></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px; color:var(--muted); margin-bottom:8px; display:block;">태어난 시간 (선택)</label>
+      <input type="hidden" id="inp-hour" value="unknown">
+      <div id="time-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+        <button type="button" class="time-btn active" data-val="unknown" onclick="pickTime(this)" style="grid-column:1/-1;">🤷 모르겠어요</button>
+        <button type="button" class="time-btn" data-val="0" onclick="pickTime(this)">🌙 자시 (23~01)</button>
+        <button type="button" class="time-btn" data-val="2" onclick="pickTime(this)">🌙 축시 (01~03)</button>
+        <button type="button" class="time-btn" data-val="4" onclick="pickTime(this)">🌅 인시 (03~05)</button>
+        <button type="button" class="time-btn" data-val="6" onclick="pickTime(this)">🌅 묘시 (05~07)</button>
+        <button type="button" class="time-btn" data-val="8" onclick="pickTime(this)">☀️ 진시 (07~09)</button>
+        <button type="button" class="time-btn" data-val="10" onclick="pickTime(this)">☀️ 사시 (09~11)</button>
+        <button type="button" class="time-btn" data-val="12" onclick="pickTime(this)">☀️ 오시 (11~13)</button>
+        <button type="button" class="time-btn" data-val="14" onclick="pickTime(this)">🌤 미시 (13~15)</button>
+        <button type="button" class="time-btn" data-val="16" onclick="pickTime(this)">🌤 신시 (15~17)</button>
+        <button type="button" class="time-btn" data-val="18" onclick="pickTime(this)">🌇 유시 (17~19)</button>
+        <button type="button" class="time-btn" data-val="20" onclick="pickTime(this)">🌇 술시 (19~21)</button>
+        <button type="button" class="time-btn" data-val="22" onclick="pickTime(this)">🌙 해시 (21~23)</button>
+      </div>
+    </div>
+    <div class="toggle-wrap" onclick="toggleLunar()"><div class="toggle" id="lunar-toggle"><div class="toggle-dot"></div></div> 음력 생일이에요</div>
+    <button class="btn-gold" id="btn-analyze" style="width:100%; padding:16px; font-size:16px; animation:none;" onclick="startAnalysis()" disabled>사주 분석 시작 ☯️</button>
+    <button class="btn-back" onclick="goTo('intro')">← 돌아가기</button>
+  </div>
+</div>
+
+<!-- ANALYZING -->
+<div id="step-analyzing" class="step">
+  <div style="text-align:center; max-width:360px;">
+    <div class="spinner"></div>
+    <p id="analyze-msg" class="serif" style="font-size:16px; color:var(--cream); font-weight:500;"></p>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <p id="progress-pct" style="font-size:12px; color:#556677; margin-top:8px;">0%</p>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="step-result" class="step">
+  <div class="result-hero" id="result-hero">
+    <div class="particles" id="result-particles"></div>
+    <div style="position:relative; z-index:1;">
+      <div style="font-size:72px; margin-bottom:12px; animation:pulse 2s ease-in-out infinite;" id="result-icon"></div>
+      <div class="badge" id="result-badge"></div>
+      <h1 class="serif" id="result-name"></h1>
+      <p class="tagline" id="result-tagline"></p>
+    </div>
+  </div>
+  <div class="result-body">
+    <!-- Pillars -->
+    <div class="card card-overlap" id="pillars-card">
+      <h3>나의 사주 팔자</h3>
+      <div class="pillars" id="pillars"></div>
+      <p class="daymaster-note" id="daymaster-note"></p>
+    </div>
+    <!-- Elements -->
+    <div class="card">
+      <h3 style="text-align:left">오행 에너지 분포</h3>
+      <div id="element-bars"></div>
+      <div class="bal-section" id="element-balance"></div>
+    </div>
+    <!-- Description -->
+    <div class="card">
+      <div id="result-animal" style="font-size:28px; margin-bottom:12px;"></div>
+      <p id="result-desc" style="font-size:15px; line-height:1.8; color:#444;"></p>
+    </div>
+    <!-- Strengths -->
+    <div class="card">
+      <h3 id="str-title" style="text-align:left; font-size:15px;"></h3>
+      <div class="str-grid" id="str-grid"></div>
+    </div>
+    <!-- NEW: Personalized Business Info -->
+    <div class="card biz-card">
+      <h3 style="text-align:left; font-size:15px; color:#333;">🎯 나만의 비즈니스 운세</h3>
+      <div id="biz-info"></div>
+      <div class="biz-tip-box" id="biz-tip"></div>
+    </div>
+    <!-- CTA -->
+    <div class="cta-box">
+      <div class="icon">📋</div>
+      <p class="title">여기까지는 요약이에요</p>
+      <p class="desc">나에게 딱 맞는 성공 전략, 주의할 점,<br>보조 기질 분석까지 담긴</p>
+      <p class="highlight">풀 리포트를 무료로 보내드려요</p>
+      <button class="btn-gold" style="animation:none;" onclick="goTo('email')">내 풀 리포트 받기 →</button>
+      <p class="note">🦕 옆집디노가 보내드리는 맞춤 리포트</p>
+    </div>
+    <div style="text-align:center; padding-bottom:40px;">
+      <button class="btn-retry" onclick="resetAll()">다시 진단하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL -->
+<div id="step-email" class="step">
+  <div class="email-card">
+    <div style="text-align:center; margin-bottom:28px;">
+      <div id="email-icon" style="font-size:48px; margin-bottom:12px;"></div>
+      <h2 class="serif" id="email-title"></h2>
+      <p style="font-size:13px; color:var(--muted); margin-top:10px; line-height:1.6;">맞춤 전략 · 주의사항 · 보조 기질 분석<br>한눈에 보기 좋게 정리해서 보내드려요</p>
+    </div>
+    <div style="margin-bottom:8px;">
+      <div class="email-label">결과 받을 이메일 <span class="tag">필수</span></div>
+      <input type="email" id="inp-email" class="email-input" placeholder="이메일 주소를 입력하세요">
+      <p class="error-msg" id="email-error">올바른 이메일 주소를 입력해주세요</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goTo('result')">이전</button>
+      <button class="btn-submit" onclick="submitEmail()">✨ 풀 리포트 받기</button>
+    </div>
+  </div>
+</div>
+
+<!-- SENDING -->
+<div id="step-sending" class="step">
+  <div class="sending-card">
+    <div class="dino-walk">🦕</div>
+    <p class="serif" style="font-size:16px; color:#2C2A27; font-weight:600; margin-top:16px;">풀 리포트를 만들고 있어요!</p>
+    <p style="font-size:13px; color:#999; margin-top:8px;">잠시만 기다려주세요...</p>
+  </div>
+</div>
+
+<!-- SENT -->
+<div id="step-sent" class="step">
+  <div class="sent-card">
+    <div style="font-size:56px; margin-bottom:16px;">🎉</div>
+    <h2 class="serif" style="font-size:22px; font-weight:700; color:#2C2A27; line-height:1.4; margin-bottom:12px;">풀 리포트가<br>전송되었어요!</h2>
+    <p style="font-size:14px; color:#888; line-height:1.6; margin-bottom:24px;">입력하신 이메일로<br>맞춤형 사주 리포트를 보내드렸어요.</p>
+    <div class="email-display" id="sent-email"></div>
+    <div class="next-cta" id="sent-cta" style="text-align:center;">
+      <h3 style="color:#fff; font-size:18px; font-weight:700; margin-bottom:8px;">성공 스타일을 알았다면?</h3>
+      <p style="color:rgba(255,255,255,0.85); font-size:13px; line-height:1.6; margin-bottom:16px;">이제 실천할 차례!<br>5분 단위로 하루를 설계해보세요 ✨</p>
+      <a href="https://app.wellstar.life/planner/" class="btn-white" id="sent-cta-btn" style="text-decoration:none; display:inline-block;">5분법칙 플래너 시작하기 →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ===== DATA =====
+const STEMS = ["갑","을","병","정","무","기","경","신","임","계"];
+const BRANCHES = ["자","축","인","묘","진","사","오","미","신","유","술","해"];
+const STEM_EL = {갑:"목",을:"목",병:"화",정:"화",무:"토",기:"토",경:"금",신:"금",임:"수",계:"수"};
+const BRANCH_EL = {자:"수",축:"토",인:"목",묘:"목",진:"토",사:"화",오:"화",미:"토",신:"금",유:"금",술:"토",해:"수"};
+const ZODIAC = {자:"🐀 쥐",축:"🐂 소",인:"🐅 호랑이",묘:"🐇 토끼",진:"🐲 용",사:"🐍 뱀",오:"🐴 말",미:"🐑 양",신:"🐵 원숭이",유:"🐓 닭",술:"🐶 개",해:"🐷 돼지"};
+
+// ===== 10 DAY MASTER STYLES (일간 기반 완전 분기) =====
+const DAY_MASTER = {
+  갑: {
+    icon:"🌲", name:"정면돌파형 리더", color:"#1B5E20", gradient:"linear-gradient(135deg,#1B5E20,#2E7D32,#388E3C)",
+    lightBg:"#E8F5E9", tagline:"곧게 뻗은 소나무, 바람에 꺾이지 않는 대장",
+    description:"갑목님은 한마디로 곧게 뻗은 소나무예요 🌲\n\n'이거다!' 싶으면 망설임 없이 밀고 나가죠.\n시작하는 힘이 엄청 강해서,\n주변에서 '일단 해보자!'의 아이콘이에요.\n\n근데 가끔 혼자 다 하려는 게 함정...",
+    strengths:["즉각적 실행력","팀을 이끄는 카리스마","위기에 강한 돌파력","신규 개척 능력"],
+    animal:"소나무 🌲", percent:"전체의 10%", hanja:"甲", particles:["🌲","🍃","🌿","💪"],
+    luckyNum:"3, 8", luckyColor:"그린/네이비 (신뢰감 UP)",
+    luckyDir:"동쪽 (새로운 시작의 방위)", goldenTime:"오전 7~9시 (아침형 리더)",
+    cautionMonth:"7월, 8월 (금극목 — 외부 압박 주의)",
+    bestPartner:"정화(丁)형 — 디테일을 채워주는 최고의 참모",
+    cautionPartner:"경금(庚)형 — 둘 다 강해서 충돌 위험",
+    bizTip:"첫 미팅에서 강한 비전을 제시하세요. 단, '왜'를 먼저 설명하면 설득력 2배!"
+  },
+  을: {
+    icon:"🌸", name:"유연한 전략가", color:"#33691E", gradient:"linear-gradient(135deg,#558B2F,#7CB342,#9CCC65)",
+    lightBg:"#F1F8E9", tagline:"담장을 타고 올라가는 넝쿨, 어디서든 꽃을 피우는 사람",
+    description:"을목님은 넝쿨 같은 사람이에요 🌸\n\n어디에서든 적응하고 뿌리를 내리죠.\n관계 만들기의 천재라서,\n사람들이 편하게 마음을 열어요.\n\n근데 결정을 너무 오래 미루는 게 약점...",
+    strengths:["탁월한 적응력","관계 기반 영업","부드러운 설득력","장기적 신뢰 구축"],
+    animal:"넝쿨 장미 🌹", percent:"전체의 10%", hanja:"乙", particles:["🌸","🌹","🌿","💚"],
+    luckyNum:"3, 8", luckyColor:"연두/민트 (친근감 UP)",
+    luckyDir:"동쪽 (성장의 방위)", goldenTime:"오전 9~11시 (관계 에너지 최고)",
+    cautionMonth:"8월, 9월 (금극목 — 자신감 흔들릴 수 있음)",
+    bestPartner:"병화(丙)형 — 에너지를 불어넣어주는 촉진자",
+    cautionPartner:"신금(辛)형 — 기준이 달라 스트레스",
+    bizTip:"1:1 커피챗이 당신의 무기예요. 편안한 분위기에서 상대의 니즈를 먼저 파악하세요."
+  },
+  병: {
+    icon:"☀️", name:"무대의 주인공", color:"#BF360C", gradient:"linear-gradient(135deg,#BF360C,#E64A19,#FF7043)",
+    lightBg:"#FBE9E7", tagline:"방에 들어서면 모든 시선이 쏠리는 태양",
+    description:"병화님은 태양 그 자체예요 ☀️\n\n에너지가 넘쳐서 주변 사람들까지 뜨거워지죠.\n라이브, 설명회, 대면 미팅에서\n폭발적인 힘을 발휘하는 타입!\n\n근데 불꽃은 오래 타면 꺼져요... 번아웃 주의!",
+    strengths:["즉흥 프레젠테이션","SNS 라이브 영향력","사람을 모으는 힘","에너지 전파력"],
+    animal:"불사조 🦅", percent:"전체의 10%", hanja:"丙", particles:["☀️","🔥","✨","💫"],
+    luckyNum:"2, 7", luckyColor:"레드/오렌지 (존재감 UP)",
+    luckyDir:"남쪽 (명예와 인기의 방위)", goldenTime:"오전 11~13시 (태양의 시간!)",
+    cautionMonth:"11월, 12월 (수극화 — 에너지 다운 주의)",
+    bestPartner:"임수(壬)형 — 큰 그림을 함께 그리는 전략가",
+    cautionPartner:"계수(癸)형 — 잔소리로 느껴질 수 있음",
+    bizTip:"사업설명회/라이브가 당신의 무대! 준비는 70%만, 나머지는 현장 에너지로 채우세요."
+  },
+  정: {
+    icon:"🕯️", name:"디테일의 마법사", color:"#880E4F", gradient:"linear-gradient(135deg,#880E4F,#AD1457,#D81B60)",
+    lightBg:"#FCE4EC", tagline:"어두운 방을 환히 밝히는 촛불, 따뜻한 디테일러",
+    description:"정화님은 촛불 같은 사람이에요 🕯️\n\n화려하지 않지만 곁에 있으면 따뜻해지죠.\n남들이 놓치는 디테일을 잡아내는 눈!\n콘텐츠 제작과 1:1 상담이 강점이에요.\n\n근데 자기 PR이 약한 게 아쉬운 점...",
+    strengths:["섬세한 고객 관리","콘텐츠 제작력","1:1 깊은 상담","감성적 스토리텔링"],
+    animal:"촛불 🕯️", percent:"전체의 10%", hanja:"丁", particles:["🕯️","✨","💝","🌟"],
+    luckyNum:"2, 7", luckyColor:"핑크/와인 (감성 UP)",
+    luckyDir:"남쪽 (표현의 방위)", goldenTime:"오후 1~3시 (집중력 최고)",
+    cautionMonth:"10월, 11월 (수극화 — 자신감 저하 주의)",
+    bestPartner:"갑목(甲)형 — 추진력을 불어넣어주는 리더",
+    cautionPartner:"임수(壬)형 — 규모가 달라 부담될 수 있음",
+    bizTip:"블로그/인스타 콘텐츠가 당신의 영업 무기예요. 매주 1개씩 진심 담은 글을 쓰세요."
+  },
+  무: {
+    icon:"🏔️", name:"흔들리지 않는 산", color:"#795548", gradient:"linear-gradient(135deg,#4E342E,#6D4C41,#8D6E63)",
+    lightBg:"#EFEBE9", tagline:"사람들이 모여드는 플랫폼, 듬직한 중재자",
+    description:"무토님은 산이에요 🏔️\n\n'이 사람 옆에 있으면 안심이 돼'\n사람들이 자연스럽게 모여들죠.\n갈등을 중재하고 조직을 안정시키는 힘!\n\n근데 변화를 두려워하는 게 걸림돌...",
+    strengths:["높은 신뢰도","조직 안정화","갈등 중재력","플랫폼 구축 능력"],
+    animal:"코끼리 🐘", percent:"전체의 10%", hanja:"戊", particles:["🏔️","⛰️","🪨","💎"],
+    luckyNum:"5, 10", luckyColor:"옐로/베이지 (안정감 UP)",
+    luckyDir:"중앙 (균형의 위치)", goldenTime:"오후 3~5시 (안정적 판단 시간)",
+    cautionMonth:"3월, 4월 (목극토 — 변화 압박 주의)",
+    bestPartner:"병화(丙)형 — 에너지와 추진력을 더해주는 촉매제",
+    cautionPartner:"갑목(甲)형 — 변화를 강요하면 갈등 발생",
+    bizTip:"오프라인 모임/스터디 운영이 최고의 영업! 사람들이 모이는 '장'을 만드세요."
+  },
+  기: {
+    icon:"🌾", name:"사람을 키우는 밭", color:"#827717", gradient:"linear-gradient(135deg,#827717,#9E9D24,#C0CA33)",
+    lightBg:"#F9FBE7", tagline:"씨앗을 심으면 뭐든 자라게 하는 양육형 리더",
+    description:"기토님은 비옥한 밭이에요 🌾\n\n팀원을 성장시키는 게 천직이죠.\n세심한 배려로 사람 마음을 얻고,\n실용적인 조언으로 신뢰를 쌓아요.\n\n근데 남 먼저 챙기다 자기를 잃는 게 약점...",
+    strengths:["팀원 코칭/멘토링","세심한 고객 관리","실용적 문제 해결","끈끈한 팀 문화 형성"],
+    animal:"어미새 🐦", percent:"전체의 10%", hanja:"己", particles:["🌾","🌻","🌱","💛"],
+    luckyNum:"5, 10", luckyColor:"브라운/카키 (편안함 UP)",
+    luckyDir:"중앙 (돌봄의 위치)", goldenTime:"오전 9~11시 (배려 에너지 최고)",
+    cautionMonth:"2월, 3월 (목극토 — 과로 주의)",
+    bestPartner:"신금(辛)형 — 품질을 높여주는 완벽주의 파트너",
+    cautionPartner:"을목(乙)형 — 의존하려 해서 지칠 수 있음",
+    bizTip:"팀원 1:1 코칭이 당신만의 차별화! '성장 노트'를 만들어 팀원 변화를 기록하세요."
+  },
+  경: {
+    icon:"⚔️", name:"결단의 칼", color:"#37474F", gradient:"linear-gradient(135deg,#263238,#37474F,#546E7A)",
+    lightBg:"#ECEFF1", tagline:"이거다 싶으면 단칼에 결정, 목표 달성 머신",
+    description:"경금님은 잘 벼려진 검이에요 ⚔️\n\n결단력이 칼날처럼 날카롭죠.\n목표를 정하면 반드시 달성하는 실행력!\n의리도 강해서 한번 인연은 끝까지.\n\n근데 너무 직설적이라 상처 주기도...",
+    strengths:["칼 같은 실행력","높은 계약 성사율","의리 기반 관계","목표 지향적 사고"],
+    animal:"독수리 🦅", percent:"전체의 10%", hanja:"庚", particles:["⚔️","⚡","🌟","💫"],
+    luckyNum:"4, 9", luckyColor:"실버/화이트 (신뢰감 UP)",
+    luckyDir:"서쪽 (결실의 방위)", goldenTime:"오후 3~5시 (결단력 최고)",
+    cautionMonth:"5월, 6월 (화극금 — 감정적 결정 주의)",
+    bestPartner:"갑목(甲)형 — 함께 큰 프로젝트를 밀어붙이는 전우",
+    cautionPartner:"병화(丙)형 — 열정에 녹아 판단력 흐려질 수 있음",
+    bizTip:"클로징이 당신의 최대 무기! '3초 결단법'으로 고객도 빠르게 결정하게 유도하세요."
+  },
+  신: {
+    icon:"💎", name:"완벽주의 브랜더", color:"#4A148C", gradient:"linear-gradient(135deg,#4A148C,#6A1B9A,#8E24AA)",
+    lightBg:"#F3E5F5", tagline:"원석에서 깎아낸 다이아몬드, 프리미엄의 대명사",
+    description:"신금님은 다이아몬드예요 💎\n\n남들이 대충 넘기는 걸 절대 못 넘기죠.\n미적 감각이 뛰어나고,\n브랜딩과 프리미엄 포지셔닝의 천재!\n\n근데 기준이 높아 시작을 못 하는 게 함정...",
+    strengths:["프리미엄 브랜딩","높은 품질 기준","세련된 프레젠테이션","가치 기반 셀링"],
+    animal:"다이아몬드 💎", percent:"전체의 10%", hanja:"辛", particles:["💎","✨","👑","🌟"],
+    luckyNum:"4, 9", luckyColor:"골드/샴페인 (품격 UP)",
+    luckyDir:"서쪽 (완성의 방위)", goldenTime:"오전 11~13시 (감각 최고조)",
+    cautionMonth:"5월, 6월 (화극금 — 완벽주의로 기회 놓칠 수 있음)",
+    bestPartner:"기토(己)형 — 당신을 빛나게 받쳐주는 든든한 기반",
+    cautionPartner:"정화(丁)형 — 섬세함이 부딪혀 피로감",
+    bizTip:"'80% 완성 후 출시' 원칙을 지키세요. 완벽해질 때까지 기다리면 기회가 떠나요!"
+  },
+  임: {
+    icon:"🌊", name:"큰 그림 전략가", color:"#0D47A1", gradient:"linear-gradient(135deg,#0D47A1,#1565C0,#1E88E5)",
+    lightBg:"#E3F2FD", tagline:"넓고 깊은 바다, 작은 파도에 흔들리지 않는 지혜",
+    description:"임수님은 바다예요 🌊\n\n넓고 깊어서 작은 일에 흔들리지 않죠.\n시스템을 설계하고 전략을 세우는 게 천직!\n아이디어가 끝없이 솟아나요.\n\n근데 생각만 하다 실행을 안 하는 게 문제...",
+    strengths:["시스템 설계 능력","전략적 사고","넓은 인맥 관리","큰 그림을 보는 눈"],
+    animal:"고래 🐋", percent:"전체의 10%", hanja:"壬", particles:["🌊","💧","🐋","💎"],
+    luckyNum:"1, 6", luckyColor:"네이비/딥블루 (지적 매력 UP)",
+    luckyDir:"북쪽 (지혜의 방위)", goldenTime:"오후 9~11시 (전략적 사고 최고)",
+    cautionMonth:"6월, 7월 (토극수 — 자유 제한 느낌 주의)",
+    bestPartner:"병화(丙)형 — 실행력을 불어넣는 에너지 부스터",
+    cautionPartner:"무토(戊)형 — 너무 막으면 답답함 폭발",
+    bizTip:"전체 로드맵을 그리고 팀원에게 실행을 맡기세요. '생각 70, 실행 30'이 아니라 '생각 30, 실행 70'으로!"
+  },
+  계: {
+    icon:"🌧️", name:"트렌드 직감러", color:"#1A237E", gradient:"linear-gradient(135deg,#1A237E,#283593,#3949AB)",
+    lightBg:"#E8EAF6", tagline:"세상 어디든 스며드는 빗물, 틈새를 찾는 천재",
+    description:"계수님은 빗물이에요 🌧️\n\n남들이 못 보는 틈새를 찾아내는 직관의 천재!\n감성적이고 공감 능력이 뛰어나서\n스토리텔링으로 사람 마음을 움직여요.\n\n근데 감정에 휩쓸리면 판단이 흐려져요...",
+    strengths:["트렌드 캐치 능력","감성 마케팅","스토리텔링 셀링","고객 공감 능력"],
+    animal:"수달 🦦", percent:"전체의 10%", hanja:"癸", particles:["🌧️","💧","🫧","✨"],
+    luckyNum:"1, 6", luckyColor:"블랙/퍼플 (미스테리 UP)",
+    luckyDir:"북쪽 (직관의 방위)", goldenTime:"오후 7~9시 (감성 에너지 최고)",
+    cautionMonth:"6월, 7월 (토극수 — 현실감각 약해질 수 있음)",
+    bestPartner:"을목(乙)형 — 유연함으로 시너지",
+    cautionPartner:"기토(己)형 — 세심함끼리 부딪혀 답답함",
+    bizTip:"인스타 스토리/릴스가 당신의 영업 무대! 매일 1개씩 감성 콘텐츠를 올리세요."
+  }
+};
+
+// ===== ELEMENT BALANCE =====
+const EL_EXCESS = {
+  목:"에너지가 넘쳐요! 방향을 하나로 좁히면 폭발적 성과 💥",
+  화:"열정이 불타요! 근데 태워먹지 않게 쉬는 것도 전략이에요 🔥",
+  토:"안정감 최고! 근데 가끔은 익숙한 걸 버려야 해요 ⛰️",
+  금:"결단력과 실행력 최강! 말 한마디에 칼이 들어있으니 살짝 둥글게 ⚔️",
+  수:"머리 회전 빠름! 근데 생각만 하다 시간 다 가요. 70%에서 일단 시작 🌊"
+};
+const EL_LACKING = {
+  목:"시작하는 힘이 부족해요. 아침 루틴으로 '일단 시작하기' 연습!",
+  화:"자기 PR이 약해요. 매주 SNS에 1개씩 내 이야기를 올려보세요",
+  토:"중심이 흔들려요. 5분법칙 플래너로 루틴을 잡으면 달라져요!",
+  금:"결정을 못 해요. '3초 결정법' — 작은 것부터 빠르게 정하는 연습!",
+  수:"트렌드 감각이 약해요. 매일 10분 업계 뉴스/SNS 체크 루틴 추천!"
+};
+
+
+// ===== 음력→양력 변환 (한국천문연구원 기반, 1940~2010) =====
+var _ld={
+1940:[1940,2,8,0,30,30,29,30,29,30,29,29,30,29,30,29],
+1941:[1941,1,27,6,30,30,29,30,30,29,29,29,30,29,30,29,30],
+1942:[1942,2,15,0,30,29,30,30,29,30,30,29,30,29,29,30],
+1943:[1943,2,5,0,29,30,29,30,29,30,30,29,30,30,29,30],
+1944:[1944,1,26,4,29,29,30,29,29,30,29,30,30,29,30,30,30],
+1945:[1945,2,13,0,29,29,30,29,29,30,29,30,30,30,29,30],
+1946:[1946,2,2,0,30,29,29,30,29,29,30,29,30,30,29,30],
+1947:[1947,1,22,2,30,30,29,30,29,29,30,29,30,29,30,30,29],
+1948:[1948,2,10,0,30,29,30,29,30,29,29,30,29,30,29,30],
+1949:[1949,1,29,7,30,30,29,30,29,30,29,30,29,30,29,30,29],
+1950:[1950,2,17,0,30,29,30,30,29,30,29,29,30,29,30,29],
+1951:[1951,2,6,0,30,29,30,30,29,30,29,30,29,30,29,30],
+1952:[1952,1,27,5,29,30,29,30,29,30,29,30,29,30,29,30,30],
+1953:[1953,2,14,0,29,30,29,29,30,30,29,30,30,29,30,30],
+1954:[1954,2,4,0,29,29,30,29,29,30,29,30,30,29,30,30],
+1955:[1955,1,24,3,30,29,29,29,29,30,29,30,29,30,30,30,30],
+1956:[1956,2,12,0,29,30,29,30,29,29,30,29,30,29,30,30],
+1957:[1957,1,31,8,30,29,30,29,30,29,29,30,30,29,30,30,29],
+1958:[1958,2,19,0,29,30,30,29,30,29,29,30,29,30,29,30],
+1959:[1959,2,8,0,29,30,30,29,30,29,30,29,30,29,30,29],
+1960:[1960,1,28,6,30,29,30,29,30,30,30,29,30,29,30,29,29],
+1961:[1961,2,15,0,30,29,30,29,30,29,30,30,29,30,29,30],
+1962:[1962,2,5,0,29,30,29,29,30,29,30,30,29,30,30,29],
+1963:[1963,1,25,4,30,29,30,29,30,29,30,29,30,30,30,29,29],
+1964:[1964,2,13,0,30,29,30,29,29,30,29,30,29,30,30,30],
+1965:[1965,2,2,0,29,30,29,30,29,29,30,29,29,30,30,30],
+1966:[1966,1,22,3,29,30,30,30,29,29,30,29,29,30,30,29,29],
+1967:[1967,2,9,0,30,30,29,30,30,29,29,30,29,30,29,30],
+1968:[1968,1,30,7,29,30,30,29,30,29,30,30,29,30,29,30,29],
+1969:[1969,2,17,0,29,30,29,30,29,30,30,29,30,29,30,29],
+1970:[1970,2,6,0,30,29,29,30,30,29,30,29,30,30,29,30],
+1971:[1971,1,27,5,29,30,29,29,30,30,29,30,30,30,29,30,29],
+1972:[1972,2,15,0,29,30,29,29,30,29,30,29,30,30,30,29],
+1973:[1973,2,3,0,30,29,30,29,29,30,29,29,30,30,30,29],
+1974:[1974,1,23,4,30,30,29,30,29,30,29,29,30,30,29,30,29],
+1975:[1975,2,11,0,30,30,29,30,29,29,30,29,29,30,29,30],
+1976:[1976,1,31,8,30,30,29,30,29,30,29,30,30,29,29,30,29],
+1977:[1977,2,18,0,30,29,30,30,29,30,29,30,29,30,29,29],
+1978:[1978,2,7,0,30,30,29,30,29,30,30,29,30,29,30,29],
+1979:[1979,1,28,6,30,29,29,30,29,30,29,30,30,29,30,29,30],
+1980:[1980,2,16,0,30,29,29,30,29,30,29,30,30,29,30,30],
+1981:[1981,2,5,0,29,30,29,29,30,29,29,30,30,29,30,30],
+1982:[1982,1,25,4,30,29,30,29,30,29,29,30,30,29,30,30,29],
+1983:[1983,2,13,0,30,29,30,29,29,30,29,29,30,29,30,30],
+1984:[1984,2,2,10,30,29,30,30,29,29,30,29,29,30,30,30,29],
+1985:[1985,2,20,0,29,30,30,29,30,29,30,29,29,30,29,30],
+1986:[1986,2,9,0,29,30,30,29,30,30,29,30,29,30,29,29],
+1987:[1987,1,29,6,30,29,30,30,29,30,30,30,29,30,29,30,29],
+1988:[1988,2,18,0,29,29,30,29,30,29,30,30,29,30,30,29],
+1989:[1989,2,6,0,30,29,29,30,29,30,29,30,30,29,30,30],
+1990:[1990,1,27,5,29,30,29,29,30,29,30,30,29,30,30,30,29],
+1991:[1991,2,15,0,29,30,29,29,30,29,29,30,29,30,30,30],
+1992:[1992,2,4,0,29,30,30,29,29,30,29,29,30,29,30,30],
+1993:[1993,1,23,3,29,30,30,30,29,30,29,29,30,29,30,29,29],
+1994:[1994,2,10,0,30,30,30,29,30,29,30,29,29,30,29,30],
+1995:[1995,1,31,8,29,30,30,29,30,30,29,30,30,29,29,30,29],
+1996:[1996,2,19,0,29,30,29,30,30,29,30,29,30,30,29,30],
+1997:[1997,2,8,0,29,29,30,29,30,29,30,30,29,30,30,29],
+1998:[1998,1,28,5,30,29,29,30,29,30,30,29,30,30,30,29,29],
+1999:[1999,2,16,0,30,29,29,30,29,29,30,29,30,30,30,29],
+2000:[2000,2,5,0,30,30,29,29,30,29,29,30,29,30,30,29],
+2001:[2001,1,24,4,30,30,30,29,30,29,29,30,29,30,29,30,29],
+2002:[2002,2,12,0,30,30,29,30,29,30,29,29,30,29,30,29],
+2003:[2003,2,1,0,30,30,29,30,30,29,30,29,29,30,29,30],
+2004:[2004,1,22,2,29,30,30,30,29,30,29,30,29,30,29,30,29],
+2005:[2005,2,9,0,29,30,29,30,29,30,30,29,30,30,29,29],
+2006:[2006,1,29,7,30,29,30,29,30,29,30,30,30,29,30,30,29],
+2007:[2007,2,18,0,29,29,30,29,29,30,29,30,30,30,29,30],
+2008:[2008,2,7,0,30,29,29,30,29,29,30,29,30,30,29,30],
+2009:[2009,1,26,5,30,30,29,29,30,29,30,29,30,29,30,30,29],
+2010:[2010,2,14,0,30,29,30,29,30,29,29,30,29,30,29,30],
+};
+
+function lunarToSolar(lY,lM,lD){
+  var d=_ld[lY];if(!d)return{year:lY,month:lM,day:lD};
+  var sY=d[0],sM=d[1],sD=d[2],lp=d[3],ml=d.slice(4);
+  var td=0;
+  for(var m=1;m<lM;m++){td+=ml[m-1];if(lp>0&&m===lp)td+=ml[12];}
+  td+=lD-1;
+  var r=new Date(sY, sM-1, sD+td);
+  return{year:r.getFullYear(),month:r.getMonth()+1,day:r.getDate()};
+}
+
+// ===== STATE =====
+let result = null;
+let refCode = '';
+let isLunar = false;
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', function() {
+  try { var params = new URLSearchParams(window.location.search); refCode = params.get('ref') || ''; } catch(e) {}
+  createParticles('intro-particles', ['⚡','🌟','💫','✦','☯️']);
+  ['inp-year','inp-month','inp-day'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', checkInputs);
+  });
+});
+
+function goTo(stepName) {
+  document.querySelectorAll('.step').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('step-' + stepName).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function createParticles(containerId, icons) {
+  var c = document.getElementById(containerId); if (!c) return; c.innerHTML = '';
+  for (var i = 0; i < 12; i++) {
+    var span = document.createElement('span'); span.className = 'particle';
+    span.textContent = icons[i % icons.length];
+    span.style.fontSize = (14 + Math.random() * 18) + 'px';
+    span.style.left = (Math.random() * 100) + '%'; span.style.top = (Math.random() * 100) + '%';
+    span.style.opacity = 0.15 + Math.random() * 0.15;
+    span.style.animationName = 'float' + (i % 3);
+    span.style.animationDuration = (6 + Math.random() * 8) + 's';
+    span.style.animationDelay = (Math.random() * 5) + 's';
+    c.appendChild(span);
+  }
+}
+
+function pickTime(btn) {
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('inp-hour').value = btn.dataset.val;
+}
+function toggleLunar() {
+  isLunar = !isLunar;
+  document.getElementById('lunar-toggle').classList.toggle('on', isLunar);
+}
+function checkInputs() {
+  var y = document.getElementById('inp-year').value;
+  var m = document.getElementById('inp-month').value;
+  var d = document.getElementById('inp-day').value;
+  document.getElementById('btn-analyze').disabled = !(y && m && d);
+}
+
+// ===== SAJU CALCULATION (만세력 보정 버전) =====
+function calc(year, month, day, hour) {
+  // ===== 1. 년주 (입춘 기준 — 2/4 전이면 전년도) =====
+  var sajuYear = year;
+  // 입춘은 매년 약 2월 3~5일. 간략히 2월 4일 기준
+  if (month < 2 || (month === 2 && day < 4)) {
+    sajuYear = year - 1;
+  }
+  var yStem = STEMS[(sajuYear - 4) % 10];
+  var yBranch = BRANCHES[(sajuYear - 4) % 12];
+  var yStemIdx = (sajuYear - 4) % 10;
+
+  // ===== 2. 월주 (절기 기준, 달력 월이 아님!) =====
+  // 절기 월 매핑 (양력 날짜 기준 근사값)
+  // 인월(1월):입춘~경칩, 묘월(2월):경칩~청명, ...
+  var jeolgiMonth; // 1~12 (인월=1, 묘월=2, ... 축월=12)
+  var md = month * 100 + day; // 비교용
+  if      (md >= 204 && md < 306) jeolgiMonth = 1;   // 인월(寅) 2/4~3/5
+  else if (md >= 306 && md < 405) jeolgiMonth = 2;   // 묘월(卯) 3/6~4/4
+  else if (md >= 405 && md < 506) jeolgiMonth = 3;   // 진월(辰) 4/5~5/5
+  else if (md >= 506 && md < 606) jeolgiMonth = 4;   // 사월(巳) 5/6~6/5
+  else if (md >= 606 && md < 707) jeolgiMonth = 5;   // 오월(午) 6/6~7/6
+  else if (md >= 707 && md < 808) jeolgiMonth = 6;   // 미월(未) 7/7~8/7
+  else if (md >= 808 && md < 908) jeolgiMonth = 7;   // 신월(申) 8/8~9/7
+  else if (md >= 908 && md < 1009) jeolgiMonth = 8;  // 유월(酉) 9/8~10/8
+  else if (md >= 1009 && md < 1108) jeolgiMonth = 9;  // 술월(戌) 10/9~11/7
+  else if (md >= 1108 && md < 1208) jeolgiMonth = 10; // 해월(亥) 11/8~12/7
+  else if (md >= 1208 || md < 106) jeolgiMonth = 11;  // 자월(子) 12/8~1/5
+  else jeolgiMonth = 12;                               // 축월(丑) 1/6~2/3
+
+  // 월주 천간: 년간 기준 계산
+  var mBase = (yStemIdx % 5) * 2 + 2;
+  var mStem = STEMS[(mBase + jeolgiMonth - 1) % 10];
+  // 월주 지지: 인(1)→묘(2)→...축(12)
+  var monthBranches = ['인','묘','진','사','오','미','신','유','술','해','자','축'];
+  var mBranch = monthBranches[jeolgiMonth - 1];
+
+  // ===== 3. 일주 (UTC 기준 — 한국 시간대 역사적 변경 보정) =====
+  // 기준점: 2000-01-01 = 기축(己丑)일 (stem=5, branch=1)
+  // Date.UTC 사용하여 시간대 영향 제거
+  var dateUTC = Date.UTC(year, month - 1, day);
+  var baseUTC = Date.UTC(2000, 0, 1);
+  var diff = Math.floor((dateUTC - baseUTC) / 86400000);
+  var dStem = STEMS[((diff + 5) % 10 + 10) % 10];
+  var dBranch = BRANCHES[((diff + 1) % 12 + 12) % 12];
+
+  // ===== 4. 시주 =====
+  var hBranch = null;
+  if (hour !== null) {
+    if (hour === 23 || hour === 0) hBranch = '자';
+    else {
+      var hb = [['자',23,1],['축',1,3],['인',3,5],['묘',5,7],['진',7,9],['사',9,11],['오',11,13],['미',13,15],['신',15,17],['유',17,19],['술',19,21],['해',21,23]];
+      for (var i = 0; i < hb.length; i++) { if (hour >= hb[i][1] && hour < hb[i][2]) { hBranch = hb[i][0]; break; } }
+    }
+  }
+
+  // ===== 5. 오행 계산 =====
+  var el = {목:0, 화:0, 토:0, 금:0, 수:0};
+  el[STEM_EL[yStem]]++; el[BRANCH_EL[yBranch]]++;
+  el[STEM_EL[mStem]]++; el[BRANCH_EL[mBranch]]++;
+  el[STEM_EL[dStem]] += 1.5; el[BRANCH_EL[dBranch]]++;
+  if (hBranch) el[BRANCH_EL[hBranch]]++;
+
+  // Find excess and lacking
+  var sorted = Object.entries(el).sort(function(a,b){return b[1]-a[1]});
+  var excess = sorted[0][1] >= 3 ? sorted[0][0] : null;
+  var lacking = sorted[sorted.length-1][1] === 0 ? sorted[sorted.length-1][0] : null;
+
+  return {
+    pillars: {year:{stem:yStem,branch:yBranch}, month:{stem:mStem,branch:mBranch}, day:{stem:dStem,branch:dBranch}, hour:hBranch?{branch:hBranch}:null},
+    elements: el, dayMaster: dStem, dayMasterEl: STEM_EL[dStem],
+    excess: excess, lacking: lacking,
+    dominant: sorted[0][0], secondary: sorted[1][0]
+  };
+}
+
+// ===== ANALYSIS =====
+function startAnalysis() {
+  var y = parseInt(document.getElementById('inp-year').value);
+  var m = parseInt(document.getElementById('inp-month').value);
+  var d = parseInt(document.getElementById('inp-day').value);
+  var h = document.getElementById('inp-hour').value;
+  h = h === 'unknown' ? null : parseInt(h);
+  if (!y || !m || !d || y < 1940 || y > 2010 || m < 1 || m > 12 || d < 1 || d > 31) return;
+
+  // ===== 음력이면 양력으로 변환! =====
+  if (isLunar) {
+    var solar = lunarToSolar(y, m, d);
+    console.log('음력→양력 변환:', y+'.'+m+'.'+d, '→', solar.year+'.'+solar.month+'.'+solar.day);
+    y = solar.year;
+    m = solar.month;
+    d = solar.day;
+  }
+  // ===== 변환 끝 =====
+
+  goTo('analyzing');
+  var msgs = ["사주 팔자를 펼치고 있어요...","천간과 지지를 배합하는 중...","일간의 성격을 분석하고 있어요...","오행 밸런스를 계산하는 중...","당신만의 비즈니스 DNA를 해독 중!"];
+  var pct = 0;
+  var iv = setInterval(function() {
+    pct += 2;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('analyze-msg').textContent = msgs[Math.min(Math.floor(pct / 22), 4)];
+    if (pct >= 100) { clearInterval(iv); result = calc(y, m, d, h); setTimeout(function() { renderResult(); goTo('result'); }, 400); }
+  }, 60);
+}
+
+// ===== RENDER RESULT (일간 기반) =====
+function renderResult() {
+  // 핵심 변경: dominant element가 아닌 DAY MASTER(일간) 기준!
+  var s = DAY_MASTER[result.dayMaster];
+  if (!s) s = DAY_MASTER['갑']; // fallback
+  var elColors = {목:"#2D5A27", 화:"#C41E3A", 토:"#B8860B", 금:"#4A4A6A", 수:"#1A5276"};
+
+  // Hero
+  document.getElementById('result-hero').style.background = s.gradient;
+  document.getElementById('result-icon').textContent = s.icon;
+  document.getElementById('result-badge').textContent = s.hanja + '(' + result.dayMaster + ') · ' + STEM_EL[result.dayMaster] + '의 기운';
+  document.getElementById('result-name').textContent = s.name;
+  document.getElementById('result-tagline').textContent = s.tagline;
+  createParticles('result-particles', s.particles);
+  document.getElementById('step-result').style.background = s.lightBg;
+
+  // Pillars
+  var pData = [
+    {label:'년주', stem:result.pillars.year.stem, branch:result.pillars.year.branch},
+    {label:'월주', stem:result.pillars.month.stem, branch:result.pillars.month.branch},
+    {label:'일주', stem:result.pillars.day.stem, branch:result.pillars.day.branch},
+    result.pillars.hour ? {label:'시주', stem:'—', branch:result.pillars.hour.branch} : {label:'시주', stem:'—', branch:'—'}
+  ];
+  var ph = '';
+  pData.forEach(function(p, i) {
+    var isDay = i === 2;
+    var boxStyle = isDay ? 'background:'+s.gradient+'; border:none;' : '';
+    var sc = isDay ? '#fff' : '#333';
+    var bc = isDay ? 'rgba(255,255,255,0.8)' : '#666';
+    ph += '<div class="pillar"><div class="pillar-label">'+p.label+'</div>';
+    ph += '<div class="pillar-box'+(isDay?' highlight':'')+'" style="'+boxStyle+'">';
+    ph += '<div class="pillar-char serif" style="color:'+sc+'">'+p.stem+'</div>';
+    ph += '<div class="pillar-char serif" style="color:'+bc+'; margin-top:4px;">'+p.branch+'</div></div>';
+    if (p.branch !== '—') ph += '<div class="pillar-zodiac">'+(ZODIAC[p.branch]||'')+'</div>';
+    ph += '</div>';
+  });
+  document.getElementById('pillars').innerHTML = ph;
+  document.getElementById('daymaster-note').textContent = '일간(日干): ' + result.dayMaster + ' (' + STEM_EL[result.dayMaster] + ') — 이것이 당신의 본질이에요';
+  document.getElementById('daymaster-note').style.color = s.color;
+
+  // Element bars
+  var maxVal = Math.max.apply(null, Object.values(result.elements));
+  var ebHtml = '';
+  Object.entries(result.elements).forEach(function(e) {
+    var pct = maxVal > 0 ? (e[1] / maxVal * 100) : 0;
+    ebHtml += '<div class="ebar"><span class="ebar-label">' + e[0] + '</span>';
+    ebHtml += '<div class="ebar-track"><div class="ebar-fill" style="width:'+pct+'%; background:'+elColors[e[0]]+';"></div></div>';
+    ebHtml += '<span class="ebar-val">' + e[1].toFixed(1) + '</span></div>';
+  });
+  document.getElementById('element-bars').innerHTML = ebHtml;
+
+  // Element balance
+  var balHtml = '';
+  if (result.excess) balHtml += '<div class="bal-item bal-excess"><strong>' + result.excess + ' 과다</strong><br>' + EL_EXCESS[result.excess] + '</div>';
+  if (result.lacking) balHtml += '<div class="bal-item bal-lack"><strong>' + result.lacking + ' 부족</strong><br>' + EL_LACKING[result.lacking] + '</div>';
+  if (!result.excess && !result.lacking) balHtml = '<div class="bal-item bal-ok"><strong>오행 균형 👍</strong><br>비교적 균형 잡힌 사주예요! 다방면에서 안정적이에요.</div>';
+  document.getElementById('element-balance').innerHTML = balHtml;
+
+  // Description
+  document.getElementById('result-animal').textContent = s.animal;
+  document.getElementById('result-desc').innerHTML = s.description.replace(/\n/g, '<br>');
+
+  // Strengths
+  document.getElementById('str-title').innerHTML = '💪 비즈니스 핵심 강점';
+  document.getElementById('str-title').style.color = s.color;
+  var sgHtml = '';
+  s.strengths.forEach(function(str) { sgHtml += '<div class="str-item" style="background:'+s.lightBg+'; color:'+s.color+';">'+str+'</div>'; });
+  document.getElementById('str-grid').innerHTML = sgHtml;
+
+  // ===== NEW: Personalized Business Info =====
+  var biHtml = '';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">영업 행운 숫자</span><span class="biz-val">'+s.luckyNum+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">미팅 추천 컬러</span><span class="biz-val">'+s.luckyColor+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">사업 행운 방위</span><span class="biz-val">'+s.luckyDir+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">골든타임</span><span class="biz-val">'+s.goldenTime+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">조심할 달</span><span class="biz-val">'+s.cautionMonth+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">최고의 파트너</span><span class="biz-val">'+s.bestPartner+'</span></div>';
+  biHtml += '<div class="biz-row"><span class="biz-icon"></span><span class="biz-label">주의할 파트너</span><span class="biz-val">'+s.cautionPartner+'</span></div>';
+  document.getElementById('biz-info').innerHTML = biHtml;
+  document.getElementById('biz-tip').textContent = ' ' + s.bizTip;
+
+  // Email step
+  document.getElementById('email-icon').textContent = s.icon;
+  document.getElementById('email-title').innerHTML = s.name + '의 풀 리포트를<br>이메일로 보내드릴게요';
+  document.getElementById('sent-cta').style.background = s.gradient;
+  document.getElementById('sent-cta').style.borderRadius = '20px';
+  document.getElementById('sent-cta').style.padding = '28px 24px';
+  document.getElementById('sent-cta-btn').style.color = s.color;
+}
+
+// ===== EMAIL =====
+function submitEmail() {
+  var email = document.getElementById('inp-email').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    document.getElementById('email-error').style.display = 'block';
+    document.getElementById('inp-email').classList.add('error');
+    return;
+  }
+  document.getElementById('email-error').style.display = 'none';
+  document.getElementById('inp-email').classList.remove('error');
+  goTo('sending');
+    var s = DAY_MASTER[result.dayMaster] || DAY_MASTER['갑'];
+  fetch('https://app.wellstar.life/api/saju-lead', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email,
+      birth_date: document.getElementById('inp-year').value + '-' + document.getElementById('inp-month').value + '-' + document.getElementById('inp-day').value,
+      ref_code: refCode || null,
+      saju_result: { day_master: result.dayMaster, result_type: s.name }
+    })
+  }).catch(function() {});
+  fetch('https://blogtool.wellstar.life/api/saju-report', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email, name: '',
+      birth_date: document.getElementById('inp-year').value + '-' + document.getElementById('inp-month').value + '-' + document.getElementById('inp-day').value,
+      birth_time: document.getElementById('inp-hour').value === 'unknown' ? '미입력' : document.getElementById('inp-hour').value + '시',
+      day_master: result.dayMaster,
+      day_master_el: STEM_EL[result.dayMaster],
+      result_type: s.name, result_summary: s.description,
+      dominant: result.dominant, secondary: result.secondary,
+      excess: result.excess || '없음', lacking: result.lacking || '없음',
+      strengths: s.strengths.join(', '), animal: s.animal, tagline: s.tagline,
+      hanja: s.hanja, biz_tip: s.bizTip,
+      lucky_num: s.luckyNum, lucky_color: s.luckyColor, lucky_dir: s.luckyDir,
+      golden_time: s.goldenTime, caution_month: s.cautionMonth,
+      best_partner: s.bestPartner, caution_partner: s.cautionPartner,
+      referred_by: refCode || 'direct',
+      // 프론트엔드에서 계산한 사주팔자 (AI가 다시 계산하지 않도록!)
+      pillars: {
+        year: { stem: result.pillars.year.stem, branch: result.pillars.year.branch },
+        month: { stem: result.pillars.month.stem, branch: result.pillars.month.branch },
+        day: { stem: result.pillars.day.stem, branch: result.pillars.day.branch },
+        hour: result.pillars.hour ? { branch: result.pillars.hour.branch } : null
+      },
+      elements: result.elements
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) { document.getElementById('sent-email').textContent = email; goTo('sent'); })
+  .catch(function(err) { console.error('API error:', err); document.getElementById('sent-email').textContent = email; goTo('sent'); });
+}
+
+function resetAll() {
+  result = null;
+  document.getElementById('inp-year').value = '';
+  document.getElementById('inp-month').value = '';
+  document.getElementById('inp-day').value = '';
+  document.getElementById('inp-hour').value = 'unknown';
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.time-btn[data-val="unknown"]').classList.add('active');
+  document.getElementById('inp-email').value = '';
+  document.getElementById('btn-analyze').disabled = true;
+  goTo('intro');
+}
+
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+</script>
+<script src="/shared/nav.js?v=2"></script>
+</body>
+</html>

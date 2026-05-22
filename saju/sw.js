@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dino-main-v6';
-const APP_PATH = '/main/';
+const CACHE_NAME = 'saju-v1';
+const APP_PATH = '/saju/';
 
 self.addEventListener('install', e => {
   e.waitUntil(
