@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FFFDFB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>옆집디노의 블로그 브랜딩 코칭</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6B5B95;
+            --primary-light: #8B7BB5;
+            --primary-pale: #F3F0F8;
+            --accent: #FF6B6B;
+            --accent-light: #FFE8E8;
+            --cream: #FFFDFB;
+            --warm-gray: #6B6560;
+            --light-gray: #F5F4F0;
+            --text: #2C2A27;
+            --shadow: rgba(107, 91, 149, 0.12);
+            --success: #4CAF50;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        .bg-decoration {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        .bg-circle-1 {
+            width: 500px; height: 500px;
+            background: linear-gradient(135deg, var(--primary-pale), transparent);
+            top: -200px; right: -200px;
+        }
+        .bg-circle-2 {
+            width: 400px; height: 400px;
+            background: linear-gradient(135deg, var(--accent-light), transparent);
+            bottom: -150px; left: -150px;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .coach-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        .coach-emoji { font-size: 24px; }
+        .header h1 {
+            font-family: 'Gowun Batang', serif;
+            font-size: 26px;
+            color: var(--primary);
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+        .header h1 span { color: var(--accent); }
+        .header-desc {
+            font-size: 15px;
+            color: var(--warm-gray);
+        }
+
+        /* 3구간 진행바 */
+        .progress-container { margin-bottom: 24px; }
+        .progress-phases {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .phase-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+        .phase-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: var(--light-gray);
+        }
+        .phase-item.active:not(:last-child)::after,
+        .phase-item.completed:not(:last-child)::after {
+            background: var(--primary-light);
+        }
+        .phase-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--light-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        .phase-item.active .phase-icon {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            box-shadow: 0 2px 8px rgba(107, 91, 149, 0.3);
+        }
+        .phase-item.completed .phase-icon {
+            background: var(--primary);
+        }
+        .phase-label {
+            font-size: 11px;
+            color: var(--warm-gray);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .phase-item.active .phase-label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .phase-item.completed .phase-label {
+            color: var(--primary);
+        }
+        .progress-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-right: 12px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            font-size: 12px;
+            color: var(--warm-gray);
+            white-space: nowrap;
+        }
+
+        .coaching-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 24px var(--shadow);
+            margin-bottom: 20px;
+        }
+        .coach-message {
+            background: var(--primary-pale);
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            padding: 18px;
+            margin-bottom: 22px;
+            position: relative;
+        }
+        .coach-message::before {
+            content: '🦕';
+            position: absolute;
+            top: -10px; left: -6px;
+            font-size: 26px;
+        }
+        .coach-message p {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.75;
+            margin-left: 16px;
+        }
+        .coach-message .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .question-label {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .question-title {
+            font-family: 'Gowun Batang', serif;
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .question-hint {
+            font-size: 13px;
+            color: var(--warm-gray);
+            margin-bottom: 16px;
+        }
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .options-grid.two-column {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .option-btn {
+            padding: 14px 16px;
+            background: var(--cream);
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            position: relative;
+        }
+        .option-btn:hover {
+            border-color: var(--primary-light);
+            background: var(--primary-pale);
+        }
+        .option-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-pale);
+        }
+        .option-btn.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 10px; right: 10px;
+            background: var(--primary);
+            color: white;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .option-btn.recommend {
+            border-style: dashed;
+            border-color: var(--primary-light);
+        }
+        .option-icon {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+        .option-title {
+            font-weight: 500;
+            color: var(--text);
+        }
+        .option-desc {
+            font-size: 12px;
+            color: var(--warm-gray);
+            margin-top: 2px;
+        }
+        .multi-hint {
+            text-align: center;
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        /* Step 10 특별 스타일 */
+        .final-section {
+            margin-bottom: 20px;
+        }
+        .final-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .final-section-title .required {
+            font-size: 11px;
+            background: var(--accent);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .final-section-title .optional {
+            font-size: 11px;
+            background: var(--light-gray);
+            color: var(--warm-gray);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .sample-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sample-btn {
+            padding: 14px 16px;
+            background: var(--cream);
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-family: 'Gowun Batang', serif;
+            font-size: 14px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .sample-btn:hover {
+            border-color: var(--primary-light);
+            background: var(--primary-pale);
+        }
+        .sample-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-pale);
+        }
+        .sample-label {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-right: 6px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-family: 'Noto Sans KR', sans-serif;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            background: var(--cream);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-pale);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 18px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-back {
+            background: var(--light-gray);
+            color: var(--warm-gray);
+            flex: 0.4;
+        }
+        .btn-next {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 14px rgba(107, 91, 149, 0.3);
+        }
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .btn-next:disabled {
+            background: #D5D4D0;
+            color: #9E9C97;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, var(--accent), #FF8585);
+            color: white;
+            box-shadow: 0 4px 14px rgba(255, 107, 107, 0.3);
+        }
+
+        /* 로딩/완료 화면 */
+        .loading-screen, .success-screen {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .loading-screen.active, .success-screen.active { display: block; }
+        .loading-animation {
+            width: 100px; height: 100px;
+            margin: 0 auto 28px;
+            position: relative;
+        }
+        .loading-circle {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 4px solid var(--light-gray);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-emoji {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-family: 'Gowun Batang', serif;
+            font-size: 18px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--warm-gray);
+        }
+        .success-icon { font-size: 64px; margin-bottom: 20px; }
+        .success-title {
+            font-family: 'Gowun Batang', serif;
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+        .success-desc {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 32px;
+        }
+        .success-email {
+            background: var(--primary-pale);
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--primary);
+            display: inline-block;
+            margin-bottom: 32px;
+        }
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 20px;
+            padding: 28px 24px;
+            color: white;
+        }
+        .cta-section h3 { font-size: 18px; margin-bottom: 10px; }
+        .cta-section p { font-size: 14px; opacity: 0.95; margin-bottom: 16px; }
+        .cta-btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 12px 28px;
+            border-radius: 24px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .error-message {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+        .error-message.show { display: block; }
+        .hidden { display: none !important; }
+
+        @media (max-width: 480px) {
+            .options-grid.two-column { grid-template-columns: 1fr; }
+            .phase-label { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration">
+        <div class="bg-circle bg-circle-1"></div>
+        <div class="bg-circle bg-circle-2"></div>
+    </div>
+
+    <div class="container">
+        <header class="header" id="mainHeader">
+            <div class="coach-badge">
+                <span class="coach-emoji">🦕</span>
+                옆집디노의 블로그 브랜딩 코칭
+            </div>
+            <h1>나만의 블로그 브랜드,<br><span>10가지 질문</span>으로 완성해요</h1>
+            <p class="header-desc">블로그명, 닉네임, 소개글까지<br>AI가 맞춤 제작해드려요</p>
+        </header>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-phases">
+                <div class="phase-item active" id="phase1">
+                    <div class="phase-icon">🔍</div>
+                    <span class="phase-label">나를 돌아보기</span>
+                </div>
+                <div class="phase-item" id="phase2">
+                    <div class="phase-icon">✨</div>
+                    <span class="phase-label">내 스타일 찾기</span>
+                </div>
+                <div class="phase-item" id="phase3">
+                    <div class="phase-icon">🎯</div>
+                    <span class="phase-label">마무리</span>
+                </div>
+            </div>
+            <div class="progress-detail">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+                </div>
+                <span class="progress-text" id="progressText">1 / 10</span>
+            </div>
+        </div>
+
+        <div id="questionSection">
+            <!-- STEP 1: 블로그 목적 -->
+            <div class="coaching-card" id="step1">
+                <div class="coach-message">
+                    <p>안녕하세요! <span class="highlight">옆집디노</span>예요 😊<br><br>
+                    10가지 질문에 답하다 보면<br>당신만의 블로그 브랜드가 완성돼요!</p>
+                </div>
+                <div class="question-label">Q1. 블로그 목적</div>
+                <h2 class="question-title">블로그를 왜 만들까요?</h2>
+                <p class="question-hint">📌 목적이 정해져야 블로그명/소개글이 정확해져요</p>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="기록"><span class="option-icon">📝</span><span class="option-title">기록 (일상/후기)</span></button>
+                    <button class="option-btn" data-value="수익"><span class="option-icon">💰</span><span class="option-title">수익 (부업/애드센스/제휴)</span></button>
+                    <button class="option-btn" data-value="홍보"><span class="option-icon">📢</span><span class="option-title">내 사업/제품 홍보</span></button>
+                    <button class="option-btn" data-value="브랜딩"><span class="option-icon">👤</span><span class="option-title">나를 브랜딩 (전문가/강사)</span></button>
+                    <button class="option-btn" data-value="소통"><span class="option-icon">💬</span><span class="option-title">소통/커뮤니티</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">✨</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-next" id="next1" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: 타겟 독자 -->
+            <div class="coaching-card hidden" id="step2">
+                <div class="coach-message">
+                    <p>좋아요! 이제 <span class="highlight">누가 읽을지</span> 정해볼까요?<br><br>
+                    타겟이 명확하면 글이 훨씬 잘 써져요 💪</p>
+                </div>
+                <div class="question-label">Q2. 타겟 독자</div>
+                <h2 class="question-title">누가 내 글을 읽었으면 좋겠나요?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="40~50대여성"><span class="option-icon">👩</span><span class="option-title">40~50대 여성 (초보)</span></button>
+                    <button class="option-btn" data-value="직장인"><span class="option-icon">💼</span><span class="option-title">직장인 (시간 부족)</span></button>
+                    <button class="option-btn" data-value="경단녀"><span class="option-icon">🌱</span><span class="option-title">경단/재시작 (막막함)</span></button>
+                    <button class="option-btn" data-value="자영업"><span class="option-icon">🏪</span><span class="option-title">자영업/1인 사업자</span></button>
+                    <button class="option-btn" data-value="건강관심"><span class="option-icon">💪</span><span class="option-title">건강 관심층</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">✨</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev2">이전</button>
+                    <button class="btn btn-next" id="next2" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: 주제 -->
+            <div class="coaching-card hidden" id="step3">
+                <div class="coach-message">
+                    <p>타겟이 정해졌네요! 👍<br><br>
+                    이제 <span class="highlight">어떤 이야기</span>를 할지 정해봐요.<br>
+                    메인 1개에 집중하는 게 검색 노출에 유리해요!</p>
+                </div>
+                <div class="question-label">Q3. 블로그 주제</div>
+                <h2 class="question-title">어떤 주제로 운영할까요?</h2>
+                <p class="multi-hint">메인 1개 + 서브 0~1개 (최대 2개)</p>
+                <div class="options-grid two-column">
+                    <button class="option-btn" data-value="건강웰빙"><span class="option-icon">💪</span><span class="option-title">건강/웰빙</span></button>
+                    <button class="option-btn" data-value="뷰티"><span class="option-icon">💄</span><span class="option-title">뷰티/셀프케어</span></button>
+                    <button class="option-btn" data-value="재테크"><span class="option-icon">💰</span><span class="option-title">재테크/부업</span></button>
+                    <button class="option-btn" data-value="여행일상"><span class="option-icon">✈️</span><span class="option-title">여행/일상</span></button>
+                    <button class="option-btn" data-value="살림육아"><span class="option-icon">🏠</span><span class="option-title">살림/육아</span></button>
+                    <button class="option-btn" data-value="자기계발"><span class="option-icon">📚</span><span class="option-title">자기계발/성장</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev3">이전</button>
+                    <button class="btn btn-next" id="next3" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: 해결할 고민 -->
+            <div class="coaching-card hidden" id="step4">
+                <div class="coach-message">
+                    <p>좋은 선택이에요! 🎯<br><br>
+                    이제 <span class="highlight">독자의 어떤 고민</span>을 해결해줄지 정해봐요.</p>
+                </div>
+                <div class="question-label">Q4. 해결할 고민</div>
+                <h2 class="question-title">내 글이 주로 해결해줄 고민은?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="정리"><span class="option-icon">📋</span><span class="option-title">정보가 복잡해요</span><span class="option-desc">→ 쉽게 정리 필요</span></button>
+                    <button class="option-btn" data-value="선택"><span class="option-icon">🤔</span><span class="option-title">뭘 골라야 할지 모르겠어요</span><span class="option-desc">→ 비교/선택 도움</span></button>
+                    <button class="option-btn" data-value="실천"><span class="option-icon">✅</span><span class="option-title">실천이 어려워요</span><span class="option-desc">→ 루틴/체크리스트 필요</span></button>
+                    <button class="option-btn" data-value="현실"><span class="option-icon">⏰</span><span class="option-title">시간/돈이 부족해요</span><span class="option-desc">→ 현실적인 방법 필요</span></button>
+                    <button class="option-btn" data-value="공감"><span class="option-icon">💜</span><span class="option-title">마음이 지쳐요</span><span class="option-desc">→ 공감/회복이 필요</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">✨</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev4">이전</button>
+                    <button class="btn btn-next" id="next4" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 5: 말투/보이스 -->
+            <div class="coaching-card hidden" id="step5">
+                <div class="coach-message">
+                    <p>이제 Phase 2! <span class="highlight">내 스타일</span>을 찾아볼 거예요 ✨<br><br>
+                    글을 쓸 때 어떤 느낌으로 말하고 싶어요?</p>
+                </div>
+                <div class="question-label">Q5. 말투/보이스</div>
+                <h2 class="question-title">글 말투는 어떤 느낌이 좋아요?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="따뜻한언니"><span class="option-icon">🤗</span><span class="option-title">따뜻한 언니형</span><span class="option-desc">공감하고 토닥여주는</span></button>
+                    <button class="option-btn" data-value="현실코치"><span class="option-icon">💪</span><span class="option-title">현실 코치형</span><span class="option-desc">정리하고 조언해주는</span></button>
+                    <button class="option-btn" data-value="꼼꼼정리"><span class="option-icon">📋</span><span class="option-title">꼼꼼 정리형</span><span class="option-desc">체계적이고 깔끔한</span></button>
+                    <button class="option-btn" data-value="전문가"><span class="option-icon">🎓</span><span class="option-title">전문가형</span><span class="option-desc">근거 있고 신뢰가는</span></button>
+                    <button class="option-btn" data-value="유쾌친구"><span class="option-icon">😄</span><span class="option-title">유쾌 친구형</span><span class="option-desc">가볍고 재미있게</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">✨</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev5">이전</button>
+                    <button class="btn btn-next" id="next5" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 6: 글 스타일 -->
+            <div class="coaching-card hidden" id="step6">
+                <div class="coach-message">
+                    <p>말투가 정해졌네요! 👍<br><br>
+                    이번엔 <span class="highlight">글 스타일</span>을 정해볼게요.</p>
+                </div>
+                <div class="question-label">Q6. 글 스타일</div>
+                <h2 class="question-title">글 스타일은 어떤 게 편하세요?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="짧은문장"><span class="option-icon">✂️</span><span class="option-title">짧은 문장 + 쉬운 단어</span></button>
+                    <button class="option-btn" data-value="체크리스트"><span class="option-icon">☑️</span><span class="option-title">체크리스트/요약 위주</span></button>
+                    <button class="option-btn" data-value="사례중심"><span class="option-icon">💬</span><span class="option-title">사례/후기 중심</span></button>
+                    <button class="option-btn" data-value="차분하게"><span class="option-icon">🍃</span><span class="option-title">차분하게 (감정 과하지 않게)</span></button>
+                    <button class="option-btn" data-value="대화체"><span class="option-icon">💭</span><span class="option-title">대화체 (친근한 느낌)</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">✨</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev6">이전</button>
+                    <button class="btn btn-next" id="next6" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 7: 블로그명 스타일 -->
+            <div class="coaching-card hidden" id="step7">
+                <div class="coach-message">
+                    <p>이제 <span class="highlight">블로그명</span>을 어떤 스타일로 만들지 정해봐요!<br><br>
+                    선택에 따라 AI가 맞춤 제작해드려요 ✨</p>
+                </div>
+                <div class="question-label">Q7. 블로그명 스타일</div>
+                <h2 class="question-title">블로그명은 어떤 타입이 좋아요?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="키워드형"><span class="option-icon">🏷️</span><span class="option-title">키워드형</span><span class="option-desc">예: OO루틴 / OO노트</span></button>
+                    <button class="option-btn" data-value="연구소형"><span class="option-icon">🔬</span><span class="option-title">연구소형</span><span class="option-desc">예: OO연구소 / OO랩</span></button>
+                    <button class="option-btn" data-value="스토리형"><span class="option-icon">📖</span><span class="option-title">스토리형</span><span class="option-desc">예: 인생2막 / 리셋일기</span></button>
+                    <button class="option-btn" data-value="심플형"><span class="option-icon">✨</span><span class="option-title">심플형</span><span class="option-desc">예: 2~4글자 짧게</span></button>
+                    <button class="option-btn" data-value="지역주제형"><span class="option-icon">📍</span><span class="option-title">지역+주제형</span><span class="option-desc">예: 관악 건강노트</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">🎁</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev7">이전</button>
+                    <button class="btn btn-next" id="next7" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 8: 닉네임 스타일 -->
+            <div class="coaching-card hidden" id="step8">
+                <div class="coach-message">
+                    <p>블로그명 스타일 정해졌어요!<br><br>
+                    이번엔 <span class="highlight">닉네임</span> 스타일을 골라주세요 😊</p>
+                </div>
+                <div class="question-label">Q8. 닉네임 스타일</div>
+                <h2 class="question-title">닉네임은 어떤 타입이 좋아요?</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="이름형"><span class="option-icon">👤</span><span class="option-title">이름형</span><span class="option-desc">예: 영희 / 미소</span></button>
+                    <button class="option-btn" data-value="언니친구형"><span class="option-icon">👭</span><span class="option-title">언니/친구형</span><span class="option-desc">예: OO언니 / OO친구</span></button>
+                    <button class="option-btn" data-value="코치멘토형"><span class="option-icon">🎯</span><span class="option-title">코치/멘토형</span><span class="option-desc">예: OO코치 / OO멘토</span></button>
+                    <button class="option-btn" data-value="기록형"><span class="option-icon">📝</span><span class="option-title">기록형</span><span class="option-desc">예: OO로그 / OO일기</span></button>
+                    <button class="option-btn" data-value="심플영문"><span class="option-icon">🔤</span><span class="option-title">심플 영문/혼합형</span><span class="option-desc">예: 짧게</span></button>
+                    <button class="option-btn recommend" data-value="추천"><span class="option-icon">🎁</span><span class="option-title">잘 모르겠어요 (추천받기)</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev8">이전</button>
+                    <button class="btn btn-next" id="next8" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 9: 싫은 느낌 -->
+            <div class="coaching-card hidden" id="step9">
+                <div class="coach-message">
+                    <p>거의 다 왔어요! 💜<br><br>
+                    <span class="highlight">이 느낌만은 피하고 싶다!</span> 하는 거 있어요?<br>
+                    이걸 알면 결과가 훨씬 좋아져요.</p>
+                </div>
+                <div class="question-label">Q9. 피하고 싶은 느낌</div>
+                <h2 class="question-title">내 블로그에서 이 느낌은 싫어요</h2>
+                <div class="options-grid">
+                    <button class="option-btn" data-value="영업티"><span class="option-icon">🚫</span><span class="option-title">영업티 (광고 같음)</span></button>
+                    <button class="option-btn" data-value="과장"><span class="option-icon">🚫</span><span class="option-title">과장/기적/무조건</span></button>
+                    <button class="option-btn" data-value="훈계"><span class="option-icon">🚫</span><span class="option-title">훈계/잔소리 느낌</span></button>
+                    <button class="option-btn" data-value="너무감성"><span class="option-icon">🚫</span><span class="option-title">너무 감성적</span></button>
+                    <button class="option-btn" data-value="너무딱딱"><span class="option-icon">🚫</span><span class="option-title">너무 딱딱/어려움</span></button>
+                    <button class="option-btn" data-value="전문용어"><span class="option-icon">🚫</span><span class="option-title">전문용어 남발</span></button>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev9">이전</button>
+                    <button class="btn btn-next" id="next9" disabled>다음으로</button>
+                </div>
+            </div>
+
+            <!-- STEP 10: 샘플 + 키워드 + 이메일 -->
+            <div class="coaching-card hidden" id="step10">
+                <div class="coach-message">
+                    <p>마지막이에요! 🎉<br><br>
+                    아래 문장 중 <span class="highlight">"가장 나답다"</span> 싶은 걸 골라주세요.<br>
+                    이게 AI 결과의 정확도를 확 높여줘요!</p>
+                </div>
+
+                <!-- 샘플 문장 선택 -->
+                <div class="final-section">
+                    <div class="final-section-title">
+                        '나답다' 문장 선택 <span class="required">필수</span>
+                    </div>
+                    <div class="sample-options" id="sampleOptions">
+                        <button class="sample-btn" data-value="A">
+                            <span class="sample-label">A</span>
+                            "복잡한 걸 쉽게 정리해드려요. 오늘부터 바로 할 수 있게요."
+                        </button>
+                        <button class="sample-btn" data-value="B">
+                            <span class="sample-label">B</span>
+                            "현실적으로 가능한 방법만 알려드려요. 시간 아끼는 쪽으로요."
+                        </button>
+                        <button class="sample-btn" data-value="C">
+                            <span class="sample-label">C</span>
+                            "천천히, 꾸준히. 나를 돌보는 루틴을 함께 만들어가요."
+                        </button>
+                        <button class="sample-btn" data-value="D">
+                            <span class="sample-label">D</span>
+                            "근거와 기준으로 깔끔하게 정리합니다. 선택이 쉬워져요."
+                        </button>
+                        <button class="sample-btn" data-value="E">
+                            <span class="sample-label">E</span>
+                            "어렵지 않게, 부담 없이. 같이 해보는 블로그 시작!"
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 키워드 입력 -->
+                <div class="final-section">
+                    <div class="final-section-title">
+                        넣고 싶은 단어 <span class="optional">선택</span>
+                    </div>
+                    <input type="text" class="input-field" id="keywordInput" placeholder="예: 미소, 관악, 루틴, 건강, 리셋">
+                </div>
+
+                <!-- 이메일 입력 -->
+                <div class="final-section">
+                    <div class="final-section-title">
+                        결과 받을 이메일 <span class="required">필수</span>
+                    </div>
+                    <input type="email" class="input-field" id="emailInput" placeholder="이메일 주소를 입력하세요">
+                    <div class="error-message" id="errorMessage">올바른 이메일 주소를 입력해주세요.</div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="btn btn-back" id="prev10">이전</button>
+                    <button class="btn btn-submit" id="submitBtn" disabled>✨ 브랜딩 결과 받기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로딩 화면 -->
+        <div class="loading-screen" id="loadingScreen">
+            <div class="coaching-card">
+                <div class="loading-animation">
+                    <div class="loading-circle"></div>
+                    <span class="loading-emoji">🦕</span>
+                </div>
+                <p class="loading-text">AI가 브랜딩을 만들고 있어요!</p>
+                <p class="loading-subtext">
+                    10가지 답변을 분석해서<br>
+                    세상에 하나뿐인 브랜드를 만드는 중...
+                </p>
+            </div>
+        </div>
+
+        <!-- 완료 화면 -->
+        <div class="success-screen" id="successScreen">
+            <div class="coaching-card">
+                <div class="success-icon">🎉</div>
+                <h2 class="success-title">브랜딩 결과가 전송되었어요!</h2>
+                <p class="success-desc">
+                    입력하신 이메일로<br>
+                    맞춤형 브랜딩 결과를 보내드렸어요.
+                </p>
+                <div class="success-email" id="successEmail">example@email.com</div>
+
+                <div class="cta-section">
+                    <h3>글쓰기도 도와드릴까요?</h3>
+                    <p>AI가 SEO 최적화된 블로그 글을<br>자동으로 만들어줘요 ✨</p>
+                    <a href="https://blogtool.wellstar.life" class="cta-btn">AI로 첫 글 써보기 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // 설정
+        // ========================================
+        const API_ENDPOINT = 'https://blogtool.wellstar.life/api/branding-coach';
+        const totalSteps = 10;
+        let currentStep = 1;
+
+        let answers = {
+            blogPurpose: '',      // Q1
+            targetAudience: '',   // Q2
+            topics: [],           // Q3
+            problemToSolve: '',   // Q4
+            voiceTone: '',        // Q5
+            writeStyle: '',       // Q6
+            blogNameStyle: '',    // Q7
+            nicknameStyle: '',    // Q8
+            avoidStyle: '',       // Q9
+            sampleChoice: '',     // Q10
+            keyword: '',          // Q10
+            email: ''             // Q10
+        };
+
+        // ========================================
+        // Phase 정보
+        // ========================================
+        const phases = [
+            { steps: [1, 2, 3, 4], label: '나를 돌아보기' },
+            { steps: [5, 6, 7, 8], label: '내 스타일 찾기' },
+            { steps: [9, 10], label: '마무리' }
+        ];
+
+        function getCurrentPhase() {
+            for (let i = 0; i < phases.length; i++) {
+                if (phases[i].steps.includes(currentStep)) return i + 1;
+            }
+            return 1;
+        }
+
+        function updateProgress() {
+            const percent = Math.round((currentStep / totalSteps) * 100);
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = `${currentStep} / ${totalSteps}`;
+
+            const currentPhase = getCurrentPhase();
+            for (let i = 1; i <= 3; i++) {
+                const phaseEl = document.getElementById(`phase${i}`);
+                phaseEl.classList.remove('active', 'completed');
+                if (i < currentPhase) {
+                    phaseEl.classList.add('completed');
+                } else if (i === currentPhase) {
+                    phaseEl.classList.add('active');
+                }
+            }
+        }
+
+        // ========================================
+        // 네비게이션
+        // ========================================
+        function goToStep(step) {
+            document.getElementById(`step${currentStep}`).classList.add('hidden');
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            currentStep = step;
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function updateSubmitButton() {
+            const canSubmit = answers.sampleChoice && answers.email && validateEmail(answers.email);
+            document.getElementById('submitBtn').disabled = !canSubmit;
+        }
+
+        // ========================================
+        // 단일 선택 설정
+        // ========================================
+        function setupSingleSelect(stepNum, answerKey) {
+            document.querySelectorAll(`#step${stepNum} .option-btn`).forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.coaching-card').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    answers[answerKey] = this.dataset.value;
+                    document.getElementById(`next${stepNum}`).disabled = false;
+                });
+            });
+        }
+
+        // ========================================
+        // 다중 선택 설정 (최대 2개)
+        // ========================================
+        function setupMultiSelect(stepNum, answerKey, maxCount) {
+            document.querySelectorAll(`#step${stepNum} .option-btn`).forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                    } else {
+                        const count = document.querySelectorAll(`#step${stepNum} .option-btn.selected`).length;
+                        if (count >= maxCount) {
+                            alert(`최대 ${maxCount}개까지 선택할 수 있어요!`);
+                            return;
+                        }
+                        this.classList.add('selected');
+                    }
+                    answers[answerKey] = Array.from(document.querySelectorAll(`#step${stepNum} .option-btn.selected`)).map(b => b.dataset.value);
+                    document.getElementById(`next${stepNum}`).disabled = answers[answerKey].length === 0;
+                });
+            });
+        }
+
+        // ========================================
+        // 이벤트 설정
+        // ========================================
+        setupSingleSelect(1, 'blogPurpose');
+        setupSingleSelect(2, 'targetAudience');
+        setupMultiSelect(3, 'topics', 2);
+        setupSingleSelect(4, 'problemToSolve');
+        setupSingleSelect(5, 'voiceTone');
+        setupSingleSelect(6, 'writeStyle');
+        setupSingleSelect(7, 'blogNameStyle');
+        setupSingleSelect(8, 'nicknameStyle');
+        setupSingleSelect(9, 'avoidStyle');
+
+        // 샘플 문장 선택
+        document.querySelectorAll('.sample-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                answers.sampleChoice = this.dataset.value;
+                updateSubmitButton();
+            });
+        });
+
+        // 키워드 입력
+        document.getElementById('keywordInput').addEventListener('input', function() {
+            answers.keyword = this.value.trim();
+        });
+
+        // 이메일 입력
+        document.getElementById('emailInput').addEventListener('input', function() {
+            answers.email = this.value.trim();
+            document.getElementById('errorMessage').classList.remove('show');
+            updateSubmitButton();
+        });
+
+        // 네비게이션 버튼
+        document.getElementById('next1').addEventListener('click', () => goToStep(2));
+        document.getElementById('prev2').addEventListener('click', () => goToStep(1));
+        document.getElementById('next2').addEventListener('click', () => goToStep(3));
+        document.getElementById('prev3').addEventListener('click', () => goToStep(2));
+        document.getElementById('next3').addEventListener('click', () => goToStep(4));
+        document.getElementById('prev4').addEventListener('click', () => goToStep(3));
+        document.getElementById('next4').addEventListener('click', () => goToStep(5));
+        document.getElementById('prev5').addEventListener('click', () => goToStep(4));
+        document.getElementById('next5').addEventListener('click', () => goToStep(6));
+        document.getElementById('prev6').addEventListener('click', () => goToStep(5));
+        document.getElementById('next6').addEventListener('click', () => goToStep(7));
+        document.getElementById('prev7').addEventListener('click', () => goToStep(6));
+        document.getElementById('next7').addEventListener('click', () => goToStep(8));
+        document.getElementById('prev8').addEventListener('click', () => goToStep(7));
+        document.getElementById('next8').addEventListener('click', () => goToStep(9));
+        document.getElementById('prev9').addEventListener('click', () => goToStep(8));
+        document.getElementById('next9').addEventListener('click', () => goToStep(10));
+        document.getElementById('prev10').addEventListener('click', () => goToStep(9));
+
+        // ========================================
+        // 제출
+        // ========================================
+        document.getElementById('submitBtn').addEventListener('click', async function() {
+            if (!validateEmail(answers.email)) {
+                document.getElementById('errorMessage').classList.add('show');
+                return;
+            }
+
+            // 로딩 화면 표시
+            document.getElementById('questionSection').classList.add('hidden');
+            document.getElementById('progressContainer').classList.add('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.add('active');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(answers)
+                });
+
+                if (!response.ok) throw new Error('API 요청 실패');
+
+                // 성공 화면 표시
+                document.getElementById('loadingScreen').classList.remove('active');
+                document.getElementById('successScreen').classList.add('active');
+                document.getElementById('successEmail').textContent = answers.email;
+
+            } catch (error) {
+                console.error('Error:', error);
+                // 에러 시에도 성공 화면 표시 (UX)
+                document.getElementById('loadingScreen').classList.remove('active');
+                document.getElementById('successScreen').classList.add('active');
+                document.getElementById('successEmail').textContent = answers.email;
+            }
+        });
+
+        // ========================================
+        // 초기화
+        // ========================================
+        updateProgress();
+    </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    }
+    </script>
+    <script src="/shared/nav.js?v=2"></script>
+</body>
+</html>

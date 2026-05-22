@@ -13,7 +13,8 @@
     { "source": "/content-maker", "destination": "/content-maker/index.html" },
     { "source": "/health-check", "destination": "/health-check/index.html" },
     { "source": "/challenge", "destination": "/challenge/index.html" },
-    { "source": "/saju", "destination": "/saju/index.html" }
+    { "source": "/saju", "destination": "/saju/index.html" },
+    { "source": "/branding-coach", "destination": "/branding-coach/index.html" }
   ],
   "headers": [
     {
@@ -122,6 +123,19 @@
     },
     {
       "source": "/saju/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/branding-coach/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/branding-coach/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/branding-coach/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]

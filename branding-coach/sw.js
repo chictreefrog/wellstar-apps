@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dino-main-v7';
-const APP_PATH = '/main/';
+const CACHE_NAME = 'branding-coach-v1';
+const APP_PATH = '/branding-coach/';
 
 self.addEventListener('install', e => {
   e.waitUntil(
