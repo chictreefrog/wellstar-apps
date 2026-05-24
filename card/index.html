@@ -8,7 +8,7 @@
 <title>나의 AI 명함</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="qrcode-generator.js"></script>
 <style>
 :root {
   --bg: #0D0D1A;
@@ -125,6 +125,39 @@ textarea { resize: none; min-height: 72px; }
 /* 토스트 */
 .toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; border: 1px solid var(--border); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── 라이트 테마 보정 (theme-toggle.js의 light-theme 클래스에 반응) ── */
+body.light-theme {
+  --bg: #F5F5FA !important;
+  --bg2: #FFFFFF !important;
+  --card: #FFFFFF !important;
+  --card2: #FFFFFF !important;
+  --text: #1A1A2E !important;
+  --text2: #555577 !important;
+  --text3: #8888AA !important;
+  --border: rgba(0,0,0,0.10) !important;
+}
+body.light-theme input,
+body.light-theme textarea,
+body.light-theme select {
+  background: #FFFFFF !important;
+  color: #1A1A2E !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+body.light-theme .btn-secondary {
+  background: #FFFFFF !important;
+  color: #1A1A2E !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+body.light-theme .tool-toggle-item,
+body.light-theme .photo-preview,
+body.light-theme .btn-upload {
+  background: #F8F8FB !important;
+}
+body.light-theme .tab-btn { color: #999 !important; }
+body.light-theme .tab-btn.active { color: var(--accent) !important; }
+body.light-theme .qr-section { border: 1px solid rgba(0,0,0,0.08); }
+body.light-theme .page-header { background: #FFFFFF !important; border-bottom-color: rgba(0,0,0,0.06) !important; }
 </style>
 </head>
 <body>
@@ -470,10 +503,10 @@ function renderCard() {
   document.getElementById('card-display-sns').innerHTML = sns.join('');
   document.getElementById('card-display-sns').style.display = sns.length ? 'flex' : 'none';
 
-  // 도구
+  // 도구 (클릭 가능한 링크)
   const tools = TOOLS.filter(t => toolToggles[t.key]);
   document.getElementById('card-display-tools').innerHTML = tools.map(t =>
-    `<div class="card-tool-chip" style="color:${theme.text};border-color:rgba(255,255,255,0.2)">${t.icon} ${t.name}</div>`
+    `<a href="${t.url}" target="_blank" rel="noopener" class="card-tool-chip" style="color:${theme.text};border-color:rgba(255,255,255,0.2);text-decoration:none;display:inline-block">${t.icon} ${t.name}</a>`
   ).join('');
   document.getElementById('card-display-tools').style.display = tools.length ? 'flex' : 'none';
 }
@@ -481,11 +514,7 @@ function renderCard() {
 // ══════════════════════════════
 // QR 코드 생성
 // ══════════════════════════════
-function generateQR() {
-  const wrap = document.getElementById('qr-wrap');
-  wrap.innerHTML = '';
-
-  // vCard 형식으로 QR 내용 생성
+function buildVCard() {
   const lines = ['BEGIN:VCARD', 'VERSION:3.0'];
   if (data.name) lines.push(`FN:${data.name}`);
   if (data.title) lines.push(`TITLE:${data.title}`);
@@ -493,21 +522,46 @@ function generateQR() {
   if (data.email) lines.push(`EMAIL:${data.email}`);
   if (data.intro) lines.push(`NOTE:${data.intro}`);
   if ((data.sns || {}).insta) lines.push(`URL:${data.sns.insta}`);
+  // 활성화된 도구 링크도 vCard URL 필드로 추가
+  TOOLS.forEach(t => { if (toolToggles[t.key]) lines.push(`URL:${t.url}`); });
   lines.push('END:VCARD');
-  const vcard = lines.join('\n');
+  return lines.join('\n');
+}
 
+function doGenerateQR(wrap) {
+  if (typeof qrcode === 'undefined') return false;
+  wrap.innerHTML = '';
   try {
-    new QRCode(wrap, {
-      text: vcard,
-      width: 180,
-      height: 180,
-      colorDark: '#1A1A2E',
-      colorLight: '#FFFFFF',
-      correctLevel: QRCode.CorrectLevel.M
-    });
+    // typeNumber 0 = 콘텐츠 크기에 맞춰 자동 선택, 'L' = 낮은 오류보정(최대 용량)
+    const qr = qrcode(0, 'L');
+    qr.addData(buildVCard());
+    qr.make();
+    // cellSize=5, margin=2 → 약 180~220px QR 이미지
+    wrap.innerHTML = qr.createImgTag(5, 12);
+    const img = wrap.querySelector('img');
+    if (img) { img.style.borderRadius = '12px'; img.style.display = 'block'; img.style.margin = '0 auto'; }
+    return true;
   } catch(e) {
-    wrap.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px">QR 생성 중...</div>';
+    wrap.innerHTML = '<div style="color:var(--accent);font-size:13px;padding:20px">QR 생성 실패 — 새로고침 후 다시 시도해주세요</div>';
+    console.error('QR error:', e);
+    return true;
   }
+}
+
+function generateQR() {
+  const wrap = document.getElementById('qr-wrap');
+  wrap.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px">QR 생성 중...</div>';
+  if (doGenerateQR(wrap)) return;
+  // 라이브러리 로드 대기 (느린 네트워크 대응, 최대 5초)
+  let waited = 0;
+  const iv = setInterval(() => {
+    waited += 200;
+    if (doGenerateQR(wrap)) { clearInterval(iv); }
+    else if (waited > 5000) {
+      clearInterval(iv);
+      wrap.innerHTML = '<div style="color:var(--accent);font-size:13px;padding:20px;line-height:1.6">QR 생성 실패<br><span style="font-size:11px;color:var(--text2)">인터넷 연결을 확인 후 새로고침해주세요</span></div>';
+    }
+  }, 200);
 }
 
 // ══════════════════════════════
@@ -524,11 +578,11 @@ function saveAndPreview() {
 }
 
 function saveQR() {
-  const canvas = document.querySelector('#qr-wrap canvas');
-  if (!canvas) { showToast('QR 코드를 먼저 생성해주세요'); return; }
+  const img = document.querySelector('#qr-wrap img');
+  if (!img || !img.src) { showToast('QR 코드를 먼저 생성해주세요'); return; }
   const link = document.createElement('a');
   link.download = `${data.name || '명함'}-QR.png`;
-  link.href = canvas.toDataURL('image/png');
+  link.href = img.src;
   link.click();
   showToast('QR 코드 저장됨 📱');
 }
