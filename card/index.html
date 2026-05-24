@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <script src="qrcode-generator.js"></script>
+<script src="html2canvas.min.js"></script>
 <style>
 :root {
   --bg: #0D0D1A;
@@ -282,11 +283,11 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
 
     <!-- 브랜딩 -->
     <div style="text-align:center;padding:20px 20px 8px;color:var(--text3)">
-      <a href="https://wellstar.life" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 18px">
+      <a href="https://app.wellstar.life" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 18px">
         <span style="font-size:20px">🦕</span>
         <div style="text-align:left">
           <div style="font-size:14px;font-weight:900;color:var(--text)">옆집디노</div>
-          <div style="font-size:11px;color:var(--text3)">wellstar.life</div>
+          <div style="font-size:11px;color:var(--text3)">app.wellstar.life</div>
         </div>
       </a>
       <div style="font-size:11px;margin-top:10px;color:var(--text3)">AI 세일즈 시스템으로 영업 성공을 이끌어요</div>
@@ -325,7 +326,7 @@ const THEMES = [
 ];
 
 const TOOLS = [
-  { key: 'saju', icon: '🔮', name: '사주 성공진단', url: 'https://wellstar.life/saju/' },
+  { key: 'saju', icon: '🔮', name: '사주 성공진단', url: 'https://app.wellstar.life/saju/' },
   { key: 'planner', icon: '📅', name: '5분법칙 플래너', url: 'https://app.wellstar.life/planner/' },
   { key: 'diary', icon: '📊', name: 'AI 다이어리', url: 'https://app.wellstar.life/diary/' },
   { key: 'quiz', icon: '🎯', name: '영업 스타일 진단', url: 'https://app.wellstar.life/quiz/' },
@@ -359,6 +360,12 @@ function init() {
   fillForm();
   renderCard();
   generateQR();
+
+  // 마지막으로 보던 화면 복원 — 카드를 저장한 사용자는 다음번 진입 시 바로 카드 보기
+  const lastScreen = localStorage.getItem('namecard_last_screen');
+  if (lastScreen === 'card' && data.name) {
+    switchTab('card');
+  }
 }
 
 function fillForm() {
@@ -542,7 +549,7 @@ function buildMeCard() {
   // MeCard는 한 줄에 URL 1개만 들어감 — 첫 번째 활성 도구 또는 인스타
   const firstUrl = (data.sns || {}).insta
     || TOOLS.find(t => toolToggles[t.key])?.url
-    || 'https://wellstar.life';
+    || 'https://app.wellstar.life';
   parts.push(`URL:${firstUrl};`);
   if (data.intro) parts.push(`NOTE:${data.intro};`);
   parts.push(';');
@@ -561,7 +568,7 @@ function buildQrContent() {
     // 첫 활성 도구 URL or 인스타 or 기본
     return (data.sns || {}).insta
       || TOOLS.find(t => toolToggles[t.key])?.url
-      || 'https://wellstar.life';
+      || 'https://app.wellstar.life';
   }
   return buildVCard();
 }
@@ -681,15 +688,34 @@ async function saveQR() {
   showToast('QR 코드 저장됨 📱');
 }
 
-// 공유하기 — QR 이미지 + 명함 텍스트 함께 첨부
+// 명함 카드 DIV를 PNG로 캡처 (html2canvas)
+async function captureBusinessCard() {
+  if (typeof html2canvas === 'undefined') return null;
+  const cardEl = document.getElementById('business-card');
+  if (!cardEl) return null;
+  try {
+    const canvas = await html2canvas(cardEl, {
+      backgroundColor: null,
+      scale: 2, // 고해상도 (Retina용)
+      useCORS: true,
+      logging: false,
+      width: cardEl.offsetWidth,
+      height: cardEl.offsetHeight
+    });
+    return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  } catch (e) {
+    console.error('Card capture error:', e);
+    return null;
+  }
+}
+
+// 공유하기 — 파란색 명함 카드 이미지 + 텍스트 함께
 async function shareCard() {
   const lines = [];
   if (data.name) lines.push(data.name + (data.title ? ` · ${data.title}` : ''));
   if (data.phone) lines.push(`📞 ${data.phone}`);
   if (data.email) lines.push(`📧 ${data.email}`);
-  if (data.intro) lines.push('');
-  if (data.intro) lines.push(data.intro);
-  // 활성 도구 링크
+  if (data.intro) { lines.push(''); lines.push(data.intro); }
   const toolLinks = TOOLS.filter(t => toolToggles[t.key]);
   if (toolLinks.length) {
     lines.push('');
@@ -697,16 +723,18 @@ async function shareCard() {
   }
   lines.push('');
   lines.push('🦕 옆집디노 AI 세일즈 시스템');
-  lines.push('https://wellstar.life');
+  lines.push('https://app.wellstar.life');
   const text = lines.join('\n');
 
-  let blob = null;
-  try { blob = await getQrPngBlob(); } catch(e) {}
+  // 명함 카드 이미지 캡처
+  showToast('명함 이미지를 만들고 있어요...');
+  let cardBlob = null;
+  try { cardBlob = await captureBusinessCard(); } catch (e) {}
 
-  // 1순위: 파일 + 텍스트 함께
-  if (navigator.share && blob) {
-    const filename = `${(data.name || '명함').replace(/[^\w가-힣\-]/g, '')}-QR.png`;
-    const file = new File([blob], filename, { type: 'image/png' });
+  // 1순위: 명함 이미지 + 텍스트 함께
+  if (navigator.share && cardBlob) {
+    const filename = `${(data.name || '명함').replace(/[^\w가-힣\-]/g, '')}-명함.png`;
+    const file = new File([cardBlob], filename, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text, title: '내 명함' });
@@ -717,13 +745,29 @@ async function shareCard() {
     }
   }
 
-  // 2순위: 텍스트만
+  // 2순위: 명함 캡처 실패 시 QR + 텍스트
+  let qrBlob = null;
+  try { qrBlob = await getQrPngBlob(); } catch (e) {}
+  if (navigator.share && qrBlob) {
+    const filename = `${(data.name || '명함').replace(/[^\w가-힣\-]/g, '')}-QR.png`;
+    const file = new File([qrBlob], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text, title: '내 명함' });
+        return;
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+      }
+    }
+  }
+
+  // 3순위: 텍스트만
   if (navigator.share) {
     try { await navigator.share({ text, title: '내 명함' }); return; }
     catch (e) { if (e?.name === 'AbortError') return; }
   }
 
-  // 3순위: 클립보드
+  // 4순위: 클립보드
   navigator.clipboard.writeText(text).then(() => showToast('명함 정보가 복사됐어요 📋'));
 }
 
@@ -736,6 +780,8 @@ function switchTab(name) {
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'card') { renderCard(); generateQR(); }
+  // 마지막 화면 기록 — 재진입 시 자동 복원
+  try { localStorage.setItem('namecard_last_screen', name); } catch {}
 }
 
 // ══════════════════════════════

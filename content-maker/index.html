@@ -11,7 +11,7 @@
 :root{--bg:#0D0D1A;--card:rgba(18,18,42,0.9);--text:#F5F5F7;--text2:rgba(255,255,255,0.6);--text3:rgba(255,255,255,0.35);--accent:#FF6B35;--accent2:#FF8F65;--green:#30D158;--border:rgba(255,255,255,0.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,sans-serif;min-height:100vh}
-.app{max-width:420px;margin:0 auto;padding:20px;min-height:100vh}
+.app{max-width:420px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 20px;min-height:100vh}
 .header{text-align:center;margin-bottom:24px}
 .header-icon{font-size:40px;margin-bottom:8px}
 .header-title{font-size:22px;font-weight:900}
