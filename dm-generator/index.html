@@ -99,8 +99,8 @@ textarea.form-input{min-height:70px;resize:vertical}
 
     <div class="section">
       <div class="section-title">📝 상황 설명 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택)</span></div>
-      <textarea class="form-input" id="context" placeholder="예: 인스타에서 알게 된 30대 여성, 육아맘, 건강에 관심 많음"></textarea>
-      <div class="form-hint">상대방 정보를 넣으면 더 맞춤형 메시지가 생성돼요</div>
+      <textarea class="form-input" id="context" placeholder="예) 건강"></textarea>
+      <div class="form-hint">💡 짧은 <strong>관심 주제 한 단어</strong>만 적어주세요 — 긴 문장은 어색해질 수 있어요<br>좋은 예) 건강 · 다이어트 · 부업 · 자녀 교육 · 부동산</div>
     </div>
 
     <div class="section">
@@ -192,13 +192,9 @@ function renderTemplates() {
 
 function useTemplate(idx) {
   const t = TEMPLATES[idx];
-  document.getElementById('resultText').textContent = t.msg;
-  document.getElementById('resultBox').style.display = 'block';
-  document.getElementById('altBox').style.display = 'none';
-  switchMode('ai');
-  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-  document.querySelector('.tab').classList.add('active');
-  showToast('템플릿이 적용되었어요');
+  navigator.clipboard.writeText(t.msg)
+    .then(() => showToast('템플릿이 복사되었어요 📋'))
+    .catch(() => showToast('복사에 실패했어요'));
 }
 
 // ═══ AI GENERATION ═══
@@ -316,6 +312,9 @@ function showToast(msg) {
 
 renderTemplates();
 </script>
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
+<script src="/shared/login-gate.js"></script>
 <script src="/shared/theme-toggle.js"></script>
 <script src="/shared/nav.js?v=2"></script>
 </body>
