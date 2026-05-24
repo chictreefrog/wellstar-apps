@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-v3';
+const CACHE_NAME = 'card-v4';
 const APP_PATH = '/card/';
 
 self.addEventListener('install', e => {

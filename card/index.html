@@ -265,6 +265,11 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
       <div class="qr-section-title">📱 QR 코드</div>
       <div id="qr-wrap"></div>
       <div class="qr-sub">QR을 스캔하면 내 명함 정보가 바로 보여요<br>캡처해서 카카오톡, 인스타에 공유해보세요</div>
+      <div style="margin-bottom:14px;text-align:center">
+        <button onclick="toggleQrFormat()" style="font-size:11px;color:var(--text2);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">
+          🔄 스캔 안 되나요? 다른 형식 시도
+        </button>
+      </div>
       <div class="save-btns">
         <button class="btn-secondary" onclick="saveQR()" style="flex:1">📱 QR 저장</button>
         <button class="btn-primary" onclick="shareCard()" style="flex:1">📤 공유하기</button>
@@ -514,32 +519,79 @@ function renderCard() {
 // ══════════════════════════════
 // QR 코드 생성
 // ══════════════════════════════
+// vCard 3.0 스펙: 줄바꿈은 CRLF여야 iOS 카메라 등에서 안정적으로 인식됨
 function buildVCard() {
   const lines = ['BEGIN:VCARD', 'VERSION:3.0'];
   if (data.name) lines.push(`FN:${data.name}`);
   if (data.title) lines.push(`TITLE:${data.title}`);
-  if (data.phone) lines.push(`TEL:${data.phone}`);
+  if (data.phone) lines.push(`TEL;TYPE=CELL:${data.phone}`);
   if (data.email) lines.push(`EMAIL:${data.email}`);
   if (data.intro) lines.push(`NOTE:${data.intro}`);
   if ((data.sns || {}).insta) lines.push(`URL:${data.sns.insta}`);
-  // 활성화된 도구 링크도 vCard URL 필드로 추가
   TOOLS.forEach(t => { if (toolToggles[t.key]) lines.push(`URL:${t.url}`); });
   lines.push('END:VCARD');
-  return lines.join('\n');
+  return lines.join('\r\n');
+}
+
+// MeCard 폴백 — iOS 카메라 호환성 가장 높음. vCard 못 읽는 일부 카메라도 인식
+function buildMeCard() {
+  const parts = ['MECARD:'];
+  if (data.name) parts.push(`N:${data.name};`);
+  if (data.phone) parts.push(`TEL:${data.phone};`);
+  if (data.email) parts.push(`EMAIL:${data.email};`);
+  // MeCard는 한 줄에 URL 1개만 들어감 — 첫 번째 활성 도구 또는 인스타
+  const firstUrl = (data.sns || {}).insta
+    || TOOLS.find(t => toolToggles[t.key])?.url
+    || 'https://wellstar.life';
+  parts.push(`URL:${firstUrl};`);
+  if (data.intro) parts.push(`NOTE:${data.intro};`);
+  parts.push(';');
+  return parts.join('');
+}
+
+// QR 인코딩 형식 — 카메라 호환성 위해 사용자가 전환 가능
+// 'vcard' (기본) : vCard 3.0, 가장 표준
+// 'mecard'       : iOS 카메라 호환성 ↑, 짧은 형식
+// 'url'          : 가장 단순 URL만 (스캔 100% 보장)
+let qrFormat = 'vcard';
+
+function buildQrContent() {
+  if (qrFormat === 'mecard') return buildMeCard();
+  if (qrFormat === 'url') {
+    // 첫 활성 도구 URL or 인스타 or 기본
+    return (data.sns || {}).insta
+      || TOOLS.find(t => toolToggles[t.key])?.url
+      || 'https://wellstar.life';
+  }
+  return buildVCard();
+}
+
+function toggleQrFormat() {
+  const order = ['vcard', 'mecard', 'url'];
+  qrFormat = order[(order.indexOf(qrFormat) + 1) % order.length];
+  const labels = { vcard: '명함 (vCard)', mecard: '간단 명함 (MeCard)', url: 'URL만' };
+  generateQR();
+  showToast(`QR 형식: ${labels[qrFormat]}`);
 }
 
 function doGenerateQR(wrap) {
   if (typeof qrcode === 'undefined') return false;
   wrap.innerHTML = '';
   try {
-    // typeNumber 0 = 콘텐츠 크기에 맞춰 자동 선택, 'L' = 낮은 오류보정(최대 용량)
     const qr = qrcode(0, 'L');
-    qr.addData(buildVCard());
+    qr.addData(buildQrContent());
     qr.make();
-    // cellSize=5, margin=2 → 약 180~220px QR 이미지
-    wrap.innerHTML = qr.createImgTag(5, 12);
+    // cellSize=6 모듈 6px, margin=24px (=4모듈 quiet zone, QR 규격 준수)
+    // typeNumber 10 기준 53*6 + 48 = 366px → 카메라 인식 안정적
+    wrap.innerHTML = qr.createImgTag(6, 24);
     const img = wrap.querySelector('img');
-    if (img) { img.style.borderRadius = '12px'; img.style.display = 'block'; img.style.margin = '0 auto'; }
+    if (img) {
+      img.style.borderRadius = '12px';
+      img.style.display = 'block';
+      img.style.margin = '0 auto';
+      img.style.maxWidth = '100%';
+      img.style.background = '#fff';
+    }
     return true;
   } catch(e) {
     wrap.innerHTML = '<div style="color:var(--accent);font-size:13px;padding:20px">QR 생성 실패 — 새로고침 후 다시 시도해주세요</div>';
