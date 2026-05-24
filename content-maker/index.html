@@ -63,7 +63,6 @@ textarea.form-input{min-height:80px;resize:vertical}
       <div class="chip" data-v="threads">스레드</div>
       <div class="chip" data-v="x">X</div>
       <div class="chip" data-v="facebook">페이스북</div>
-      <div class="chip" data-v="blog">블로그</div>
     </div>
   </div>
 
@@ -336,38 +335,13 @@ const HASHTAGS = {
     motivation: '#동기부여 #자기계발 #긍정 #힘내 #포기하지마 #성공마인드 #명언 #오늘의한마디 #마인드셋',
     recruit: '#파트너모집 #사업파트너 #함께성장 #AI영업 #부업추천 #투잡 #재택부업 #N잡러 #비즈니스기회'
   },
-  blog: {
-    daily: '#일상기록 #오늘의일기 #브이로그 #성장일기 #루틴공유',
-    review: '#제품리뷰 #솔직후기 #사용기 #추천제품 #비교분석',
-    tip: '#영업팁공유 #세일즈전략 #비즈니스노하우 #실전영업 #성공비결',
-    story: '#성공스토리 #나의도전 #성장기록 #사업이야기 #경험공유',
-    motivation: '#동기부여글 #명언모음 #자기개발 #성공마인드 #오늘의명언',
-    recruit: '#사업파트너 #비즈니스기회 #함께성장 #팀모집 #파트너십'
-  },
   facebook: { daily:'#일상 #데일리그램 #하루기록',review:'#솔직후기 #리뷰 #추천템',tip:'#영업팁 #세일즈노하우 #비즈니스',story:'#성공스토리 #도전기 #성장',motivation:'#동기부여 #힘내 #응원',recruit:'#파트너모집 #비즈니스기회 #함께성장' },
   threads: { daily:'#일상',review:'#리뷰',tip:'#영업팁',story:'#성장기',motivation:'#동기부여',recruit:'#기회' },
   x: { daily:'#일상',review:'#리뷰',tip:'#sales',story:'#성장',motivation:'#mindset',recruit:'#기회' }
 };
 
-// 블로그 제목 템플릿 (콘텐츠 유형별)
-const BLOG_TITLES = {
-  daily: ['오늘 하루를 돌아보며', '작은 일상에서 배운 것', '내가 매일 하는 한 가지'],
-  review: ['직접 써본 솔직 후기 한 달 정리', '리얼 사용기: 좋은 점, 아쉬운 점', '한 달 써본 후 알게 된 것들'],
-  tip: ['영업 성과를 높이는 핵심 노하우', '거절을 줄이는 실전 영업 팁', '꼭 알아야 할 영업 전략 정리'],
-  story: ['평범한 내가 여기까지 온 이야기', '실패에서 배운 성공의 비결', '나의 1년 도전 기록'],
-  motivation: ['오늘도 한 걸음 내딛는 당신에게', '포기하고 싶을 때 꺼내보세요', '작은 노력이 만드는 큰 변화'],
-  recruit: ['함께 성장할 파트너를 찾고 있어요', 'AI 시대의 새로운 비즈니스 기회', '왜 지금 이 일을 시작해야 할까']
-};
-
 // 채널별 콘텐츠 변환
 function transformByChannel(channel, caption, keyword, type) {
-  if (channel === 'blog') {
-    const titles = BLOG_TITLES[type] || BLOG_TITLES.daily;
-    const title = titles[Math.floor(Math.random() * titles.length)];
-    const intro = `안녕하세요, 옆집디노예요 🦕\n\n오늘은 ${keyword}에 대해 솔직하게 이야기해보려 해요. 끝까지 읽어보시면 작은 인사이트 하나는 얻어 가실 거예요.`;
-    const conclusion = `\n\n━━━━━━━━━━━━━━━━━\n\n📌 정리하며\n\n오늘 글이 도움이 되셨다면\n공감 ❤️ 한 번 부탁드려요!\n\n더 궁금한 점이 있으시면\n댓글이나 메시지로 편하게 물어봐 주세요 😊\n\n다음 글에서 또 만나요!`;
-    return `📝 ${title}\n\n${intro}\n\n━━━━━━━━━━━━━━━━━\n\n${caption}${conclusion}`;
-  }
   if (channel === 'x') {
     // X: 매우 짧게 (~140자), 리스트/이모지 정리, 한 문단으로
     const lines = caption.split('\n').filter(l => {
