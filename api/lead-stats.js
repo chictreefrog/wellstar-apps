@@ -29,25 +29,29 @@ module.exports = async function handler(req, res) {
   };
 
   try {
-    // 해당 팀의 모든 saju 리드 조회
-    const url = `${SUPABASE_URL}/rest/v1/leads?team_id=eq.${encodeURIComponent(team_id)}&source=eq.saju&select=quiz_result`;
+    // 해당 팀의 모든 리드 조회 (source 필터 없음 — 여러 리드마그넷 동시 지원)
+    const url = `${SUPABASE_URL}/rest/v1/leads?team_id=eq.${encodeURIComponent(team_id)}&select=source,quiz_result`;
     const leadsRes = await fetch(url, { headers });
     const leads = await leadsRes.json();
 
-    // ref_code 별 카운트 집계
+    // 키 형식: countMap['source:ref'] = count (마그넷별 분리)
+    // 호환성 유지: countMap['ref'] = 전체 카운트 (기존 코드 동작 유지)
     const countMap = {};
     (leads || []).forEach(l => {
       const r = l.quiz_result?.ref_code;
-      if (r) countMap[r] = (countMap[r] || 0) + 1;
+      const s = l.source || 'unknown';
+      if (!r) return;
+      countMap[r] = (countMap[r] || 0) + 1;
+      const key = `${s}:${r}`;
+      countMap[key] = (countMap[key] || 0) + 1;
     });
 
-    // 특정 ref_code 개인 카운트도 포함
     const myCount = ref_code ? (countMap[ref_code] || 0) : null;
 
     return res.status(200).json({
-      countMap,        // { "36928892": 3, "79302382": 1, ... }
+      countMap,        // { "ref": total, "source:ref": perMagnet, ... }
       total: (leads || []).length,
-      myCount,         // 특정 ref_code의 카운트 (파트너 개인 뷰용)
+      myCount,
     });
   } catch (err) {
     console.error('lead-stats error:', err);

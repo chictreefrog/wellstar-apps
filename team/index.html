@@ -504,26 +504,59 @@ function renderInviteSection() {
 }
 
 // ═══ LEAD MAGNET CONFIG ═══
-// 리드마그넷 추가 시 이 배열에만 항목 추가하면 끝!
+// tracks: true → 이메일 수집해서 leads 테이블에 저장됨 (실제 카운트 잡힘)
+// tracks: false → 공유는 가능하지만 현재 리드 캡처 없음 (백엔드 연동 추가 필요)
 const LEAD_MAGNETS = [
   {
     id: 'saju',
     icon: '🔮',
     name: '사주 성공 DNA',
     source: 'saju',
-    url: (ref) => `https://wellstar.life/saju/?ref=${encodeURIComponent(ref)}`,
+    tracks: true,
+    url: (ref) => `https://app.wellstar.life/saju/?ref=${encodeURIComponent(ref)}`,
     message: (link) =>
       `🔮 사주로 알아보는 나의 성공 DNA\n\n"내가 왜 영업이 잘 안될까?" 고민해봤어?\n사주로 알아보니까 이유가 딱 나오더라고 😳\n\n무료니까 한번 해봐!\n👉 ${link}`,
   },
-  // ── 리드마그넷 추가 예시 ──────────────────────────────────────────
-  // {
-  //   id: 'quiz',
-  //   icon: '🧬',
-  //   name: '영업 유형 진단',
-  //   source: 'quiz',
-  //   url: (ref) => `https://app.wellstar.life/quiz/?ref=${encodeURIComponent(ref)}`,
-  //   message: (link) => `🧬 나는 어떤 영업 유형일까?\n\n무료 진단 해봐!\n👉 ${link}`,
-  // },
+  {
+    id: 'branding-coach',
+    icon: '✍️',
+    name: '블로그 브랜딩 코치',
+    source: 'branding-coach',
+    tracks: true,
+    url: (ref) => `https://app.wellstar.life/branding-coach/?ref=${encodeURIComponent(ref)}`,
+    message: (link) =>
+      `✍️ 나만의 블로그 브랜드 만들기\n\n10가지 질문에 답하면 AI가 블로그명·닉네임·소개글까지 자동 제작 ✨\n수익형 블로그 시작 전에 꼭 해보세요!\n\n👉 ${link}`,
+  },
+  {
+    id: 'quiz',
+    icon: '🧬',
+    name: '영업 스타일 진단',
+    source: 'quiz',
+    tracks: false,
+    url: (ref) => `https://app.wellstar.life/quiz/?ref=${encodeURIComponent(ref)}`,
+    message: (link) =>
+      `🧬 나는 어떤 영업 유형일까?\n\n8가지 유형으로 알아보는 나의 영업 스타일!\n무료 진단 + 맞춤 전략까지 ✨\n\n👉 ${link}`,
+  },
+  {
+    id: 'success-test',
+    icon: '🎯',
+    name: 'NM 성공 확률 진단',
+    source: 'success-test',
+    tracks: false,
+    url: (ref) => `https://app.wellstar.life/success-test/?ref=${encodeURIComponent(ref)}`,
+    message: (link) =>
+      `🎯 NM에서 성공할 확률이 얼마나 될까?\n\n8가지 역량으로 알아보는 솔직한 진단.\n시작 전에 미리 체크해봐!\n\n👉 ${link}`,
+  },
+  {
+    id: 'health-check',
+    icon: '🦕',
+    name: '건강 밸런스 진단',
+    source: 'health-check',
+    tracks: false,
+    url: (ref) => `https://app.wellstar.life/health-check/?ref=${encodeURIComponent(ref)}`,
+    message: (link) =>
+      `🦕 내 몸이 보내는 영양 SOS 신호\n\n요즘 자주 피곤하지 않아?\n간단한 체크로 부족한 영양소 알아봐!\n\n👉 ${link}`,
+  },
 ];
 
 // ═══ LEADS / REFERRAL ═══
@@ -539,16 +572,20 @@ function renderLeadMagnetCards(countMap) {
   if (!container) return;
   container.innerHTML = LEAD_MAGNETS.map(magnet => {
     const link = magnet.url(ref);
-    const cnt = countMap[ref] || 0;
+    // 마그넷별 카운트 ("source:ref" 키), 없으면 0
+    const cnt = countMap[`${magnet.source}:${ref}`] || 0;
+    const tracksLabel = magnet.tracks
+      ? `<span style="font-size:13px;font-weight:800;color:#BF5AF2">${cnt}명</span>`
+      : `<span style="font-size:10px;color:var(--text3);background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:2px 8px">공유만</span>`;
+    const listBtn = (magnet.tracks && cnt > 0)
+      ? `<button id="listBtn-${magnet.id}" onclick="toggleLeadList('${magnet.id}')"
+          style="font-size:11px;color:#BF5AF2;background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.25);border-radius:6px;padding:3px 10px;cursor:pointer">목록 ▾</button>`
+      : '';
     return `
     <div style="background:var(--card);border:1px solid rgba(191,90,242,0.3);border-radius:16px;padding:16px;margin-bottom:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:14px;font-weight:700">${magnet.icon} ${magnet.name}</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:13px;font-weight:800;color:#BF5AF2">${cnt}명</span>
-          <button id="listBtn-${magnet.id}" onclick="toggleLeadList('${magnet.id}')"
-            style="display:${cnt > 0 ? 'block' : 'none'};font-size:11px;color:#BF5AF2;background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.25);border-radius:6px;padding:3px 10px;cursor:pointer">목록 ▾</button>
-        </div>
+        <div style="display:flex;align-items:center;gap:8px">${tracksLabel}${listBtn}</div>
       </div>
       <div style="font-size:11px;color:#BF5AF2;background:rgba(191,90,242,0.08);border:1px solid rgba(191,90,242,0.15);border-radius:8px;padding:8px 10px;word-break:break-all;font-family:'Courier New',monospace;margin-bottom:10px">${link}</div>
       <button onclick="shareMagnet('${magnet.id}')"

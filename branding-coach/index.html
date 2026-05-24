@@ -1011,6 +1011,13 @@
         document.getElementById('next9').addEventListener('click', () => goToStep(10));
         document.getElementById('prev10').addEventListener('click', () => goToStep(9));
 
+        // URL의 ?ref= 추천 코드 읽기 (팀 대시보드 리드 트래킹용)
+        let refCode = '';
+        try {
+            const params = new URLSearchParams(window.location.search);
+            refCode = params.get('ref') || '';
+        } catch (e) {}
+
         // ========================================
         // 제출
         // ========================================
@@ -1026,6 +1033,23 @@
             document.getElementById('mainHeader').classList.add('hidden');
             document.getElementById('loadingScreen').classList.add('active');
 
+            // 1. 리드 트래킹 (옆집디노 팀 대시보드에 자동 수집)
+            fetch('https://app.wellstar.life/api/track-lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source: 'branding-coach',
+                    email: answers.email,
+                    ref_code: refCode || null,
+                    extra: {
+                        blogPurpose: answers.blogPurpose,
+                        topics: answers.topics,
+                        keyword: answers.keyword
+                    }
+                })
+            }).catch(() => {});
+
+            // 2. AI 결과 생성 (기존 blogtool API)
             try {
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
@@ -1035,14 +1059,12 @@
 
                 if (!response.ok) throw new Error('API 요청 실패');
 
-                // 성공 화면 표시
                 document.getElementById('loadingScreen').classList.remove('active');
                 document.getElementById('successScreen').classList.add('active');
                 document.getElementById('successEmail').textContent = answers.email;
 
             } catch (error) {
                 console.error('Error:', error);
-                // 에러 시에도 성공 화면 표시 (UX)
                 document.getElementById('loadingScreen').classList.remove('active');
                 document.getElementById('successScreen').classList.add('active');
                 document.getElementById('successEmail').textContent = answers.email;
