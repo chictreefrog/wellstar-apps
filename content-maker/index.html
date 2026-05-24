@@ -94,6 +94,7 @@ textarea.form-input{min-height:80px;resize:vertical}
   </div>
 
   <button class="btn btn-primary" id="genBtn" onclick="generate()">콘텐츠 생성하기</button>
+  <div id="usageInfo" style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px;min-height:14px"></div>
 
   <div class="loading" id="loading">
     <div class="loading-spinner"></div>
@@ -365,39 +366,115 @@ function transformByChannel(channel, caption, keyword, type) {
   return caption; // 인스타, 페이스북은 그대로
 }
 
-function generate() {
+// 정적 템플릿 폴백 (AI 실패 시 사용)
+function generateFromTemplate(channel, type, tone, keyword) {
+  const db = CONTENT_DB[type]?.[tone];
+  if (!db) return null;
+  const idx = Math.floor(Math.random() * db.captions.length);
+  const baseCaption = db.captions[idx].replace(/\{keyword\}/g, keyword);
+  const caption = transformByChannel(channel, baseCaption, keyword, type);
+  const hookRaw = db.hooks[Math.floor(Math.random() * db.hooks.length)];
+  const hook = hookRaw.replace(/\{keyword\}/g, keyword);
+  const tags = HASHTAGS[channel]?.[type] || '';
+  return { caption, hook, hashtags: tags };
+}
+
+function renderResult(caption, hook, hashtags) {
+  document.getElementById('captionText').textContent = caption;
+  document.getElementById('hashText').textContent = hashtags;
+  document.getElementById('hookText').textContent = hook;
+  document.getElementById('captionCard').style.display = 'block';
+  document.getElementById('hashCard').style.display = hashtags ? 'block' : 'none';
+  document.getElementById('hookCard').style.display = hook ? 'block' : 'none';
+}
+
+function renderRateLimit(used, limit, role) {
+  const msg = role === 'guest'
+    ? `⏰ 오늘 무료 사용 한도(${limit}건)에 도달했어요.\n\n팀에 합류하시면 하루 5건까지 사용할 수 있어요!\n프로필에서 초대 코드를 입력해주세요.`
+    : `⏰ 오늘 사용 한도(${limit}건)에 도달했어요.\n\n내일 다시 시도해주세요. 더 많은 사용이 필요하시면 피드백으로 알려주세요!`;
+  document.getElementById('captionText').textContent = msg;
+  document.getElementById('captionCard').style.display = 'block';
+  document.getElementById('hashCard').style.display = 'none';
+  document.getElementById('hookCard').style.display = 'none';
+}
+
+function updateUsageInfo(used, limit, remaining) {
+  const el = document.getElementById('usageInfo');
+  if (!el) return;
+  el.textContent = `오늘 ${used}/${limit}건 사용 · 남은 ${remaining}건`;
+}
+
+async function generate() {
   const channel = sel('channelChips');
   const type = sel('typeChips');
   const tone = sel('toneChips');
-  const keyword = document.getElementById('keyword').value.trim() || '나의 도전';
-
-  const db = CONTENT_DB[type]?.[tone];
-  if (!db) { showToast('다른 조합을 선택해주세요'); return; }
+  const keyword = document.getElementById('keyword').value.trim();
+  const safeKeyword = keyword || '나의 도전';
 
   document.getElementById('genBtn').disabled = true;
   document.getElementById('loading').style.display = 'block';
   document.querySelectorAll('.result-card').forEach(c => c.style.display = 'none');
 
-  setTimeout(() => {
-    const idx = Math.floor(Math.random() * db.captions.length);
-    const baseCaption = db.captions[idx].replace(/\{keyword\}/g, keyword);
-    const caption = transformByChannel(channel, baseCaption, keyword, type);
-    const hookRaw = db.hooks[Math.floor(Math.random() * db.hooks.length)];
-    const hook = hookRaw.replace(/\{keyword\}/g, keyword);
-    const tags = HASHTAGS[channel]?.[type] || '';
+  try {
+    // Supabase 액세스 토큰 가져오기 (login-gate가 이미 로그인을 강제함)
+    let accessToken = '';
+    if (window.dinoSupabase) {
+      const { data } = await window.dinoSupabase.auth.getSession();
+      accessToken = data?.session?.access_token || '';
+    }
 
-    document.getElementById('captionText').textContent = caption;
-    document.getElementById('hashText').textContent = tags;
-    document.getElementById('hookText').textContent = hook;
+    if (!accessToken) {
+      // 토큰 없으면 그냥 폴백
+      const fb = generateFromTemplate(channel, type, tone, safeKeyword);
+      if (fb) renderResult(fb.caption, fb.hook, fb.hashtags);
+      showToast('로그인 세션이 없어 템플릿으로 보여드려요');
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('genBtn').disabled = false;
+      document.getElementById('captionCard').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
 
+    const res = await fetch('/api/content-generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ channel, type, tone, keyword })
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 429 && data?.error === 'rate_limit') {
+      renderRateLimit(data.used, data.limit, data.role);
+      updateUsageInfo(data.used, data.limit, 0);
+    } else if (res.ok && data?.caption) {
+      renderResult(data.caption, data.hook, data.hashtags);
+      updateUsageInfo(data.used, data.limit, data.remaining);
+    } else {
+      // AI 실패 → 정적 템플릿 폴백
+      const fb = generateFromTemplate(channel, type, tone, safeKeyword);
+      if (fb) {
+        renderResult(fb.caption, fb.hook, fb.hashtags);
+        showToast('AI 응답이 없어 템플릿으로 보여드려요');
+      } else {
+        showToast('생성 실패. 다른 조합을 선택해주세요');
+      }
+    }
+  } catch (err) {
+    // 네트워크 등 예외 → 폴백
+    console.error('Generate error:', err);
+    const fb = generateFromTemplate(channel, type, tone, safeKeyword);
+    if (fb) {
+      renderResult(fb.caption, fb.hook, fb.hashtags);
+      showToast('네트워크 오류로 템플릿 콘텐츠를 보여드려요');
+    } else {
+      showToast('네트워크 오류. 잠시 후 다시 시도해주세요');
+    }
+  } finally {
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('captionCard').style.display = 'block';
-    document.getElementById('hashCard').style.display = 'block';
-    document.getElementById('hookCard').style.display = 'block';
     document.getElementById('genBtn').disabled = false;
-
     document.getElementById('captionCard').scrollIntoView({ behavior: 'smooth' });
-  }, 1200);
+  }
 }
 
 function copy(id) {
