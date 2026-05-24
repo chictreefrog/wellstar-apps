@@ -629,24 +629,102 @@ function saveAndPreview() {
   showToast('저장됐어요! 🎉');
 }
 
-function saveQR() {
+// QR 이미지(GIF)를 PNG Blob으로 변환 (iOS에서 .png.gif 같은 이상한 파일명 방지)
+async function getQrPngBlob() {
+  const img = document.querySelector('#qr-wrap img');
+  if (!img || !img.src) return null;
+  // 이미지 로딩 대기
+  if (!img.complete || img.naturalWidth === 0) {
+    await new Promise((res, rej) => {
+      img.addEventListener('load', res, { once: true });
+      img.addEventListener('error', rej, { once: true });
+    }).catch(() => {});
+  }
+  const dim = img.naturalWidth || 366;
+  const canvas = document.createElement('canvas');
+  canvas.width = dim;
+  canvas.height = dim;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, dim, dim);
+  ctx.drawImage(img, 0, 0, dim, dim);
+  return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+// QR 저장 — iOS는 공유 시트에서 "사진에 저장" 선택. 안드/데스크탑은 직접 다운로드
+async function saveQR() {
   const img = document.querySelector('#qr-wrap img');
   if (!img || !img.src) { showToast('QR 코드를 먼저 생성해주세요'); return; }
+  let blob;
+  try { blob = await getQrPngBlob(); } catch(e) { blob = null; }
+  if (!blob) { showToast('QR 저장 실패 — 새로고침 후 다시 시도'); return; }
+  const filename = `${(data.name || '명함').replace(/[^\w가-힣\-]/g, '')}-QR.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  // 1순위: Web Share API에 파일 첨부 — iOS는 "사진에 저장" 옵션 제공
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'QR 명함' });
+      return;
+    } catch (e) {
+      if (e?.name === 'AbortError') return; // 사용자 취소
+    }
+  }
+
+  // 2순위: 직접 다운로드 (안드로이드 / 데스크탑)
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.download = `${data.name || '명함'}-QR.png`;
-  link.href = img.src;
+  link.download = filename;
+  link.href = url;
   link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
   showToast('QR 코드 저장됨 📱');
 }
 
-function shareCard() {
-  const canvas = document.querySelector('#qr-wrap canvas');
-  const text = `${data.name || ''}${data.title ? ' · ' + data.title : ''}\n${data.phone || ''}\n${data.intro || ''}\n\n🦕 옆집디노 AI 세일즈 시스템\nwellstar.life`;
-  if (navigator.share) {
-    navigator.share({ text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => showToast('명함 정보 복사됨 📋'));
+// 공유하기 — QR 이미지 + 명함 텍스트 함께 첨부
+async function shareCard() {
+  const lines = [];
+  if (data.name) lines.push(data.name + (data.title ? ` · ${data.title}` : ''));
+  if (data.phone) lines.push(`📞 ${data.phone}`);
+  if (data.email) lines.push(`📧 ${data.email}`);
+  if (data.intro) lines.push('');
+  if (data.intro) lines.push(data.intro);
+  // 활성 도구 링크
+  const toolLinks = TOOLS.filter(t => toolToggles[t.key]);
+  if (toolLinks.length) {
+    lines.push('');
+    toolLinks.forEach(t => lines.push(`${t.icon} ${t.name}: ${t.url}`));
   }
+  lines.push('');
+  lines.push('🦕 옆집디노 AI 세일즈 시스템');
+  lines.push('https://wellstar.life');
+  const text = lines.join('\n');
+
+  let blob = null;
+  try { blob = await getQrPngBlob(); } catch(e) {}
+
+  // 1순위: 파일 + 텍스트 함께
+  if (navigator.share && blob) {
+    const filename = `${(data.name || '명함').replace(/[^\w가-힣\-]/g, '')}-QR.png`;
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text, title: '내 명함' });
+        return;
+      } catch (e) {
+        if (e?.name === 'AbortError') return;
+      }
+    }
+  }
+
+  // 2순위: 텍스트만
+  if (navigator.share) {
+    try { await navigator.share({ text, title: '내 명함' }); return; }
+    catch (e) { if (e?.name === 'AbortError') return; }
+  }
+
+  // 3순위: 클립보드
+  navigator.clipboard.writeText(text).then(() => showToast('명함 정보가 복사됐어요 📋'));
 }
 
 // ══════════════════════════════
