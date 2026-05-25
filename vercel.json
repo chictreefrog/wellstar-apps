@@ -19,7 +19,8 @@
     { "source": "/health-check", "destination": "/health-check/index.html" },
     { "source": "/challenge", "destination": "/challenge/index.html" },
     { "source": "/saju", "destination": "/saju/index.html" },
-    { "source": "/branding-coach", "destination": "/branding-coach/index.html" }
+    { "source": "/branding-coach", "destination": "/branding-coach/index.html" },
+    { "source": "/roleplay", "destination": "/roleplay/index.html" }
   ],
   "headers": [
     {
@@ -165,6 +166,19 @@
     },
     {
       "source": "/branding-coach/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/roleplay/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/roleplay/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/roleplay/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]

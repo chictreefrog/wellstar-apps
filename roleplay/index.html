@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>🎭 세일즈 롤플레이 — 옆집디노</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a14; --bg2: #12122a;
+  --card: rgba(20,20,50,0.8); --card-hover: rgba(30,30,60,0.9);
+  --text: #F5F5F7; --text2: rgba(255,255,255,0.6); --text3: rgba(255,255,255,0.35);
+  --accent: #FF6B35; --accent2: #FF8F65;
+  --green: #30D158; --red: #FF453A; --blue: #0A84FF; --purple: #BF5AF2;
+  --border: rgba(255,255,255,0.08);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',-apple-system,sans-serif;min-height:100dvh;overflow-x:hidden}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+
+/* Header */
+.rp-header{padding:calc(16px + var(--safe-top)) 16px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;backdrop-filter:blur(20px)}
+.back-btn{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.rp-title{flex:1;font-size:16px;font-weight:800}
+.rp-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Screen container */
+.screen{flex:1;display:none;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+.screen-scroll{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+
+/* Setup screen */
+.setup-intro{padding:12px 4px 18px;text-align:center}
+.setup-intro h2{font-size:20px;font-weight:900;margin-bottom:6px}
+.setup-intro p{font-size:13px;color:var(--text2);line-height:1.6}
+.section{margin-bottom:20px}
+.section-label{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.persona-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;text-align:left}
+.persona-card.selected{border-color:var(--accent);background:rgba(255,107,53,0.12)}
+.persona-card .icon{font-size:22px;margin-bottom:4px}
+.persona-card .name{font-size:13px;font-weight:700;margin-bottom:2px}
+.persona-card .desc{font-size:10px;color:var(--text3);line-height:1.4}
+.custom-input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:vertical;min-height:64px}
+.custom-input:focus{border-color:var(--accent)}
+.level-row{display:flex;gap:8px}
+.level-btn{flex:1;padding:12px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;line-height:1.4}
+.level-btn .lv-icon{font-size:18px;display:block;margin-bottom:4px}
+.level-btn.selected{border-color:var(--accent);background:rgba(255,107,53,0.12);color:var(--accent)}
+.start-btn{width:100%;padding:16px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:8px}
+.start-btn:disabled{opacity:0.5;cursor:not-allowed}
+.daily-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:10px}
+
+/* Chat screen */
+.chat-list{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.chat-meta{text-align:center;font-size:11px;color:var(--text3);padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:6px}
+.bubble{max-width:78%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap}
+.bubble.user{align-self:flex-end;background:var(--accent);color:white;border-bottom-right-radius:4px}
+.bubble.ai{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+.bubble.typing{background:var(--card);border:1px solid var(--border);align-self:flex-start;padding:14px 16px}
+.typing-dots{display:inline-flex;gap:4px}
+.typing-dots span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:blink 1.4s infinite}
+.typing-dots span:nth-child(2){animation-delay:0.2s}
+.typing-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes blink{0%,80%,100%{opacity:0.3}40%{opacity:1}}
+
+.chat-bar{padding:10px 12px calc(10px + var(--safe-bottom));background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end}
+.chat-input{flex:1;padding:12px 14px;border-radius:18px;border:1px solid var(--border);background:rgba(255,255,255,0.06);color:var(--text);font-size:14px;font-family:inherit;outline:none;resize:none;min-height:42px;max-height:120px}
+.chat-input:focus{border-color:var(--accent)}
+.send-btn{width:42px;height:42px;border-radius:50%;border:none;background:var(--accent);color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.send-btn:disabled{opacity:0.4;cursor:not-allowed}
+.end-btn{padding:10px 14px;border-radius:18px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;align-self:center}
+
+.chat-turn-info{padding:6px 12px;font-size:11px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)}
+.chat-turn-info .end-link{color:var(--accent);cursor:pointer;font-weight:600;margin-left:8px}
+
+/* Review screen */
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.review-label{font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.review-text{font-size:14px;line-height:1.7;color:var(--text)}
+.review-good .review-label{color:var(--green)}
+.review-improve .review-label{color:#FF9F0A}
+.review-summary{background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(255,143,101,0.1));border-color:rgba(255,107,53,0.3)}
+.review-summary .review-label{color:var(--accent)}
+.review-next{background:rgba(48,209,88,0.08);border-color:rgba(48,209,88,0.25)}
+.review-next .review-label{color:var(--green)}
+.review-actions{display:flex;gap:8px;margin-top:14px;padding-bottom:env(safe-area-inset-bottom,0px)}
+.review-actions button{flex:1;padding:14px;border-radius:12px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.review-actions .btn-retry{background:var(--accent);color:white}
+.review-actions .btn-home{background:var(--card);color:var(--text2);border:1px solid var(--border)}
+
+.loading-block{text-align:center;padding:40px 20px;color:var(--text2)}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Light theme */
+body.light-theme{--bg:#F5F5FA;--bg2:#FFFFFF;--card:#FFFFFF;--text:#1A1A2E;--text2:#555577;--text3:#8888AA;--border:rgba(0,0,0,0.08)}
+body.light-theme .chat-input,body.light-theme .custom-input{background:#fff;color:#1A1A2E}
+body.light-theme .rp-header,body.light-theme .chat-bar{background:rgba(255,255,255,0.95)}
+body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
+
+.toast{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;transform:translateX(-50%);background:rgba(30,30,60,0.95);color:#fff;padding:10px 18px;border-radius:18px;font-size:13px;z-index:9999;display:none;backdrop-filter:blur(10px)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── 헤더 ── -->
+<div class="rp-header">
+  <button class="back-btn" id="rpBack" onclick="goBack()" title="뒤로">←</button>
+  <div style="flex:1">
+    <div class="rp-title" id="rpTitle">🎭 세일즈 롤플레이</div>
+    <div class="rp-sub" id="rpSub">실전 영업 연습</div>
+  </div>
+</div>
+
+<!-- ── 1. 시나리오 선택 ── -->
+<div class="screen active" id="screenSetup">
+  <div class="screen-scroll">
+    <div class="setup-intro">
+      <h2>🎭 NM 영업 롤플레이</h2>
+      <p>AI 고객과 실전처럼 대화하면서<br>거절 대응을 연습해요</p>
+    </div>
+
+    <div class="section">
+      <div class="section-label">📌 어떤 고객과 연습할까요?</div>
+      <div class="persona-grid" id="personaGrid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">✏️ 고객 정보 추가 (선택)</div>
+      <textarea class="custom-input" id="customContext" placeholder="예) 김미정, 40대 워킹맘. 작년에 다른 NM 시도했다가 부담스러워서 그만둠. 운동·건강은 관심 많지만 시간 부족함."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-label">🎚 난이도</div>
+      <div class="level-row">
+        <button class="level-btn" data-level="soft"><span class="lv-icon">🟢</span>소프트<br>초보 연습</button>
+        <button class="level-btn selected" data-level="normal"><span class="lv-icon">🟡</span>일반<br>실전 수준</button>
+        <button class="level-btn" data-level="hard"><span class="lv-icon">🔴</span>어려움<br>베테랑</button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn" onclick="startSession()" disabled>롤플레이 시작 →</button>
+    <div class="daily-hint">하루 사용 한도: 게스트 1회 / 회원 5회</div>
+  </div>
+</div>
+
+<!-- ── 2. 채팅 ── -->
+<div class="screen" id="screenChat">
+  <div class="chat-turn-info" id="chatTurnInfo">
+    <span id="chatPersonaName"></span> · <span id="chatTurnCount">0</span>/10턴
+    <span class="end-link" onclick="endSession()">종료하기</span>
+  </div>
+  <div class="chat-list" id="chatList"></div>
+  <div class="chat-bar">
+    <textarea class="chat-input" id="chatInput" placeholder="여기에 대응 메시지 입력..." rows="1" onkeydown="onChatKey(event)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+  </div>
+</div>
+
+<!-- ── 3. 회고 ── -->
+<div class="screen" id="screenReview">
+  <div class="screen-scroll">
+    <div id="reviewLoading" class="loading-block">
+      <div class="loading-spinner"></div>
+      <div>옆집디노 코치가 회고를 정리하고 있어요...</div>
+    </div>
+    <div id="reviewContent" style="display:none">
+      <div class="review-card review-summary">
+        <div class="review-label">💡 핵심 한 줄</div>
+        <div class="review-text" id="reviewSummary"></div>
+      </div>
+      <div class="review-card review-good">
+        <div class="review-label">✅ 잘한 점</div>
+        <div class="review-text" id="reviewGood"></div>
+      </div>
+      <div class="review-card review-improve">
+        <div class="review-label">📈 더 좋게</div>
+        <div class="review-text" id="reviewImprove"></div>
+      </div>
+      <div class="review-card review-next">
+        <div class="review-label">🎯 다음 연습 시</div>
+        <div class="review-text" id="reviewNext"></div>
+      </div>
+      <div class="review-actions">
+        <button class="btn-home" onclick="goHome()">메인으로</button>
+        <button class="btn-retry" onclick="resetAll()">한 번 더</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ 데이터 ═══
+const PERSONAS = [
+  { id:'friend', icon:'👫', name:'친한 지인', desc:'"친해서 부담스러워"' },
+  { id:'conservative', icon:'👴', name:'보수적 어른', desc:'"다단계 아니야?"' },
+  { id:'busy_office', icon:'💼', name:'바쁜 직장인', desc:'"관심 없어요"' },
+  { id:'mom_budget', icon:'🤰', name:'육아맘', desc:'"이거 살 돈도 없어"' },
+  { id:'student', icon:'🎓', name:'학생/취준생', desc:'"돈도 시간도 없어"' },
+  { id:'self_employed', icon:'🏪', name:'자영업 사장', desc:'"내 가게도 벅차"' },
+  { id:'health_curious', icon:'💪', name:'건강 관심층', desc:'"왜 굳이 너희 거?"' },
+  { id:'ex_nm', icon:'🧑‍💼', name:'NM 경험자', desc:'"예전에 해봤는데 망함"' }
+];
+const MAX_TURNS = 10;
+
+let selectedPersona = null;
+let selectedLevel = 'normal';
+let currentSession = null; // { id, persona, level, custom_context, history:[] }
+
+// ═══ UI 초기화 ═══
+function renderPersonas() {
+  document.getElementById('personaGrid').innerHTML = PERSONAS.map(p => `
+    <div class="persona-card" data-persona="${p.id}" onclick="selectPersona('${p.id}')">
+      <div class="icon">${p.icon}</div>
+      <div class="name">${p.name}</div>
+      <div class="desc">${p.desc}</div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.addEventListener('click', () => selectLevel(b.dataset.level));
+  });
+}
+
+function selectPersona(id) {
+  selectedPersona = id;
+  document.querySelectorAll('.persona-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.persona === id);
+  });
+  document.getElementById('startBtn').disabled = false;
+}
+
+function selectLevel(lv) {
+  selectedLevel = lv;
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.level === lv);
+  });
+}
+
+// ═══ 화면 전환 ═══
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  const active = document.querySelector('.screen.active');
+  if (!active) { goHome(); return; }
+  if (active.id === 'screenChat') {
+    if (currentSession && currentSession.history.length > 0) {
+      if (!confirm('대화를 끝내고 처음으로 돌아갈까요? 현재 대화는 저장됩니다.')) return;
+    }
+    resetAll();
+  } else if (active.id === 'screenReview') {
+    resetAll();
+  } else {
+    goHome();
+  }
+}
+
+function goHome() { location.href = '/main/'; }
+
+function resetAll() {
+  selectedPersona = null;
+  selectedLevel = 'normal';
+  currentSession = null;
+  document.getElementById('customContext').value = '';
+  document.getElementById('chatInput').value = '';
+  document.getElementById('chatList').innerHTML = '';
+  document.getElementById('reviewContent').style.display = 'none';
+  document.getElementById('reviewLoading').style.display = 'block';
+  document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('selected', b.dataset.level === 'normal'));
+  document.getElementById('startBtn').disabled = true;
+  showScreen('Setup');
+  document.getElementById('rpTitle').textContent = '🎭 세일즈 롤플레이';
+  document.getElementById('rpSub').textContent = '실전 영업 연습';
+}
+
+// ═══ 세션 시작 ═══
+async function startSession() {
+  if (!selectedPersona) { showToast('고객 유형을 선택하세요'); return; }
+  const persona = PERSONAS.find(p => p.id === selectedPersona);
+  currentSession = {
+    id: null,
+    persona_id: selectedPersona,
+    persona_name: persona.name,
+    persona_icon: persona.icon,
+    level: selectedLevel,
+    custom_context: document.getElementById('customContext').value.trim(),
+    history: []
+  };
+  document.getElementById('rpTitle').textContent = persona.icon + ' ' + persona.name;
+  const lvLabel = { soft:'🟢 소프트', normal:'🟡 일반', hard:'🔴 어려움' }[selectedLevel];
+  document.getElementById('rpSub').textContent = lvLabel + ' · 실전 연습';
+  document.getElementById('chatPersonaName').textContent = persona.icon + ' ' + persona.name;
+  updateTurnCount(0);
+  document.getElementById('chatList').innerHTML = '';
+  addMeta('롤플레이 시작! 영업인 입장에서 먼저 인사·접근을 시작해보세요.');
+  showScreen('Chat');
+  setTimeout(() => document.getElementById('chatInput').focus(), 300);
+}
+
+function updateTurnCount(n) { document.getElementById('chatTurnCount').textContent = n; }
+function addMeta(text) {
+  const el = document.createElement('div');
+  el.className = 'chat-meta';
+  el.textContent = text;
+  document.getElementById('chatList').appendChild(el);
+  scrollChat();
+}
+function addBubble(text, role) {
+  const el = document.createElement('div');
+  el.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+  el.textContent = text;
+  document.getElementById('chatList').appendChild(el);
+  scrollChat();
+  return el;
+}
+function showTyping() {
+  const el = document.createElement('div');
+  el.className = 'bubble typing';
+  el.id = 'typingBubble';
+  el.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+  document.getElementById('chatList').appendChild(el);
+  scrollChat();
+}
+function hideTyping() {
+  const el = document.getElementById('typingBubble');
+  if (el) el.remove();
+}
+function scrollChat() {
+  const list = document.getElementById('chatList');
+  setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+}
+
+function onChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+async function sendMessage() {
+  if (!currentSession) return;
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  addBubble(msg, 'user');
+  showTyping();
+
+  try {
+    const token = await getAccessToken();
+    if (!token) { hideTyping(); showToast('로그인이 필요해요'); return; }
+
+    const res = await fetch('/api/roleplay-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        session_id: currentSession.id,
+        persona_id: currentSession.persona_id,
+        custom_context: currentSession.custom_context,
+        level: currentSession.level,
+        history: currentSession.history,
+        message: msg
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    hideTyping();
+
+    if (res.status === 429) {
+      addMeta('⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'));
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+    if (!res.ok || !data.reply) {
+      addMeta('AI 응답 실패 — 잠시 후 다시 시도해주세요');
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+
+    if (!currentSession.id) currentSession.id = data.session_id;
+    currentSession.history.push({ role: 'user', content: msg });
+    currentSession.history.push({ role: 'model', content: data.reply });
+
+    addBubble(data.reply, 'ai');
+    updateTurnCount(data.turn_count);
+
+    // 10턴 도달 시 자동 종료
+    if (data.turn_count >= MAX_TURNS) {
+      setTimeout(() => {
+        addMeta(MAX_TURNS + '턴 도달! 회고로 넘어갑니다.');
+        setTimeout(endSession, 1500);
+      }, 600);
+    }
+  } catch (err) {
+    hideTyping();
+    addMeta('네트워크 오류: ' + String(err));
+  } finally {
+    document.getElementById('sendBtn').disabled = false;
+  }
+}
+
+// ═══ 종료 / 회고 ═══
+async function endSession() {
+  if (!currentSession || !currentSession.id) {
+    showToast('아직 대화 내용이 없어요');
+    return;
+  }
+  if (!confirm('대화를 끝내고 코치 회고를 받을까요?')) return;
+  showScreen('Review');
+  document.getElementById('reviewLoading').style.display = 'block';
+  document.getElementById('reviewContent').style.display = 'none';
+
+  try {
+    const token = await getAccessToken();
+    const res = await fetch('/api/roleplay-review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ session_id: currentSession.id })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.review) {
+      showToast('회고 생성 실패. 잠시 후 다시 시도해주세요.');
+      // 폴백: 채팅 화면으로 돌아감
+      setTimeout(() => showScreen('Chat'), 1500);
+      return;
+    }
+    const r = data.review;
+    document.getElementById('reviewSummary').textContent = r.summary || '';
+    document.getElementById('reviewGood').textContent = r.good || '';
+    document.getElementById('reviewImprove').textContent = r.improve || '';
+    document.getElementById('reviewNext').textContent = r.next_step || '';
+    document.getElementById('reviewLoading').style.display = 'none';
+    document.getElementById('reviewContent').style.display = 'block';
+
+    // 메인 앱 활동 로그에 기록 (사용 도구 통계용)
+    try {
+      window.dinoLogActivity && window.dinoLogActivity('roleplay', '롤플레이 완료: ' + currentSession.persona_name);
+    } catch {}
+  } catch (err) {
+    showToast('네트워크 오류');
+    setTimeout(() => showScreen('Chat'), 1500);
+  }
+}
+
+// ═══ 유틸 ═══
+async function getAccessToken() {
+  if (!window.dinoSupabase) {
+    await new Promise(resolve => window.addEventListener('dino-supabase-ready', resolve, { once: true, timeout: 3000 }));
+  }
+  try {
+    const { data } = await window.dinoSupabase.auth.getSession();
+    return data?.session?.access_token || '';
+  } catch { return ''; }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2500);
+}
+
+// 채팅 input 자동 높이
+document.addEventListener('DOMContentLoaded', () => {
+  renderPersonas();
+  const inp = document.getElementById('chatInput');
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+  });
+});
+
+// 서비스워커
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
+<script src="/shared/login-gate.js"></script>
+<script src="/shared/theme-toggle.js"></script>
+<script src="/shared/nav.js?v=2"></script>
+</body>
+</html>
