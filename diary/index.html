@@ -391,7 +391,7 @@ textarea { resize: none; min-height: 80px; }
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:18px">🦕</span>
         <span style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px">AI 인사이트</span>
-        <button onclick="refreshAiInsight()" id="ai-refresh-btn" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;padding:2px">↻</button>
+        <button onclick="refreshAiInsight(true)" id="ai-refresh-btn" title="새로 분석" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;cursor:pointer;padding:2px">↻</button>
       </div>
       <div id="ai-insight-text" style="font-size:14px;line-height:1.7;color:#F5F5F7">
         <span style="color:rgba(255,255,255,0.5)">분석 중...</span>
@@ -1536,23 +1536,45 @@ async function callDiaryAI(type, payload) {
   return data.result;
 }
 
-// ── 1. 홈 AI 인사이트 ──
-async function refreshAiInsight() {
+// ── 1. 홈 AI 인사이트 (캐싱 적용 — 같은 날 + 같은 데이터면 API 호출 안 함) ──
+const INSIGHT_CACHE_KEY = 'dino_diary_ai_insight';
+
+function getInsightSignature() {
+  const customers = load(KEYS.customers);
+  const activities = load(KEYS.activities);
+  const today = todayStr();
+  const todayActCount = activities.filter(a => a.date === today).length;
+  // 활동·고객 수가 바뀌면 시그니처 달라짐 → 자동 갱신
+  return `${customers.length}-${activities.length}-${todayActCount}`;
+}
+
+async function refreshAiInsight(force) {
   const el = document.getElementById('ai-insight-text');
   const btn = document.getElementById('ai-refresh-btn');
+  const today = todayStr();
+  const sig = getInsightSignature();
+
+  // 캐시 확인 (강제 새로고침 아닐 때)
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(INSIGHT_CACHE_KEY) || 'null');
+      if (cached && cached.date === today && cached.sig === sig && cached.result) {
+        el.innerHTML = cached.result;
+        return; // ✓ API 호출 안 함
+      }
+    } catch {}
+  }
+
   el.innerHTML = '<span class="ai-loading"></span> 분석 중...';
   btn.style.pointerEvents = 'none';
 
   try {
-    // 로컬 데이터 분석
     const customers = load(KEYS.customers);
     const activities = load(KEYS.activities);
-    const today = todayStr();
     const weekStart = getWeekStart();
     const weekStart_d = new Date(weekStart);
     const prevWeekStart = new Date(weekStart_d); prevWeekStart.setDate(prevWeekStart.getDate() - 7);
 
-    // 이번 주 / 저번 주 집계
     const thisWeek = { 신규연락:0, 팔로업:0, 미팅:0, 성사:0 };
     const lastWeek = { 신규연락:0, 팔로업:0, 미팅:0, 성사:0 };
     activities.forEach(a => {
@@ -1561,14 +1583,12 @@ async function refreshAiInsight() {
       if (target) Object.keys(target).forEach(k => { target[k] += a[k]||0; });
     });
 
-    // 긴급 고객 수
     const urgentCount = customers.filter(c => {
       if (c.stage==='성사'||c.stage==='휴면') return false;
       const diff = dayDiff(c.followUp);
       return diff !== null && diff <= 0;
     }).length;
 
-    // 전체 고객 수
     const totalCustomers = customers.length;
     const stageMap = {};
     customers.forEach(c => { stageMap[c.stage] = (stageMap[c.stage]||0)+1; });
@@ -1577,8 +1597,11 @@ async function refreshAiInsight() {
 
     const result = await callDiaryAI('insight', { analysisData });
     el.innerHTML = result;
+    // 캐시 저장
+    try {
+      localStorage.setItem(INSIGHT_CACHE_KEY, JSON.stringify({ date: today, sig, result }));
+    } catch {}
   } catch(e) {
-    // API 실패 시 로컬 분석으로 대체
     el.innerHTML = generateLocalInsight();
   }
   btn.style.pointerEvents = 'auto';

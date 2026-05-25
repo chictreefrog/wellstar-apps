@@ -174,6 +174,26 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
 
     <button class="start-btn" id="startBtn" onclick="startSession()" disabled>롤플레이 시작 →</button>
     <div class="daily-hint">하루 사용 한도: 게스트 1회 / 회원 5회</div>
+
+    <!-- 과거 회고 목록 -->
+    <div class="section" id="historySection" style="margin-top:24px;display:none">
+      <div class="section-label">📜 최근 회고</div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 회고 상세 모달 -->
+<div id="historyModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px)" onclick="closeHistoryModal(event)">
+  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-radius:20px 20px 0 0;max-height:88vh;display:flex;flex-direction:column">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div id="historyModalTitle" style="font-size:15px;font-weight:800"></div>
+        <div id="historyModalSub" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+      </div>
+      <button onclick="closeHistoryModal()" style="background:rgba(255,255,255,0.08);border:none;color:var(--text);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div id="historyModalBody" style="flex:1;overflow-y:auto;padding:16px"></div>
   </div>
 </div>
 
@@ -677,6 +697,8 @@ async function fetchReview() {
     try {
       window.dinoLogActivity && window.dinoLogActivity('roleplay', '롤플레이 완료: ' + currentSession.persona_name);
     } catch {}
+    // 회고 목록 갱신 (다음에 메인 가면 보임)
+    loadHistory().catch(() => {});
   } catch (err) {
     showReviewError();
   }
@@ -700,7 +722,96 @@ function showToast(msg) {
   setTimeout(() => t.style.display = 'none', 2500);
 }
 
-// 채팅 input 자동 높이
+// ═══ 과거 회고 목록 ═══
+async function loadHistory() {
+  if (!window.dinoSupabase) {
+    await new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true }));
+  }
+  try {
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) return;
+    const { data, error } = await window.dinoSupabase
+      .from('roleplay_sessions')
+      .select('id, persona_name, persona_id, level, mode, created_at, review, turn_count')
+      .eq('user_id', session.user.id)
+      .eq('completed', true)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) { console.error(error); return; }
+    renderHistory(data || []);
+  } catch (e) { console.error(e); }
+}
+
+function renderHistory(sessions) {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (!sessions.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  const lvIcon = { soft: '🟢', normal: '🟡', hard: '🔴' };
+  list.innerHTML = sessions.map(s => {
+    const d = new Date(s.created_at);
+    const dateLabel = d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) + ' ' +
+      d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    const modeIcon = s.mode === 'reverse' ? '😶' : '💼';
+    const persona = PERSONAS.find(p => p.id === s.persona_id);
+    const personaIcon = persona ? persona.icon : '👤';
+    const summary = s.review?.summary || '회고 없음';
+    return `<div onclick="openHistoryDetail(${s.id})" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;transition:transform .15s">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:15px">${modeIcon}</span>
+        <span style="font-size:14px">${personaIcon}</span>
+        <span style="font-weight:700;font-size:13px">${s.persona_name}</span>
+        <span style="font-size:10px;color:var(--text3)">${lvIcon[s.level] || '🟡'} · ${s.turn_count}턴</span>
+        <span style="font-size:10px;color:var(--text3);margin-left:auto">${dateLabel}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">${summary}</div>
+    </div>`;
+  }).join('');
+}
+
+let loadedHistoryCache = [];
+async function openHistoryDetail(sessionId) {
+  // 최신 데이터 한 번 더 조회
+  try {
+    const { data } = await window.dinoSupabase
+      .from('roleplay_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+    if (!data) return;
+    const persona = PERSONAS.find(p => p.id === data.persona_id);
+    const modeLabel = data.mode === 'reverse' ? '😶 내가 고객' : '💼 내가 영업인';
+    const lvLabel = { soft: '🟢 소프트', normal: '🟡 일반', hard: '🔴 어려움' }[data.level] || '';
+    document.getElementById('historyModalTitle').textContent = (persona?.icon || '👤') + ' ' + data.persona_name;
+    document.getElementById('historyModalSub').textContent = modeLabel + ' · ' + lvLabel + ' · ' + data.turn_count + '턴 · ' + new Date(data.created_at).toLocaleString('ko-KR');
+
+    const r = data.review || {};
+    const body = document.getElementById('historyModalBody');
+    body.innerHTML = `
+      ${r.summary ? `<div class="review-card review-summary"><div class="review-label">💡 핵심 한 줄</div><div class="review-text">${r.summary}</div></div>` : ''}
+      ${r.good ? `<div class="review-card review-good"><div class="review-label">✅ 잘한 점</div><div class="review-text">${r.good}</div></div>` : ''}
+      ${r.improve ? `<div class="review-card review-improve"><div class="review-label">📈 더 좋게</div><div class="review-text">${r.improve}</div></div>` : ''}
+      ${r.next_step ? `<div class="review-card review-next"><div class="review-label">🎯 다음 시도</div><div class="review-text">${r.next_step}</div></div>` : ''}
+      <details style="margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">📜 전체 대화 보기</summary><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+        ${(data.messages || []).map(m => {
+          const isUser = m.role === 'user';
+          return `<div style="display:flex;${isUser ? 'justify-content:flex-end' : ''}">
+            <div style="max-width:80%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-wrap;${isUser ? 'background:var(--accent);color:#fff' : 'background:rgba(255,255,255,0.06);border:1px solid var(--border)'}">${m.content || ''}</div>
+          </div>`;
+        }).join('')}
+      </div></details>
+    `;
+    document.getElementById('historyModal').style.display = 'block';
+  } catch (e) { console.error(e); }
+}
+
+function closeHistoryModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('historyModal').style.display = 'none';
+}
+
+// 채팅 input 자동 높이 + 페이지 초기 로드 시 과거 회고 호출
 document.addEventListener('DOMContentLoaded', () => {
   renderPersonas();
   const inp = document.getElementById('chatInput');
@@ -708,6 +819,14 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
   });
+  // 로그인 후 회고 목록 로드
+  window.addEventListener('dino-auth-change', (e) => {
+    if (e.detail?.user) loadHistory();
+  });
+  // 이미 로그인 상태면 바로 로드
+  setTimeout(() => {
+    if (window.DinoAuth?.isLoggedIn?.()) loadHistory();
+  }, 800);
 });
 
 // 서비스워커
