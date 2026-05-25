@@ -115,6 +115,18 @@
       ]
     },
     {
+      "source": "/team",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/team/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
       "source": "/saju/sw.js",
       "headers": [
         { "key": "Service-Worker-Allowed", "value": "/saju/" },
