@@ -722,7 +722,7 @@ function showToast(msg) {
   setTimeout(() => t.style.display = 'none', 2500);
 }
 
-// ═══ 과거 회고 목록 ═══
+// ═══ 과거 세션 목록 (회고 완료 + 미완성 모두) ═══
 async function loadHistory() {
   if (!window.dinoSupabase) {
     await new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true }));
@@ -730,11 +730,12 @@ async function loadHistory() {
   try {
     const { data: { session } } = await window.dinoSupabase.auth.getSession();
     if (!session) return;
+    // 1턴 이상인 모든 세션 (완료/미완성 다 표시)
     const { data, error } = await window.dinoSupabase
       .from('roleplay_sessions')
-      .select('id, persona_name, persona_id, level, mode, created_at, review, turn_count')
+      .select('id, persona_name, persona_id, level, mode, created_at, review, turn_count, completed')
       .eq('user_id', session.user.id)
-      .eq('completed', true)
+      .gte('turn_count', 1)
       .order('created_at', { ascending: false })
       .limit(20);
     if (error) { console.error(error); return; }
@@ -756,8 +757,10 @@ function renderHistory(sessions) {
     const modeIcon = s.mode === 'reverse' ? '😶' : '💼';
     const persona = PERSONAS.find(p => p.id === s.persona_id);
     const personaIcon = persona ? persona.icon : '👤';
-    const summary = s.review?.summary || '회고 없음';
-    return `<div onclick="openHistoryDetail(${s.id})" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;transition:transform .15s">
+    const hasReview = !!s.review?.summary;
+    const summaryText = hasReview ? s.review.summary : '⚠️ 회고 미생성 — 탭해서 받기';
+    const summaryColor = hasReview ? 'var(--text2)' : '#FF9F0A';
+    return `<div onclick="openHistoryDetail(${s.id})" style="background:var(--card);border:1px solid ${hasReview ? 'var(--border)' : 'rgba(255,159,10,0.3)'};border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;transition:transform .15s">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:15px">${modeIcon}</span>
         <span style="font-size:14px">${personaIcon}</span>
@@ -765,7 +768,7 @@ function renderHistory(sessions) {
         <span style="font-size:10px;color:var(--text3)">${lvIcon[s.level] || '🟡'} · ${s.turn_count}턴</span>
         <span style="font-size:10px;color:var(--text3);margin-left:auto">${dateLabel}</span>
       </div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.5">${summary}</div>
+      <div style="font-size:12px;color:${summaryColor};line-height:1.5">${summaryText}</div>
     </div>`;
   }).join('');
 }
@@ -787,13 +790,23 @@ async function openHistoryDetail(sessionId) {
     document.getElementById('historyModalSub').textContent = modeLabel + ' · ' + lvLabel + ' · ' + data.turn_count + '턴 · ' + new Date(data.created_at).toLocaleString('ko-KR');
 
     const r = data.review || {};
+    const hasReview = !!r.summary;
     const body = document.getElementById('historyModalBody');
-    body.innerHTML = `
-      ${r.summary ? `<div class="review-card review-summary"><div class="review-label">💡 핵심 한 줄</div><div class="review-text">${r.summary}</div></div>` : ''}
+
+    const reviewSection = hasReview ? `
+      <div class="review-card review-summary"><div class="review-label">💡 핵심 한 줄</div><div class="review-text">${r.summary}</div></div>
       ${r.good ? `<div class="review-card review-good"><div class="review-label">✅ 잘한 점</div><div class="review-text">${r.good}</div></div>` : ''}
       ${r.improve ? `<div class="review-card review-improve"><div class="review-label">📈 더 좋게</div><div class="review-text">${r.improve}</div></div>` : ''}
       ${r.next_step ? `<div class="review-card review-next"><div class="review-label">🎯 다음 시도</div><div class="review-text">${r.next_step}</div></div>` : ''}
-      <details style="margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">📜 전체 대화 보기</summary><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+    ` : `
+      <div style="background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.3);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px">
+        <div style="font-size:13px;color:#FF9F0A;margin-bottom:12px">⚠️ 이 세션은 회고가 아직 생성되지 않았어요</div>
+        <button id="regenerateReviewBtn" onclick="regenerateReview(${sessionId})" style="padding:10px 20px;border:none;border-radius:10px;background:var(--accent);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔄 회고 받기</button>
+      </div>
+    `;
+
+    body.innerHTML = reviewSection + `
+      <details ${hasReview ? '' : 'open'} style="margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text2)">📜 전체 대화 보기 (${(data.messages || []).filter(m=>m.role==='user').length}턴)</summary><div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
         ${(data.messages || []).map(m => {
           const isUser = m.role === 'user';
           return `<div style="display:flex;${isUser ? 'justify-content:flex-end' : ''}">
@@ -809,6 +822,33 @@ async function openHistoryDetail(sessionId) {
 function closeHistoryModal(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('historyModal').style.display = 'none';
+}
+
+// 미완성 회고 다시 생성
+async function regenerateReview(sessionId) {
+  const btn = document.getElementById('regenerateReviewBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '생성 중...'; }
+  try {
+    const token = await getAccessToken();
+    const res = await fetch('/api/roleplay-review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.review) {
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 다시 시도'; }
+      showToast('회고 생성 실패 — 잠시 후 다시 시도');
+      return;
+    }
+    showToast('회고가 생성됐어요!');
+    // 모달 다시 그리기 + 목록 갱신
+    await openHistoryDetail(sessionId);
+    loadHistory().catch(() => {});
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 다시 시도'; }
+    showToast('네트워크 오류');
+  }
 }
 
 // 채팅 input 자동 높이 + 페이지 초기 로드 시 과거 회고 호출
