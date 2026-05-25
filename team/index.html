@@ -103,6 +103,39 @@ textarea.form-input { min-height:100px; resize:vertical; }
 .login-gate-icon { font-size:64px; margin-bottom:16px; }
 .login-gate-title { font-size:20px; font-weight:800; margin-bottom:8px; }
 .login-gate-desc { font-size:14px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
+
+/* ── 라이트 테마 보정 (theme-toggle.js의 light-theme 클래스에 반응) ── */
+body.light-theme {
+  --bg: #F5F5FA !important;
+  --bg2: #FFFFFF !important;
+  --card: #FFFFFF !important;
+  --text: #1A1A2E !important;
+  --text2: #555577 !important;
+  --text3: #8888AA !important;
+  --border: rgba(0,0,0,0.10) !important;
+}
+body.light-theme .icon-btn { color: #1A1A2E; }
+body.light-theme .form-input {
+  background: #FFFFFF !important;
+  color: #1A1A2E !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+body.light-theme .btn-ghost {
+  background: #FFFFFF !important;
+  color: #555577 !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+body.light-theme .header { background: #FFFFFF !important; border-bottom-color: rgba(0,0,0,0.06) !important; }
+body.light-theme .bottom-nav { background: rgba(255,255,255,0.95) !important; border-top-color: rgba(0,0,0,0.06) !important; }
+body.light-theme .nav-item { color: #999 !important; }
+body.light-theme .nav-item.active { color: var(--accent) !important; }
+body.light-theme .empty { color: #888 !important; }
+body.light-theme .stat-card,
+body.light-theme .member-card,
+body.light-theme .announce-card,
+body.light-theme .schedule-card,
+body.light-theme .invite-box { box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+body.light-theme .invite-code { color: #1A1A2E; }
 </style>
 </head>
 <body>
@@ -300,6 +333,7 @@ textarea.form-input { min-height:100px; resize:vertical; }
 
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
+<script src="/shared/theme-toggle.js"></script>
 <script>
 let sb = null;
 let myProfile = null;
