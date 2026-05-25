@@ -1197,6 +1197,37 @@ function editProfile() {
 }
 
 // ==================== REFERRALS ====================
+function renderReferralList() {
+  const listEl = document.getElementById('referralList');
+  if (!listEl) return;
+  const data = window.__myReferralsData || [];
+  const PAGE_SIZE = 5;
+  const expanded = window.__myReferralsExpanded;
+  const visible = expanded ? data : data.slice(0, PAGE_SIZE);
+
+  const itemsHtml = visible.map(p => {
+    const phone = (p.phone || '').replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3');
+    const date = new Date(p.created_at).toLocaleDateString('ko-KR');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-card,rgba(255,255,255,0.05));border-radius:12px;margin-bottom:6px">
+      <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${p.display_name || '이름 없음'}</div><div style="font-size:11px;color:var(--text-tertiary)">${phone} · ${date} 가입</div></div>
+    </div>`;
+  }).join('');
+
+  let moreBtn = '';
+  if (data.length > PAGE_SIZE) {
+    moreBtn = expanded
+      ? `<button onclick="toggleReferralExpand()" style="width:100%;padding:10px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-size:13px;font-family:inherit;border-radius:10px;cursor:pointer">접기 ▲</button>`
+      : `<button onclick="toggleReferralExpand()" style="width:100%;padding:10px;border:1px solid var(--border);background:transparent;color:var(--accent-orange);font-size:13px;font-weight:600;font-family:inherit;border-radius:10px;cursor:pointer">+${data.length - PAGE_SIZE}명 더 보기 ▼</button>`;
+  }
+  listEl.innerHTML = itemsHtml + moreBtn;
+}
+
+function toggleReferralExpand() {
+  window.__myReferralsExpanded = !window.__myReferralsExpanded;
+  renderReferralList();
+}
+
 async function loadReferrals() {
   if (!DinoAuth.isLoggedIn() || !DinoAuth.getSupabase()) return;
   const sb = DinoAuth.getSupabase();
@@ -1214,14 +1245,9 @@ async function loadReferrals() {
   if (data && data.length > 0) {
     countEl.textContent = data.length;
     wrapEl.style.display = 'block';
-    listEl.innerHTML = data.map(p => {
-      const phone = (p.phone || '').replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3');
-      const date = new Date(p.created_at).toLocaleDateString('ko-KR');
-      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-card,rgba(255,255,255,0.05));border-radius:12px;margin-bottom:6px">
-        <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:600">${p.display_name || '이름 없음'}</div><div style="font-size:11px;color:var(--text-tertiary)">${phone} · ${date} 가입</div></div>
-      </div>`;
-    }).join('');
+    window.__myReferralsData = data; // 전체 보기 토글에서 사용
+    window.__myReferralsExpanded = false;
+    renderReferralList();
   } else {
     countEl.textContent = '0';
     wrapEl.style.display = 'none';

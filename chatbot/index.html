@@ -474,7 +474,7 @@ body.light-theme .input-bar {
 .history-panel.show { display: flex; }
 .history-header {
   display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px;
+  padding: calc(14px + var(--safe-top)) 16px 14px;
   border-bottom: 1px solid var(--border);
 }
 .history-header h2 { font-size: 18px; font-weight: 800; flex: 1; }

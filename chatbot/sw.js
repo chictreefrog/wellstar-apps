@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dino-chatbot-v4';
+const CACHE_NAME = 'dino-chatbot-v5';
 const APP_PATH = '/chatbot/';
 
 self.addEventListener('install', e => {
