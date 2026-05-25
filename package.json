@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/chictreefrog/wellstar-apps#readme",
   "dependencies": {
-    "@google/genai": "^1.48.0"
+    "@google/genai": "^1.48.0",
+    "web-push": "^3.6.7"
   }
 }

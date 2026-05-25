@@ -95,5 +95,23 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: '저장 실패' });
   }
 
+  // 추천한 파트너에게 푸시 알림
+  if (partnerId) {
+    try {
+      const SOURCE_LABEL = {
+        saju: '사주 진단', 'branding-coach': '블로그 브랜딩',
+        quiz: '영업 스타일', 'success-test': 'NM 성공 확률', 'health-check': '건강 밸런스'
+      };
+      const label = SOURCE_LABEL[source] || source;
+      const emailPrefix = (email || '').split('@')[0] || '신규';
+      const { sendPushToUsers } = require('./_push-send');
+      sendPushToUsers([partnerId], {
+        title: `🎯 새 리드 수집!`,
+        body: `${emailPrefix}님이 ${label}을 완료했어요`,
+        url: '/team/?tab=leads'
+      }, 'referral').catch(() => {});
+    } catch {}
+  }
+
   return res.status(200).json({ ok: true, partner_id: partnerId, team_id: teamId });
 };

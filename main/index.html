@@ -929,9 +929,10 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
           <span class="my-menu-arrow">›</span>
         </div>
 
-        <div class="my-menu-item" style="opacity:0.5;cursor:default">
+        <div class="my-menu-item" id="pushNotifyToggle" onclick="togglePushNotify()">
           <span class="my-menu-icon">🔔</span>
-          <span class="my-menu-text">알림 설정 <span style="font-size:11px;color:var(--text-tertiary)">(업데이트 예정)</span></span>
+          <span class="my-menu-text">알림 받기 <span id="pushNotifyStatus" style="font-size:11px;color:var(--text-tertiary)">확인 중...</span></span>
+          <span class="my-menu-arrow">›</span>
         </div>
 
         <div class="my-menu-title">계정</div>
@@ -993,6 +994,7 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
 <script src="/shared/guest.js"></script>
+<script src="/shared/push.js"></script>
 <script>
 // ==================== TAB NAVIGATION ====================
 function switchTab(tab) {
@@ -1220,6 +1222,49 @@ async function loadReferrals() {
   document.getElementById('statDiary').textContent = customers.length;
 }
 
+// ==================== PUSH NOTIFICATIONS ====================
+function updatePushStatusUI() {
+  const el = document.getElementById('pushNotifyStatus');
+  if (!el || !window.DinoPush) return;
+  const status = DinoPush.getStatus();
+  if (status === 'unsupported') { el.textContent = '(미지원 브라우저)'; el.style.color = '#888'; return; }
+  if (status === 'granted' && DinoPush.isEnabled()) { el.textContent = 'ON'; el.style.color = '#30D158'; return; }
+  if (status === 'denied') { el.textContent = '차단됨 (폰 설정에서 허용)'; el.style.color = '#FF453A'; return; }
+  el.textContent = 'OFF (눌러서 켜기)'; el.style.color = 'var(--text-tertiary)';
+}
+
+async function togglePushNotify() {
+  if (!window.DinoPush) return;
+  if (!DinoAuth.isLoggedIn()) { alert('로그인 후 사용할 수 있어요'); return; }
+  if (!DinoPush.isSupported()) { alert('이 브라우저에서는 알림을 지원하지 않아요. 홈화면에 추가한 PWA에서 사용해주세요.'); return; }
+
+  const status = DinoPush.getStatus();
+  if (status === 'denied') {
+    alert('폰 설정에서 알림이 차단되어 있어요. 설정 → Safari → 옆집디노 → 알림 허용으로 바꿔주세요.');
+    return;
+  }
+
+  if (DinoPush.isEnabled()) {
+    if (!confirm('알림을 끄시겠어요?')) return;
+    await DinoPush.unsubscribe();
+    updatePushStatusUI();
+    return;
+  }
+
+  const r = await DinoPush.subscribe();
+  if (r.ok) {
+    updatePushStatusUI();
+    alert('알림이 켜졌어요! 🎉');
+  } else if (r.reason === 'denied') {
+    alert('알림 권한이 필요해요. 다시 시도해주세요.');
+    updatePushStatusUI();
+  } else if (r.reason === 'unsupported' || r.reason === 'no_sw') {
+    alert('이 환경에서는 알림을 사용할 수 없어요. 홈화면에 추가한 PWA에서 다시 시도해주세요.');
+  } else {
+    alert('알림 설정 실패: ' + (r.reason || '알 수 없음'));
+  }
+}
+
 function shareApp() {
   // 로그인 상태면 본인 추천 코드를 URL에 자동 포함
   let url = window.location.origin;
@@ -1357,6 +1402,9 @@ function init() {
   // Init auth
   DinoAuth.init();
   DinoAuth.onAuthChange(updateAuthUI);
+
+  // 푸시 알림 UI 상태 표시
+  setTimeout(updatePushStatusUI, 500);
 }
 
 init();

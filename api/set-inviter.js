@@ -117,5 +117,21 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'save_failed' });
   }
 
+  // 추천인에게 푸시 알림 (비동기, 응답 블로킹 안 함)
+  try {
+    const meRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=display_name`,
+      { headers: sbHeaders }
+    );
+    const me = (await meRes.json())[0];
+    const name = me?.display_name || '신규 회원';
+    const { sendPushToUsers } = require('./_push-send');
+    sendPushToUsers([inviterId], {
+      title: '🎉 새 회원이 가입했어요!',
+      body: `${name}님이 당신의 추천으로 가입했어요`,
+      url: '/team/?tab=invite'
+    }, 'referral').catch(() => {});
+  } catch {}
+
   return res.status(200).json({ ok: true, inviter_id: inviterId });
 };

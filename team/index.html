@@ -498,6 +498,18 @@ async function postAnnouncement() {
   document.getElementById('annPin').checked = false;
   showToast('공지가 등록되었습니다');
   loadAnnouncements(myProfile.team_id);
+
+  // 팀원들에게 푸시 알림 발송 (비동기, 실패해도 공지는 등록됨)
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.access_token) {
+      fetch('/api/notify-announcement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ team_id: myProfile.team_id, title, content })
+      }).catch(() => {});
+    }
+  } catch {}
 }
 
 async function postSchedule() {
