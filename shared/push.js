@@ -48,13 +48,24 @@ window.DinoPush = (function() {
   }
 
   async function subscribe() {
-    if (!isSupported()) return { ok: false, reason: 'unsupported' };
+    const debug = {
+      sw: 'serviceWorker' in navigator,
+      push: 'PushManager' in window,
+      notif: 'Notification' in window,
+      standalone: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+      ua: navigator.userAgent.slice(0, 80)
+    };
+    if (!isSupported()) return { ok: false, reason: 'unsupported', debug };
 
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return { ok: false, reason: 'denied' };
+    debug.permission = permission;
+    if (permission !== 'granted') return { ok: false, reason: 'denied', debug };
 
     const reg = await getActiveRegistration();
-    if (!reg || !reg.pushManager) return { ok: false, reason: 'no_sw' };
+    debug.hasRegistration = !!reg;
+    debug.hasPushManager = !!(reg && reg.pushManager);
+    debug.scope = reg?.scope || null;
+    if (!reg || !reg.pushManager) return { ok: false, reason: 'no_sw', debug };
 
     let subscription = await reg.pushManager.getSubscription();
     if (!subscription) {
@@ -64,13 +75,13 @@ window.DinoPush = (function() {
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
       } catch (e) {
-        return { ok: false, reason: 'subscribe_failed', err: String(e) };
+        return { ok: false, reason: 'subscribe_failed', err: String(e), debug };
       }
     }
 
     // 백엔드에 등록
     const accessToken = await getAccessToken();
-    if (!accessToken) return { ok: false, reason: 'not_logged_in' };
+    if (!accessToken) return { ok: false, reason: 'not_logged_in', debug };
 
     const sub = subscription.toJSON();
     try {
@@ -83,11 +94,11 @@ window.DinoPush = (function() {
           user_agent: navigator.userAgent
         })
       });
-      if (!res.ok) return { ok: false, reason: 'server_save_failed' };
+      if (!res.ok) return { ok: false, reason: 'server_save_failed', debug };
       try { localStorage.setItem('dino_push_enabled', '1'); } catch {}
-      return { ok: true };
+      return { ok: true, debug };
     } catch (e) {
-      return { ok: false, reason: 'network', err: String(e) };
+      return { ok: false, reason: 'network', err: String(e), debug };
     }
   }
 

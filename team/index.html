@@ -104,6 +104,9 @@ textarea.form-input { min-height:100px; resize:vertical; }
 .login-gate-title { font-size:20px; font-weight:800; margin-bottom:8px; }
 .login-gate-desc { font-size:14px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
 
+/* theme-toggle.js의 fixed 버튼이 헤더의 🏠 홈버튼을 가리지 않도록 왼쪽으로 옮김 */
+#dino-theme-toggle { right: 60px !important; top: calc(12px + env(safe-area-inset-top, 0px)) !important; }
+
 /* ── 라이트 테마 보정 (theme-toggle.js의 light-theme 클래스에 반응) ── */
 body.light-theme {
   --bg: #F5F5FA !important;

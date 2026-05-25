@@ -582,6 +582,12 @@ body { min-height: 100dvh; }
 .my-menu-icon { font-size: 18px; width: 24px; text-align: center; }
 .my-menu-text { font-size: 14px; font-weight: 600; flex: 1; }
 .my-menu-arrow { color: var(--text-muted); font-size: 14px; }
+.my-toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+.my-toggle-slider { position:absolute; inset:0; border-radius:12px; transition:0.2s; background:rgba(255,255,255,0.12); }
+.my-toggle-slider.on { background:var(--accent-orange); }
+.my-toggle-knob { position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:0.2s; }
+.my-toggle-knob.on { left:22px; }
+.my-toggle-status { font-size:11px; color:var(--text-muted); margin-right:6px; }
 
 /* Footer */
 .app-footer {
@@ -931,7 +937,16 @@ body.light-theme .badge-soon { background: #e8e8f0; color: #888; }
 
         <div class="my-menu-item" id="pushNotifyToggle" onclick="togglePushNotify()">
           <span class="my-menu-icon">🔔</span>
-          <span class="my-menu-text">알림 받기 <span id="pushNotifyStatus" style="font-size:11px;color:var(--text-tertiary)">확인 중...</span></span>
+          <span class="my-menu-text">알림 받기</span>
+          <span class="my-toggle-status" id="pushNotifyStatus"></span>
+          <div class="my-toggle">
+            <div class="my-toggle-slider" id="pushToggleSlider"></div>
+            <div class="my-toggle-knob" id="pushToggleKnob"></div>
+          </div>
+        </div>
+        <div class="my-menu-item" id="pushTestItem" style="display:none" onclick="sendTestPush()">
+          <span class="my-menu-icon">📨</span>
+          <span class="my-menu-text">테스트 알림 보내기</span>
           <span class="my-menu-arrow">›</span>
         </div>
 
@@ -1224,23 +1239,49 @@ async function loadReferrals() {
 
 // ==================== PUSH NOTIFICATIONS ====================
 function updatePushStatusUI() {
-  const el = document.getElementById('pushNotifyStatus');
-  if (!el || !window.DinoPush) return;
-  const status = DinoPush.getStatus();
-  if (status === 'unsupported') { el.textContent = '(미지원 브라우저)'; el.style.color = '#888'; return; }
-  if (status === 'granted' && DinoPush.isEnabled()) { el.textContent = 'ON'; el.style.color = '#30D158'; return; }
-  if (status === 'denied') { el.textContent = '차단됨 (폰 설정에서 허용)'; el.style.color = '#FF453A'; return; }
-  el.textContent = 'OFF (눌러서 켜기)'; el.style.color = 'var(--text-tertiary)';
+  const slider = document.getElementById('pushToggleSlider');
+  const knob = document.getElementById('pushToggleKnob');
+  const status = document.getElementById('pushNotifyStatus');
+  const testItem = document.getElementById('pushTestItem');
+  if (!slider || !knob || !status) return;
+
+  if (!window.DinoPush) { status.textContent = ''; return; }
+  const pStatus = DinoPush.getStatus();
+  const isOn = pStatus === 'granted' && DinoPush.isEnabled();
+
+  // 토글 스위치 시각 표시
+  slider.classList.toggle('on', isOn);
+  knob.classList.toggle('on', isOn);
+
+  // 상태 라벨
+  if (pStatus === 'unsupported') { status.textContent = '미지원'; status.style.color = '#888'; }
+  else if (pStatus === 'denied') { status.textContent = '차단됨'; status.style.color = '#FF453A'; }
+  else if (isOn) { status.textContent = ''; }
+  else { status.textContent = ''; }
+
+  // 테스트 알림 버튼은 ON일 때만 표시
+  if (testItem) testItem.style.display = isOn ? 'flex' : 'none';
+}
+
+function formatDebug(debug) {
+  if (!debug) return '';
+  return '\n\n[기술 정보]' +
+    '\n• standalone PWA: ' + (debug.standalone ? '✅' : '❌ (홈화면 추가 필요)') +
+    '\n• SW 지원: ' + (debug.sw ? '✅' : '❌') +
+    '\n• Push 지원: ' + (debug.push ? '✅' : '❌ (iOS 16.4+ 필요)') +
+    '\n• Notification: ' + (debug.notif ? '✅' : '❌') +
+    (debug.permission ? '\n• 권한: ' + debug.permission : '') +
+    (debug.hasRegistration !== undefined ? '\n• SW 등록: ' + (debug.hasRegistration ? '✅' : '❌') : '') +
+    (debug.scope ? '\n• SW scope: ' + debug.scope : '');
 }
 
 async function togglePushNotify() {
   if (!window.DinoPush) return;
   if (!DinoAuth.isLoggedIn()) { alert('로그인 후 사용할 수 있어요'); return; }
-  if (!DinoPush.isSupported()) { alert('이 브라우저에서는 알림을 지원하지 않아요. 홈화면에 추가한 PWA에서 사용해주세요.'); return; }
 
   const status = DinoPush.getStatus();
   if (status === 'denied') {
-    alert('폰 설정에서 알림이 차단되어 있어요. 설정 → Safari → 옆집디노 → 알림 허용으로 바꿔주세요.');
+    alert('폰 설정에서 알림이 차단되어 있어요.\n설정 앱 → 알림 → 옆집디노 → 알림 허용으로 바꾼 뒤 다시 시도해주세요.');
     return;
   }
 
@@ -1254,14 +1295,38 @@ async function togglePushNotify() {
   const r = await DinoPush.subscribe();
   if (r.ok) {
     updatePushStatusUI();
-    alert('알림이 켜졌어요! 🎉');
+    alert('알림이 켜졌어요! 🎉\n바로 아래 "테스트 알림 보내기"로 확인해보세요.');
   } else if (r.reason === 'denied') {
-    alert('알림 권한이 필요해요. 다시 시도해주세요.');
+    alert('알림 권한이 거부됐어요. 다시 시도해주세요.' + formatDebug(r.debug));
     updatePushStatusUI();
-  } else if (r.reason === 'unsupported' || r.reason === 'no_sw') {
-    alert('이 환경에서는 알림을 사용할 수 없어요. 홈화면에 추가한 PWA에서 다시 시도해주세요.');
+  } else if (r.reason === 'unsupported') {
+    alert('이 환경은 푸시 알림을 지원하지 않아요.' + formatDebug(r.debug));
+  } else if (r.reason === 'no_sw') {
+    alert('서비스워커를 찾을 수 없어요.\n홈화면 PWA를 한 번 닫았다 다시 열어주세요.' + formatDebug(r.debug));
   } else {
-    alert('알림 설정 실패: ' + (r.reason || '알 수 없음'));
+    alert('알림 설정 실패: ' + (r.reason || '알 수 없음') + formatDebug(r.debug));
+  }
+}
+
+async function sendTestPush() {
+  if (!DinoAuth.isLoggedIn()) { alert('로그인 후 사용해주세요'); return; }
+  try {
+    const { data: { session } } = await DinoAuth.getSupabase().auth.getSession();
+    if (!session?.access_token) { alert('로그인 세션이 만료됐어요'); return; }
+    const res = await fetch('/api/push-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` }
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.sent > 0) {
+      alert('테스트 알림 전송! 📨\n잠시 후 알림이 도착해요.\n안 오면 폰 설정에서 알림 허용 확인.');
+    } else if (data.sent === 0) {
+      alert('등록된 구독이 없어요. 알림을 먼저 켜주세요.');
+    } else {
+      alert('전송 실패: ' + (data.reason || data.error || '알 수 없음'));
+    }
+  } catch (e) {
+    alert('네트워크 오류: ' + String(e));
   }
 }
 

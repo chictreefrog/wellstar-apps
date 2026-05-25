@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dino-main-v11';
+const CACHE_NAME = 'dino-main-v12';
 const APP_PATH = '/main/';
 
 // ── 푸시 알림 수신 ──
