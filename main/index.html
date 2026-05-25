@@ -1137,6 +1137,21 @@ window.dinoLogActivity = function(app, label) {
   localStorage.setItem('dino_activity_log', JSON.stringify(logs.slice(0, 50)));
 };
 
+// 도구 카드/링크 클릭 시 자동으로 활동 기록 (사용 도구 통계용)
+document.addEventListener('click', function(e) {
+  const tool = e.target.closest('.tool-list-item, .quick-card');
+  if (!tool) return;
+  const href = tool.getAttribute('href') || '';
+  if (!href || href.startsWith('javascript:') || tool.classList.contains('tool-coming')) return;
+  // /quiz/ → quiz, https://... → 외부
+  let appKey = href.replace(/^https?:\/\/[^/]+/, '').replace(/^\//, '').replace(/\/.*$/, '');
+  if (!appKey) appKey = 'external';
+  const label = tool.getAttribute('data-name')
+    || tool.querySelector('.quick-card-name, .tool-name')?.textContent
+    || appKey;
+  window.dinoLogActivity(appKey, label);
+});
+
 // ==================== MY PAGE ====================
 function editProfile() {
   const profile = DinoAuth.getProfile();
@@ -1302,6 +1317,8 @@ function updateAuthUI(user, profile) {
     badge.style.display = '';
 
     DinoGuest.check(profile);
+    // 로그인 완료 후 통계 다시 로드 (init() 시점엔 auth 미완료라 0이었음)
+    loadReferrals();
   } else {
     text.textContent = '로그인 / 팀 합류';
     badge.style.display = 'none';
