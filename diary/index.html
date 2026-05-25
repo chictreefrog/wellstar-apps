@@ -716,8 +716,18 @@ const KEYS = {
   customers: 'diary_customers',
   activities: 'diary_activities',
   goals: 'diary_goals',
-  journal: 'diary_journal'
+  journal: 'diary_journal',
+  lastEvent: 'dino_diary_last_event'
 };
+
+// 이벤트 로깅 — AI 인사이트가 이벤트 발생 시에만 새로 생성되도록
+function logDiaryEvent(type, customerName, detail) {
+  try {
+    localStorage.setItem(KEYS.lastEvent, JSON.stringify({
+      type, customerName: customerName || null, detail: detail || '', ts: Date.now()
+    }));
+  } catch {}
+}
 
 function load(key) {
   try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
@@ -1010,9 +1020,16 @@ function saveCustomer() {
   }
   if (editId) {
     const idx = customers.findIndex(x => x.id === editId);
+    const oldStage = idx >= 0 ? customers[idx]?.stage : null;
     if (idx >= 0) { data.memos = customers[idx].memos || []; data.createdAt = customers[idx].createdAt; customers[idx] = data; }
+    if (oldStage && oldStage !== data.stage) {
+      logDiaryEvent('stage_changed', data.name, `단계 ${oldStage} → ${data.stage}`);
+    } else {
+      logDiaryEvent('customer_updated', data.name, '고객 정보 수정');
+    }
   } else {
     customers.push(data);
+    logDiaryEvent('customer_added', data.name, `${data.stage} 단계로 신규 등록`);
   }
   save(KEYS.customers, customers);
   closeModal('modal-customer');
@@ -1093,6 +1110,7 @@ function addMemo(id) {
   if (!c.memos) c.memos = [];
   c.memos.push({ date: todayStr(), text });
   save(KEYS.customers, customers);
+  logDiaryEvent('memo_added', c.name, '메모: "' + text.slice(0, 60) + (text.length > 60 ? '...' : '') + '"');
   input.value = '';
   const list = document.getElementById('memo-list-' + id);
   if (list) {
@@ -1139,6 +1157,11 @@ function changeActivity(key, delta) {
   save('diary_act_' + today, data);
   const el = document.getElementById('act-num-' + key);
   if (el) el.textContent = data[key];
+  // 증가만 이벤트로 (감소는 정정 같으니 제외)
+  if (delta > 0) {
+    const label = (ACTIVITY_ITEMS.find(i => i.key === key)?.label) || key;
+    logDiaryEvent('activity', null, `${label} +1 (오늘 누적 ${data[key]}회)`);
+  }
 }
 
 function saveActivityMemo() {
@@ -1259,15 +1282,26 @@ function selectSituation(el, val) {
 }
 function saveJournal() {
   const journals = load(KEYS.journal);
+  const customer = document.getElementById('j-customer').value.trim();
+  const feeling = document.getElementById('j-feeling').value.trim();
   journals.push({
     id: genId(),
     date: todayStr(),
-    customer: document.getElementById('j-customer').value.trim(),
+    customer,
     situation: selectedSituation,
-    feeling: document.getElementById('j-feeling').value.trim(),
+    feeling,
     next: document.getElementById('j-next').value.trim(),
   });
   save(KEYS.journal, journals);
+  const situationLabels = {
+    '처음부터 관심없음':'처음부터 관심없음',
+    '생각해보겠다 후 연락두절':'생각해본다 후 잠수',
+    '가격 문제':'가격 거절',
+    '이미 지인이 있음':'지인 있음',
+    '기타':'기타'
+  };
+  const sitLabel = situationLabels[selectedSituation] || selectedSituation || '거절';
+  logDiaryEvent('journal', customer || null, `거절 회복 저널 — ${sitLabel}${feeling ? ' / ' + feeling.slice(0, 40) : ''}`);
   closeModal('modal-journal');
   showToast('기록됨 💪 오늘도 수고했어요!');
 }
@@ -1536,31 +1570,23 @@ async function callDiaryAI(type, payload) {
   return data.result;
 }
 
-// ── 1. 홈 AI 인사이트 (캐싱 적용 — 같은 날 + 같은 데이터면 API 호출 안 함) ──
+// ── 1. 홈 AI 인사이트 (이벤트 기반 캐싱 — 새 이벤트 발생 시에만 새로 생성) ──
 const INSIGHT_CACHE_KEY = 'dino_diary_ai_insight';
-
-function getInsightSignature() {
-  const customers = load(KEYS.customers);
-  const activities = load(KEYS.activities);
-  const today = todayStr();
-  const todayActCount = activities.filter(a => a.date === today).length;
-  // 활동·고객 수가 바뀌면 시그니처 달라짐 → 자동 갱신
-  return `${customers.length}-${activities.length}-${todayActCount}`;
-}
 
 async function refreshAiInsight(force) {
   const el = document.getElementById('ai-insight-text');
   const btn = document.getElementById('ai-refresh-btn');
-  const today = todayStr();
-  const sig = getInsightSignature();
+  const lastEvent = loadObj(KEYS.lastEvent, null);
+  const eventTs = lastEvent?.ts || 0;
 
   // 캐시 확인 (강제 새로고침 아닐 때)
+  // → 마지막 이벤트 ts가 캐시와 같으면 → 새 이벤트 없음 → API 호출 안 함
   if (!force) {
     try {
       const cached = JSON.parse(localStorage.getItem(INSIGHT_CACHE_KEY) || 'null');
-      if (cached && cached.date === today && cached.sig === sig && cached.result) {
+      if (cached && cached.eventTs === eventTs && cached.result) {
         el.innerHTML = cached.result;
-        return; // ✓ API 호출 안 함
+        return;
       }
     } catch {}
   }
@@ -1571,6 +1597,7 @@ async function refreshAiInsight(force) {
   try {
     const customers = load(KEYS.customers);
     const activities = load(KEYS.activities);
+    const today = todayStr();
     const weekStart = getWeekStart();
     const weekStart_d = new Date(weekStart);
     const prevWeekStart = new Date(weekStart_d); prevWeekStart.setDate(prevWeekStart.getDate() - 7);
@@ -1593,13 +1620,24 @@ async function refreshAiInsight(force) {
     const stageMap = {};
     customers.forEach(c => { stageMap[c.stage] = (stageMap[c.stage]||0)+1; });
 
-    const analysisData = { thisWeek, lastWeek, urgentCount, totalCustomers, stageMap, today };
+    // lastEvent에 상대 시간 추가 (방금/N분 전/N시간 전)
+    let lastEventForAi = null;
+    if (lastEvent) {
+      const diffMs = Date.now() - lastEvent.ts;
+      let relative;
+      if (diffMs < 60_000) relative = '방금';
+      else if (diffMs < 3_600_000) relative = Math.floor(diffMs / 60_000) + '분 전';
+      else if (diffMs < 86_400_000) relative = Math.floor(diffMs / 3_600_000) + '시간 전';
+      else relative = Math.floor(diffMs / 86_400_000) + '일 전';
+      lastEventForAi = { ...lastEvent, relative };
+    }
+
+    const analysisData = { thisWeek, lastWeek, urgentCount, totalCustomers, stageMap, today, lastEvent: lastEventForAi };
 
     const result = await callDiaryAI('insight', { analysisData });
     el.innerHTML = result;
-    // 캐시 저장
     try {
-      localStorage.setItem(INSIGHT_CACHE_KEY, JSON.stringify({ date: today, sig, result }));
+      localStorage.setItem(INSIGHT_CACHE_KEY, JSON.stringify({ eventTs, result }));
     } catch {}
   } catch(e) {
     el.innerHTML = generateLocalInsight();

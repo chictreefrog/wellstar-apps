@@ -56,34 +56,54 @@ function buildInsightPrompt(d) {
   const data = d || {};
   const tw = data.thisWeek || {};
   const lw = data.lastWeek || {};
+  const ev = data.lastEvent;
+
+  const EVENT_TYPE_KO = {
+    customer_added: '신규 고객 등록',
+    customer_updated: '고객 정보 수정',
+    stage_changed: '고객 단계 변경',
+    memo_added: '상담 메모 추가',
+    activity: '활동 카운트 증가',
+    journal: '거절 회복 저널 작성'
+  };
+
+  let eventBlock = '';
+  if (ev) {
+    const typeLabel = EVENT_TYPE_KO[ev.type] || ev.type;
+    eventBlock = `
+
+[방금 일어난 일 — 이걸 중심으로 인사이트 만들어주세요]
+- 종류: ${typeLabel}
+- ${ev.customerName ? '고객: ' + ev.customerName + ' / ' : ''}내용: ${ev.detail || ''}
+- 시점: ${ev.relative || '방금'}`;
+  }
+
+  const focusLine = ev
+    ? `→ "${ev.customerName ? ev.customerName + '님에게 ' : ''}방금 일어난 일"과 관련해 1~2문장으로 맞춤 인사이트를 만들어주세요. 다음에 무엇을 하면 좋을지 구체적 행동까지 짧게.`
+    : `→ 활동 데이터를 보고 격려 + 다음 행동 제안 한 줄.`;
+
   return `당신은 영업인의 다이어리를 분석해주는 친근한 코치입니다. 옆집디노라고 불립니다.
 
 [이번 주 활동]
-- 신규 연락: ${tw.신규연락 || 0}회
-- 팔로업: ${tw.팔로업 || 0}회
-- 미팅: ${tw.미팅 || 0}회
-- 성사: ${tw.성사 || 0}회
+- 신규 연락: ${tw.신규연락 || 0}회 / 팔로업: ${tw.팔로업 || 0}회 / 미팅: ${tw.미팅 || 0}회 / 성사: ${tw.성사 || 0}회
 
 [저번 주 활동]
-- 신규 연락: ${lw.신규연락 || 0}회
-- 팔로업: ${lw.팔로업 || 0}회
-- 미팅: ${lw.미팅 || 0}회
-- 성사: ${lw.성사 || 0}회
+- 신규 연락: ${lw.신규연락 || 0}회 / 팔로업: ${lw.팔로업 || 0}회 / 미팅: ${lw.미팅 || 0}회 / 성사: ${lw.성사 || 0}회
 
 [기타]
-- 긴급 팔로업 필요 고객: ${data.urgentCount || 0}명
-- 전체 고객: ${data.totalCustomers || 0}명
+- 긴급 팔로업: ${data.urgentCount || 0}명 / 전체 고객: ${data.totalCustomers || 0}명${eventBlock}
 
-위 데이터를 한눈에 분석해서 사용자에게 도움이 되는 한 줄 인사이트(HTML 짧은 텍스트, <b> 태그만 허용)를 만들어주세요.
+[지침]
+${focusLine}
 
-규칙:
-- 2~3줄 이내, 100자 이내
-- 친근한 반말 X, 친근한 존댓말 ("~예요", "~해보세요")
-- 구체적 숫자 인용 OK
-- 응원 + 다음 행동 제안
-- 이모지 1개 정도
+[작성 규칙]
+- 2~3줄 이내, 약 100자
+- 친근한 존댓말 ("~예요", "~해보세요")
+- 구체적 이름·숫자 인용 OK (예: "<b>김거절님</b>이 거절하셨네요")
+- 이모지 1개
+- HTML 짧은 텍스트, <b> 태그만 허용 — 마크다운/기타 태그 금지
 
-응답은 HTML 텍스트만, 다른 설명/마크다운 금지.`;
+응답은 인사이트 본문만, 다른 설명 절대 추가하지 마세요.`;
 }
 
 function buildMessagePrompt(c) {
