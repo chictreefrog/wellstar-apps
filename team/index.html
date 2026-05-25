@@ -223,28 +223,22 @@ textarea.form-input { min-height:100px; resize:vertical; }
     <!-- ═══ INVITE TAB ═══ -->
     <div class="tab-content" id="tab-invite">
 
-      <!-- 팀장만 보이는 팀 초대코드 -->
-      <div id="leaderInviteSection" style="display:none">
-        <div class="invite-box">
-          <div style="font-size:14px;font-weight:700;margin-bottom:4px">팀 초대 코드</div>
-          <div class="invite-code" id="inviteCode">------</div>
-          <div class="invite-hint">파트너를 등록할 때 이 코드를 공유하세요</div>
-          <button class="btn btn-primary" style="margin-top:16px" onclick="copyInviteCode()">코드 복사하기</button>
+      <!-- 모두에게 보이는 내 초대 코드 (리더·파트너 동일 UI) -->
+      <div id="myInviteSection">
+        <div class="invite-box" style="border-color:rgba(255,107,53,0.4)">
+          <div style="font-size:13px;color:var(--text2);margin-bottom:6px">🤝 내 초대 코드</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:12px">이 코드를 공유하면 나를 통해 가입돼요<br>가입한 분은 자동으로 내 다운레그로 연결돼요</div>
+          <div class="invite-code" id="myInviteCode" style="font-size:22px;letter-spacing:3px;color:var(--accent)">------</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="myInviteLabel"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="copyMyInviteCode()">코드 복사하기</button>
+          <button class="btn btn-ghost" style="margin-top:8px" onclick="shareMyInviteCode()">카톡으로 공유하기</button>
         </div>
-        <div class="section-title">👥 파트너 목록 <span class="badge" id="memberCount">0/30</span></div>
-        <div id="inviteMemberList"></div>
       </div>
 
-      <!-- 파트너만 보이는 예비파트너 초대코드 -->
-      <div id="partnerInviteSection" style="display:none">
-        <div class="invite-box" style="border-color:rgba(255,107,53,0.4)">
-          <div style="font-size:13px;color:var(--text2);margin-bottom:6px">🤝 내 예비파트너 초대코드</div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:12px">관심있는 분께 이 코드를 알려주세요<br>나를 통해 가입하면 자동으로 연결돼요</div>
-          <div class="invite-code" id="partnerRefCode" style="font-size:22px;letter-spacing:3px;color:var(--accent)">------</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="partnerBizLabel"></div>
-          <button class="btn btn-primary" style="margin-top:16px" onclick="copyPartnerCode()">코드 복사하기</button>
-          <button class="btn btn-ghost" style="margin-top:8px" onclick="sharePartnerCode()">카톡으로 공유하기</button>
-        </div>
+      <!-- 리더에게만 보이는 팀원 목록 (디노그룹 전체) -->
+      <div id="teamMembersSection" style="display:none">
+        <div class="section-title" style="margin-top:24px">👥 팀원 목록 <span class="badge" id="memberCount">0/30</span></div>
+        <div id="inviteMemberList"></div>
       </div>
 
       <!-- 내가 추천한 사람 목록 (게스트·파트너 통합) -->
@@ -338,7 +332,6 @@ async function loadDashboard() {
   if (team) {
     document.getElementById('teamName').textContent = team.name;
     document.getElementById('teamSub').textContent = isLeader ? '리더 대시보드' : '팀원 대시보드';
-    document.getElementById('inviteCode').textContent = team.invite_code;
   }
 
   // Load members
@@ -494,33 +487,23 @@ async function postSchedule() {
   loadSchedules(myProfile.team_id);
 }
 
-function copyInviteCode() {
-  const code = document.getElementById('inviteCode').textContent;
+// 내 초대 코드 복사 (리더·파트너 통일)
+function copyMyInviteCode() {
+  const code = document.getElementById('myInviteCode').textContent;
   if (code === '------') return;
-  const link = `https://app.wellstar.life/team/?invite=${encodeURIComponent(code)}`;
-  const text = `AI 세일즈 시스템에 합류하세요! 🦕\n\n아래 링크를 누르면 초대코드가 자동으로 적용돼요!\n👉 ${link}\n\n혹시 코드가 자동으로 안 들어가면 회원가입 시 직접 입력:\n초대코드: ${code}`;
-  if (navigator.share) {
-    navigator.share({ title: '팀 초대', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => showToast('초대 메시지가 복사되었습니다'));
-  }
+  navigator.clipboard.writeText(code).then(() => showToast('초대코드가 복사되었어요'));
 }
 
-function copyPartnerCode() {
-  const code = document.getElementById('partnerRefCode').textContent;
-  if (code === '------') return;
-  navigator.clipboard.writeText(code).then(() => showToast('초대코드가 복사되었습니다'));
-}
-
-function sharePartnerCode() {
-  const code = document.getElementById('partnerRefCode').textContent;
+// 내 초대 코드 카톡 공유 (리더·파트너 통일)
+function shareMyInviteCode() {
+  const code = document.getElementById('myInviteCode').textContent;
   if (code === '------') return;
   const link = `https://app.wellstar.life/team/?invite=${encodeURIComponent(code)}`;
-  const text = `안녕하세요! AI 세일즈 시스템에 초대드려요 🦕\n\n아래 링크를 누르면 초대코드가 자동으로 적용돼요!\n👉 ${link}\n\n혹시 코드가 자동으로 안 들어가면 회원가입 시 직접 입력:\n초대코드: ${code}`;
+  const text = `안녕하세요! AI 세일즈 시스템에 초대드려요 🦕\n\n아래 링크를 누르면 초대코드가 자동으로 적용돼요!\n👉 ${link}\n\n혹시 자동으로 안 들어가면 회원가입 시 직접 입력:\n초대코드: ${code}`;
   if (navigator.share) {
-    navigator.share({ title: '파트너 초대', text });
+    navigator.share({ title: '초대', text });
   } else {
-    navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었습니다'));
+    navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었어요'));
   }
 }
 
@@ -536,19 +519,20 @@ function sharePartnerCode() {
 
 function renderInviteSection() {
   if (!myProfile) return;
-  if (isLeader) {
-    document.getElementById('leaderInviteSection').style.display = 'block';
-    document.getElementById('partnerInviteSection').style.display = 'none';
-  } else {
-    document.getElementById('leaderInviteSection').style.display = 'none';
-    document.getElementById('partnerInviteSection').style.display = 'block';
-    const code = myProfile.business_code || myProfile.id.replace(/-/g, '').slice(0, 8).toUpperCase();
-    document.getElementById('partnerRefCode').textContent = code;
-    document.getElementById('partnerBizLabel').textContent = myProfile.business_code
-      ? `사업자번호 기반 코드`
-      : `자동 생성 코드 (사업자번호 등록 시 변경됩니다)`;
-  }
-  // 내가 추천한 사람 목록 로드
+
+  // 모두 동일한 '내 초대 코드' UI (사업자번호 기반)
+  const code = myProfile.business_code
+    || myProfile.id.replace(/-/g, '').slice(0, 8).toUpperCase();
+  document.getElementById('myInviteCode').textContent = code;
+  document.getElementById('myInviteLabel').textContent = myProfile.business_code
+    ? '사업자번호 기반 코드'
+    : '자동 생성 코드 (사업자번호 등록 시 변경됩니다)';
+
+  // 리더에게만 디노그룹 전체 팀원 목록 표시
+  const teamSec = document.getElementById('teamMembersSection');
+  if (teamSec) teamSec.style.display = isLeader ? 'block' : 'none';
+
+  // 내가 추천한 사람 목록 (모두)
   loadMyInvitedPeople();
 }
 
