@@ -1,4 +1,4 @@
-const CACHE_NAME = 'saju-v1';
+const CACHE_NAME = 'saju-v2';
 const APP_PATH = '/saju/';
 
 self.addEventListener('install', e => {

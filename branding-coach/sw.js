@@ -1,4 +1,4 @@
-const CACHE_NAME = 'branding-coach-v2';
+const CACHE_NAME = 'branding-coach-v3';
 const APP_PATH = '/branding-coach/';
 
 self.addEventListener('install', e => {

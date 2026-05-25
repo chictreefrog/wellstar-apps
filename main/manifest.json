@@ -1,7 +1,7 @@
 {
   "name": "옆집디노 AI 세일즈 시스템",
   "short_name": "옆집디노",
-  "description": "AI가 매일 당신의 세일즈를 코칭합니다",
+  "description": "AI 세일즈 파트너",
   "start_url": "/main/",
   "scope": "/",
   "display": "standalone",

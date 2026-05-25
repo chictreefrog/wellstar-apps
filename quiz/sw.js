@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quiz-v2';
+const CACHE_NAME = 'quiz-v3';
 const APP_PATH = '/quiz/';
 
 self.addEventListener('install', e => {

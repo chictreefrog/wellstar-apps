@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sim-v5';
+const CACHE_NAME = 'sim-v6';
 const APP_PATH = '/simulator/';
 
 self.addEventListener('install', e => {
