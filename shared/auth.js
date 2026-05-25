@@ -139,7 +139,7 @@ window.DinoAuth = (function() {
           <div class="dino-auth-sub">이름을 입력하고, 팀에 합류하려면<br>초대 코드를 입력하세요</div>
           <input class="dino-auth-input" id="dino-name" type="text" placeholder="이름">
           <input class="dino-auth-input" id="dino-biz-code" type="text" placeholder="사업자번호 / 설계사번호 (선택)">
-          <input class="dino-auth-input" id="dino-invite" type="text" placeholder="초대 코드 (선택)" maxlength="6" style="text-transform:uppercase">
+          <input class="dino-auth-input" id="dino-invite" type="text" placeholder="초대 코드 (선택, 받은 코드 있으면 입력)" maxlength="20" style="text-transform:uppercase">
           <div class="dino-auth-error" id="dino-error-profile"></div>
           <button class="dino-auth-btn" id="dino-btn-profile" onclick="DinoAuth._saveProfile()">시작하기</button>
         </div>
@@ -167,6 +167,16 @@ window.DinoAuth = (function() {
     document.querySelectorAll('.dino-auth-step').forEach(s => s.classList.remove('active'));
     document.getElementById('dino-step-' + step).classList.add('active');
     document.querySelectorAll('.dino-auth-error').forEach(e => e.textContent = '');
+    // 프로필 단계 진입 시 sessionStorage의 invite 코드 자동 입력
+    if (step === 'profile') {
+      try {
+        const pending = sessionStorage.getItem('dino_pending_invite');
+        const inviteInput = document.getElementById('dino-invite');
+        if (pending && inviteInput && !inviteInput.value) {
+          inviteInput.value = pending;
+        }
+      } catch {}
+    }
   }
 
   // ═══ 로그인 (번호 + 비밀번호) ═══
@@ -408,6 +418,9 @@ window.DinoAuth = (function() {
             document.getElementById('dino-error-profile').textContent = joinResult.error;
             // 에러가 나도 프로필은 이미 저장됨 — 초대코드만 실패
             // 버튼은 계속 사용 가능하게 유지
+          } else {
+            // 성공: pending invite 정리
+            try { sessionStorage.removeItem('dino_pending_invite'); } catch {}
           }
         } catch {
           // 초대코드 실패해도 가입은 진행

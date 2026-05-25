@@ -122,8 +122,36 @@ textarea.form-input { min-height:100px; resize:vertical; }
     <div class="login-gate-icon">🔐</div>
     <div class="login-gate-title">팀에 합류하세요</div>
     <div class="login-gate-desc">리더로부터 받은 초대 코드로<br>팀에 합류하면 모든 기능을 이용할 수 있어요</div>
+    <div id="pendingInviteBanner" style="display:none;background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.4);border-radius:12px;padding:14px 18px;margin-bottom:18px;max-width:280px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">초대 코드 자동 적용 대기 중</div>
+      <div id="pendingInviteCode" style="font-size:18px;font-weight:800;color:var(--accent);letter-spacing:1px;font-family:'Courier New',monospace">------</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">회원가입을 진행하시면<br>초대 코드가 자동으로 적용돼요</div>
+    </div>
     <button class="btn btn-primary" style="max-width:280px" onclick="DinoAuth.showLogin()">로그인 / 회원가입</button>
   </div>
+  <script>
+    // pending invite 캡처 + 표시 (URL 우선, 없으면 sessionStorage)
+    (function showPendingInvite() {
+      try {
+        let code = '';
+        try { code = new URLSearchParams(location.search).get('invite') || ''; } catch {}
+        if (code) {
+          code = code.trim().toUpperCase();
+          sessionStorage.setItem('dino_pending_invite', code);
+        } else {
+          code = sessionStorage.getItem('dino_pending_invite') || '';
+        }
+        if (code) {
+          const banner = document.getElementById('pendingInviteBanner');
+          const codeEl = document.getElementById('pendingInviteCode');
+          if (banner && codeEl) {
+            codeEl.textContent = code;
+            banner.style.display = 'block';
+          }
+        }
+      } catch {}
+    })();
+  </script>
 
   <!-- Main Content (hidden until login) -->
   <div class="content" id="mainContent" style="display:none">
@@ -462,11 +490,12 @@ async function postSchedule() {
 function copyInviteCode() {
   const code = document.getElementById('inviteCode').textContent;
   if (code === '------') return;
-  const text = `AI 세일즈 시스템에 합류하세요!\n초대 코드: ${code}\n👉 app.wellstar.life/team/`;
+  const link = `https://app.wellstar.life/team/?invite=${encodeURIComponent(code)}`;
+  const text = `AI 세일즈 시스템에 합류하세요! 🦕\n\n아래 링크를 누르면 초대코드가 자동으로 적용돼요!\n👉 ${link}\n\n혹시 코드가 자동으로 안 들어가면 회원가입 시 직접 입력:\n초대코드: ${code}`;
   if (navigator.share) {
     navigator.share({ title: '팀 초대', text });
   } else {
-    navigator.clipboard.writeText(text).then(() => showToast('초대 코드가 복사되었습니다'));
+    navigator.clipboard.writeText(text).then(() => showToast('초대 메시지가 복사되었습니다'));
   }
 }
 
@@ -479,13 +508,24 @@ function copyPartnerCode() {
 function sharePartnerCode() {
   const code = document.getElementById('partnerRefCode').textContent;
   if (code === '------') return;
-  const text = `안녕하세요! AI 세일즈 시스템에 초대드려요 🦕\n\n회원가입 시 아래 초대코드를 입력해주세요:\n초대코드: ${code}\n\n👉 app.wellstar.life/team/`;
+  const link = `https://app.wellstar.life/team/?invite=${encodeURIComponent(code)}`;
+  const text = `안녕하세요! AI 세일즈 시스템에 초대드려요 🦕\n\n아래 링크를 누르면 초대코드가 자동으로 적용돼요!\n👉 ${link}\n\n혹시 코드가 자동으로 안 들어가면 회원가입 시 직접 입력:\n초대코드: ${code}`;
   if (navigator.share) {
     navigator.share({ title: '파트너 초대', text });
   } else {
     navigator.clipboard.writeText(text).then(() => showToast('공유 텍스트가 복사되었습니다'));
   }
 }
+
+// 페이지 진입 시 ?invite= 파라미터 캐치 → 회원가입 시 자동 적용
+(function captureInviteCode() {
+  try {
+    const code = new URLSearchParams(location.search).get('invite');
+    if (code) {
+      sessionStorage.setItem('dino_pending_invite', code.trim().toUpperCase());
+    }
+  } catch {}
+})();
 
 function renderInviteSection() {
   if (!myProfile) return;
