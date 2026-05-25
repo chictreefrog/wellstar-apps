@@ -1247,6 +1247,9 @@ function openJournalModal() {
   document.getElementById('j-next').value = '';
   selectedSituation = '';
   document.querySelectorAll('.situation-chip').forEach(c => c.classList.remove('selected'));
+  // 이전 AI 코칭 답변 초기화 (저장하고 다시 열어도 빈 상태로 시작)
+  const ai = document.getElementById('ai-coaching-result');
+  if (ai) ai.innerHTML = '';
   openModal('modal-journal');
 }
 function selectSituation(el, val) {

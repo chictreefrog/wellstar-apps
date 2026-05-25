@@ -1446,6 +1446,10 @@ function updateAuthUI(user, profile) {
 
 // ==================== INIT ====================
 function init() {
+  // 서비스워커 등록 (PWA + 푸시 알림 위해 필수)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/main/sw.js').catch(err => console.error('SW 등록 실패:', err));
+  }
   // URL의 ?ref= 추천 코드 캐치 → 가입 시 자동 적용
   try {
     const ref = new URLSearchParams(location.search).get('ref');

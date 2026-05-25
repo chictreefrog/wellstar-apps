@@ -41,8 +41,12 @@ window.DinoPush = (function() {
     if (!('serviceWorker' in navigator)) return null;
     let reg = await navigator.serviceWorker.getRegistration();
     if (!reg) {
-      // 등록된 SW 없으면 main의 SW 등록 시도
-      try { reg = await navigator.serviceWorker.register('/main/sw.js', { scope: '/' }); } catch {}
+      // 등록된 SW 없으면 main의 SW 등록 시도 (default scope = /main/)
+      try { reg = await navigator.serviceWorker.register('/main/sw.js'); } catch {}
+    }
+    if (reg) {
+      // SW가 아직 active 아니면 ready 기다림 (iOS PWA는 처음 등록 시 시간 걸림)
+      try { await navigator.serviceWorker.ready; } catch {}
     }
     return reg || null;
   }
