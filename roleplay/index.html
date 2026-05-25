@@ -88,8 +88,10 @@ body.rp-chat-mode #dino-global-nav,
 body.rp-chat-mode .dino-nav{display:none !important}
 .end-btn{padding:10px 14px;border-radius:18px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;align-self:center}
 
-.chat-turn-info{padding:6px 12px;font-size:11px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)}
-.chat-turn-info .end-link{color:var(--accent);cursor:pointer;font-weight:600;margin-left:8px}
+.chat-turn-info{padding:8px 12px;font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);gap:10px}
+.chat-turn-info .turn-label{flex:1;text-align:left}
+.chat-turn-info .end-link{color:var(--accent);cursor:pointer;font-weight:700;font-size:12px;background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.4);border-radius:8px;padding:5px 12px;flex-shrink:0;font-family:inherit}
+.chat-turn-info .end-link:active{transform:scale(0.95)}
 
 /* Review screen */
 .review-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -178,8 +180,8 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
 <!-- ── 2. 채팅 ── -->
 <div class="screen" id="screenChat">
   <div class="chat-turn-info" id="chatTurnInfo">
-    <span id="chatPersonaName"></span> · <span id="chatTurnCount">0</span>/10턴
-    <span class="end-link" onclick="endSession()">종료하기</span>
+    <div class="turn-label"><span id="chatPersonaName"></span> · <span id="chatTurnCount">0</span>/10턴</div>
+    <button class="end-link" onclick="endSession()">🎯 종료 + 회고 받기</button>
   </div>
   <div class="chat-list" id="chatList"></div>
   <div class="chat-bar">
