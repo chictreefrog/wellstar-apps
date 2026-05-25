@@ -42,7 +42,8 @@
   const btn = document.createElement('button');
   btn.id = 'dino-theme-toggle';
   btn.textContent = document.body.classList.contains('light-theme') ? '🌙' : '☀️';
-  btn.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9980;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;';
+  // iOS 다이내믹 아일랜드/노치 안전영역 아래로 배치
+  btn.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);right:12px;z-index:9980;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.3);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;-webkit-tap-highlight-color:transparent;';
 
   btn.onclick = function() {
     const isLight = document.body.classList.toggle('light-theme');
