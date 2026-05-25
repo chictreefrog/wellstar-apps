@@ -442,6 +442,26 @@ window.DinoAuth = (function() {
         } catch {
           // 초대코드 실패해도 가입은 진행
         }
+      } else {
+        // 초대 코드는 없지만 앱 공유 링크의 ?ref= 가 sessionStorage에 있으면 추천인 기록
+        // (게스트로 가입해도 추천인 정보 추적 가능 → 나중에 사업자가 되면 추적 유지)
+        try {
+          const pendingRef = sessionStorage.getItem('dino_pending_ref');
+          if (pendingRef) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+              await fetch('/api/set-inviter', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ ref: pendingRef })
+              });
+            }
+            sessionStorage.removeItem('dino_pending_ref');
+          }
+        } catch {}
       }
 
       const { data: updated } = await supabase

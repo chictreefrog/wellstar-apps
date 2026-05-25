@@ -247,6 +247,13 @@ textarea.form-input { min-height:100px; resize:vertical; }
         </div>
       </div>
 
+      <!-- 내가 추천한 사람 목록 (게스트·파트너 통합) -->
+      <div id="myInvitedSection" style="display:none;margin-top:20px">
+        <div class="section-title">👀 내가 추천한 사람 <span class="badge" id="invitedCount">0</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">앱 공유나 초대코드로 가입한 분들이에요. 사업자번호 등록 시 자동으로 내 팀에 합류돼요.</div>
+        <div id="myInvitedList"></div>
+      </div>
+
     </div>
 
     <!-- ═══ LEADS TAB ═══ -->
@@ -540,6 +547,81 @@ function renderInviteSection() {
     document.getElementById('partnerBizLabel').textContent = myProfile.business_code
       ? `사업자번호 기반 코드`
       : `자동 생성 코드 (사업자번호 등록 시 변경됩니다)`;
+  }
+  // 내가 추천한 사람 목록 로드
+  loadMyInvitedPeople();
+}
+
+// 내가 추천한 사람 목록 (게스트·파트너 통합)
+async function loadMyInvitedPeople() {
+  if (!myProfile) return;
+  const sb = window.dinoSupabase;
+  if (!sb) return;
+
+  const { data: invited } = await sb.from('profiles')
+    .select('id, display_name, phone, role, business_code, team_id, guest_started_at, created_at')
+    .eq('invited_by', myProfile.id)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  const section = document.getElementById('myInvitedSection');
+  const listEl = document.getElementById('myInvitedList');
+  const countEl = document.getElementById('invitedCount');
+  if (!section || !listEl || !countEl) return;
+
+  if (!invited || invited.length === 0) {
+    section.style.display = 'block';
+    countEl.textContent = '0';
+    listEl.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>아직 추천한 사람이 없어요<br>위 코드를 카톡으로 공유해보세요</div>';
+    return;
+  }
+
+  section.style.display = 'block';
+  countEl.textContent = invited.length;
+
+  // 게스트는 D-Day 표시, 파트너는 합류 완료 표시
+  const today = new Date();
+  const TRIAL_DAYS = 7;
+  listEl.innerHTML = invited.map(p => {
+    const phoneMasked = (p.phone || '').replace(/(\d{3})(\d{4})(\d{4})/, '$1-****-$3');
+    const joinedDate = new Date(p.created_at).toLocaleDateString('ko-KR');
+    let statusBadge = '';
+    let actionBtn = '';
+    if (p.role === 'guest') {
+      const started = p.guest_started_at ? new Date(p.guest_started_at) : new Date(p.created_at);
+      const elapsed = Math.floor((today - started) / (1000 * 60 * 60 * 24));
+      const left = Math.max(0, TRIAL_DAYS - elapsed);
+      const color = left <= 1 ? '#FF453A' : left <= 3 ? '#FF9F0A' : '#30D158';
+      statusBadge = `<span style="font-size:10px;background:${color}22;color:${color};border:1px solid ${color}44;border-radius:6px;padding:2px 8px;font-weight:600">체험 ${left === 0 ? '종료' : 'D-' + left + '일'}</span>`;
+      actionBtn = `<button onclick="shareBizSignupGuide('${(p.display_name || '').replace(/'/g, "\\'")}', '${p.id}')" style="background:rgba(255,107,53,0.12);border:1px solid rgba(255,107,53,0.3);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">💬 사업자 가입 안내</button>`;
+    } else {
+      statusBadge = `<span style="font-size:10px;background:rgba(48,209,88,0.15);color:#30D158;border:1px solid rgba(48,209,88,0.3);border-radius:6px;padding:2px 8px;font-weight:600">✓ 파트너 합류</span>`;
+    }
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,107,53,0.12);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:var(--accent);font-weight:700">${(p.display_name || '?')[0]}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600">${p.display_name || '이름 없음'}</div>
+          <div style="font-size:11px;color:var(--text3)">${phoneMasked} · ${joinedDate} 가입</div>
+        </div>
+        ${statusBadge}
+      </div>
+      ${actionBtn ? `<div style="margin-top:8px;text-align:right">${actionBtn}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// 게스트에게 사업자번호 등록 안내 메시지 보내기
+function shareBizSignupGuide(name, profileId) {
+  const text = `${name ? name + '님~ ' : ''}AI 세일즈 시스템 잘 쓰고 계세요? 🦕\n\n` +
+    `사업자 등록하셨다면 앱에서 사업자번호만 추가로 입력하시면 돼요!\n` +
+    `메인 앱 → MY 탭 → 프로필 수정 → 사업자번호 입력\n\n` +
+    `자동으로 정식 파트너로 전환되고, 7일 체험 제한 없이 계속 사용 가능해요.\n` +
+    `궁금한 점 있으시면 언제든 연락주세요!`;
+  if (navigator.share) {
+    navigator.share({ title: '사업자 등록 안내', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('안내 메시지가 복사되었어요'));
   }
 }
 
