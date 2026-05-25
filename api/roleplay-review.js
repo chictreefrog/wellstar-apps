@@ -85,21 +85,41 @@ ${dialog}
 
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   let review;
+  let rawText = '';
   try {
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: { temperature: 0.7, maxOutputTokens: 800, responseMimeType: 'application/json' }
+      config: { temperature: 0.7, maxOutputTokens: 1500, responseMimeType: 'application/json' }
     });
-    const text = (response.text || '').trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
-    review = JSON.parse(text);
+    // response.text 우선, 없으면 candidates 경로 폴백
+    rawText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cleaned = rawText.trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
+    if (!cleaned) throw new Error('empty_response');
+    review = JSON.parse(cleaned);
   } catch (err) {
-    console.error('roleplay-review error:', err);
-    return res.status(503).json({ error: 'ai_unavailable' });
+    console.error('roleplay-review error:', err, 'raw:', rawText.slice(0, 300));
+    // 한 번 더 재시도 (responseMimeType 없이)
+    try {
+      const retry = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt + '\n\n반드시 위 JSON 형식으로만 응답하세요.' }] }],
+        config: { temperature: 0.5, maxOutputTokens: 1500 }
+      });
+      const text2 = (retry.text || '').trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
+      // { 첫 등장부터 } 끝까지 추출
+      const m = text2.match(/\{[\s\S]*\}/);
+      if (m) review = JSON.parse(m[0]);
+    } catch (err2) {
+      console.error('roleplay-review retry error:', err2);
+    }
+    if (!review) {
+      return res.status(503).json({ error: 'ai_unavailable', detail: String(err?.message || err).slice(0, 200) });
+    }
   }
 
   if (!review?.good || !review?.improve || !review?.summary) {
-    return res.status(503).json({ error: 'ai_format' });
+    return res.status(503).json({ error: 'ai_format', got: Object.keys(review || {}) });
   }
 
   // DB 업데이트

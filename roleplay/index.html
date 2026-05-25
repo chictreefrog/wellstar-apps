@@ -195,8 +195,15 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
 <div class="screen" id="screenReview">
   <div class="screen-scroll">
     <div id="reviewLoading" class="loading-block">
-      <div class="loading-spinner"></div>
-      <div>옆집디노 코치가 회고를 정리하고 있어요...</div>
+      <div class="loading-spinner" id="reviewSpinner"></div>
+      <div id="reviewLoadingText">옆집디노 코치가 회고를 정리하고 있어요...</div>
+      <div id="reviewErrorBox" style="display:none;margin-top:16px">
+        <div style="color:var(--red);margin-bottom:14px">회고 생성에 실패했어요</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button onclick="retryReview()" style="padding:10px 18px;border:none;border-radius:10px;background:var(--accent);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔄 다시 시도</button>
+          <button onclick="resetAll()" style="padding:10px 18px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit">처음으로</button>
+        </div>
+      </div>
     </div>
     <div id="reviewContent" style="display:none">
       <div class="review-card review-summary">
@@ -621,9 +628,31 @@ async function endSession(skipConfirm) {
   document.getElementById('sendBtn').disabled = true;
   document.getElementById('micBtn').disabled = true;
   showScreen('Review');
+  showReviewLoading();
+  await fetchReview();
+}
+
+function showReviewLoading() {
+  document.getElementById('reviewSpinner').style.display = 'block';
+  document.getElementById('reviewLoadingText').style.display = 'block';
+  document.getElementById('reviewErrorBox').style.display = 'none';
   document.getElementById('reviewLoading').style.display = 'block';
   document.getElementById('reviewContent').style.display = 'none';
+}
 
+function showReviewError() {
+  document.getElementById('reviewSpinner').style.display = 'none';
+  document.getElementById('reviewLoadingText').style.display = 'none';
+  document.getElementById('reviewErrorBox').style.display = 'block';
+}
+
+function retryReview() {
+  showReviewLoading();
+  fetchReview();
+}
+
+async function fetchReview() {
+  if (!currentSession || !currentSession.id) return;
   try {
     const token = await getAccessToken();
     const res = await fetch('/api/roleplay-review', {
@@ -633,9 +662,7 @@ async function endSession(skipConfirm) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.review) {
-      showToast('회고 생성 실패. 잠시 후 다시 시도해주세요.');
-      // 폴백: 채팅 화면으로 돌아감
-      setTimeout(() => showScreen('Chat'), 1500);
+      showReviewError();
       return;
     }
     const r = data.review;
@@ -646,13 +673,12 @@ async function endSession(skipConfirm) {
     document.getElementById('reviewLoading').style.display = 'none';
     document.getElementById('reviewContent').style.display = 'block';
 
-    // 메인 앱 활동 로그에 기록 (사용 도구 통계용)
+    // 메인 앱 활동 로그 (사용 도구 통계)
     try {
       window.dinoLogActivity && window.dinoLogActivity('roleplay', '롤플레이 완료: ' + currentSession.persona_name);
     } catch {}
   } catch (err) {
-    showToast('네트워크 오류');
-    setTimeout(() => showScreen('Chat'), 1500);
+    showReviewError();
   }
 }
 
