@@ -67,8 +67,10 @@ module.exports = async function handler(req, res) {
     'Content-Type': 'application/json',
   };
 
-  const { session_id, persona_id, custom_context, level, history, message } = req.body || {};
-  if (!message) return res.status(400).json({ error: 'message required' });
+  const { session_id, persona_id, custom_context, level, history, message, mode } = req.body || {};
+  const sessionMode = (mode === 'reverse') ? 'reverse' : 'normal';
+  const isReverseFirstTurn = sessionMode === 'reverse' && (!history || history.length === 0) && !message;
+  if (!message && !isReverseFirstTurn) return res.status(400).json({ error: 'message required' });
   if (!persona_id) return res.status(400).json({ error: 'persona_id required' });
 
   // 2. role 확인 → 일일 한도
@@ -119,6 +121,7 @@ module.exports = async function handler(req, res) {
         persona_name: personaName,
         custom_context: custom_context || null,
         level: level || 'normal',
+        mode: sessionMode,
         messages: [],
         turn_count: 0
       })
@@ -129,13 +132,36 @@ module.exports = async function handler(req, res) {
     turnCount = 0;
   }
 
-  // 4. Gemini 시스템 프롬프트 구성
+  // 4. Gemini 시스템 프롬프트 구성 (mode별로 다름)
   const personaCfg = NM_PERSONAS[persona_id];
-  const personaSystem = personaCfg ? personaCfg.system : '당신은 일반 한국 성인입니다. 영업 권유에 자연스럽게 반응하세요.';
+  const personaSystem = personaCfg ? personaCfg.system : '당신은 일반 한국 성인입니다.';
   const levelGuide = LEVEL_GUIDE[level] || LEVEL_GUIDE.normal;
-  const extraContext = custom_context ? `\n\n[영업인이 알려준 추가 정보 — 자연스럽게 반영]\n${custom_context}` : '';
+  const extraContext = custom_context ? `\n\n[추가 정보]\n${custom_context}` : '';
 
-  const systemPrompt = `당신은 옆집디노 NM 영업인이 다가오는 상황의 '고객 역할'입니다. 영업 코치가 아니라 진짜 고객처럼 답변하세요.
+  let systemPrompt;
+  if (sessionMode === 'reverse') {
+    // reverse: AI=영업인, 사용자=고객 (페르소나 연기)
+    systemPrompt = `당신은 옆집디노 NM 세일즈 베테랑입니다. 사용자는 아래 페르소나의 고객을 연기하고 있고, 당신은 그 고객을 자연스럽고 진정성 있게 설득하는 NM 영업인 역할을 합니다.
+
+[고객 페르소나 — 사용자가 연기 중]
+${personaSystem}
+${extraContext}
+
+[고객의 거절 강도]
+${levelGuide}
+
+[영업인 역할 원칙]
+1. 첫 메시지는 자연스러운 인사·접근 — 영업 티 나지 않게, 따뜻한 한 마디로 시작.
+2. 답변은 1~3문장으로 짧게. 실제 카톡·대화처럼.
+3. 고객의 거절·회피를 먼저 인정하고 공감 → 그 다음 다른 관점·가치 제시.
+4. 한 번에 다 팔지 말 것 — 관계 → 신뢰 → 가치 → 권유 순서.
+5. 강압·과장 절대 금지. NM의 윤리적 접근만.
+6. 구체적 비유·사례·경험담 활용 (예: "저도 처음엔 그랬어요").
+7. 고객이 마음을 닫으면 더 밀지 말고 한 발 물러서기 ("부담드린 거면 죄송해요").
+8. 마크다운 금지. 일반 텍스트만.`;
+  } else {
+    // normal: AI=고객, 사용자=영업인 (기존)
+    systemPrompt = `당신은 옆집디노 NM 영업인이 다가오는 상황의 '고객 역할'입니다. 영업 코치가 아니라 진짜 고객처럼 답변하세요.
 
 [페르소나]
 ${personaSystem}
@@ -153,6 +179,7 @@ ${levelGuide}
 6. 절대 영업인 모드로 변하지 말 것 — 끝까지 고객 페르소나 유지.
 7. 마크다운(#, **, ---) 금지, 일반 대화 텍스트만.
 8. 영업인이 "지금 어땠어요?" 같은 메타 질문하면 "지금 대화 중이에요" 같이 캐릭터 유지.`;
+  }
 
   // 5. Gemini 호출
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -160,7 +187,12 @@ ${levelGuide}
   (history || []).forEach(m => {
     contents.push({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] });
   });
-  contents.push({ role: 'user', parts: [{ text: message }] });
+  if (isReverseFirstTurn) {
+    // reverse 모드 첫 턴: 시드 user 신호로 AI(영업인) 첫 인사 생성
+    contents.push({ role: 'user', parts: [{ text: '[시작 신호 — 영업인 입장에서 자연스러운 첫 인사·접근을 한국어로 해주세요. 1~2문장으로 짧고 따뜻하게. 사용자에겐 이 신호가 보이지 않습니다.]' }] });
+  } else {
+    contents.push({ role: 'user', parts: [{ text: message }] });
+  }
 
   let reply = '';
   try {
@@ -177,11 +209,15 @@ ${levelGuide}
   }
 
   // 6. 세션 메시지 업데이트
-  const newMessages = (history || []).concat([
-    { role: 'user', content: message, ts: Date.now() },
-    { role: 'model', content: reply, ts: Date.now() }
-  ]);
-  turnCount = Math.floor(newMessages.length / 2);
+  // reverse 첫 턴은 시드 user 메시지를 저장하지 않음 (AI 인사만 저장)
+  const newMessages = isReverseFirstTurn
+    ? (history || []).concat([{ role: 'model', content: reply, ts: Date.now() }])
+    : (history || []).concat([
+        { role: 'user', content: message, ts: Date.now() },
+        { role: 'model', content: reply, ts: Date.now() }
+      ]);
+  // turn_count = 사용자가 보낸 메시지 수 (실제 대응 횟수)
+  turnCount = newMessages.filter(m => m.role === 'user').length;
 
   await fetch(`${SUPABASE_URL}/rest/v1/roleplay_sessions?id=eq.${sessionId}`, {
     method: 'PATCH',

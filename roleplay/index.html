@@ -140,7 +140,19 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
     </div>
 
     <div class="section">
-      <div class="section-label">📌 어떤 고객과 연습할까요?</div>
+      <div class="section-label">🎭 역할 선택</div>
+      <div class="level-row">
+        <button class="level-btn selected" data-mode="normal" onclick="selectMode('normal')">
+          <span class="lv-icon">💼</span>내가 영업인<br><span style="font-size:10px;color:var(--text3);font-weight:400">AI가 고객 (거절)</span>
+        </button>
+        <button class="level-btn" data-mode="reverse" onclick="selectMode('reverse')">
+          <span class="lv-icon">😶</span>내가 고객<br><span style="font-size:10px;color:var(--text3);font-weight:400">AI가 영업인 (설득)</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label" id="personaSectionLabel">📌 어떤 고객과 연습할까요?</div>
       <div class="persona-grid" id="personaGrid"></div>
     </div>
 
@@ -228,7 +240,8 @@ const MAX_TURNS = 10;
 
 let selectedPersona = null;
 let selectedLevel = 'normal';
-let currentSession = null; // { id, persona, level, custom_context, history:[] }
+let selectedMode = 'normal'; // 'normal' (AI=고객) | 'reverse' (AI=영업인)
+let currentSession = null; // { id, persona, level, mode, custom_context, history:[] }
 
 // ═══ UI 초기화 ═══
 function renderPersonas() {
@@ -255,9 +268,23 @@ function selectPersona(id) {
 
 function selectLevel(lv) {
   selectedLevel = lv;
-  document.querySelectorAll('.level-btn').forEach(b => {
+  document.querySelectorAll('.level-btn[data-level]').forEach(b => {
     b.classList.toggle('selected', b.dataset.level === lv);
   });
+}
+
+function selectMode(m) {
+  selectedMode = m;
+  document.querySelectorAll('.level-btn[data-mode]').forEach(b => {
+    b.classList.toggle('selected', b.dataset.mode === m);
+  });
+  // 페르소나 섹션 라벨 동적 변경
+  const lbl = document.getElementById('personaSectionLabel');
+  if (lbl) {
+    lbl.textContent = m === 'reverse'
+      ? '📌 어떤 고객을 연기할까요? (내가 이 고객 역할)'
+      : '📌 어떤 고객과 연습할까요?';
+  }
 }
 
 // ═══ 화면 전환 ═══
@@ -294,14 +321,20 @@ function goHome() {
 function resetAll() {
   selectedPersona = null;
   selectedLevel = 'normal';
+  selectedMode = 'normal';
   currentSession = null;
   document.getElementById('customContext').value = '';
   document.getElementById('chatInput').value = '';
+  document.getElementById('chatInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('micBtn').disabled = false;
   document.getElementById('chatList').innerHTML = '';
   document.getElementById('reviewContent').style.display = 'none';
   document.getElementById('reviewLoading').style.display = 'block';
   document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('selected', b.dataset.level === 'normal'));
+  document.querySelectorAll('.level-btn[data-level]').forEach(b => b.classList.toggle('selected', b.dataset.level === 'normal'));
+  document.querySelectorAll('.level-btn[data-mode]').forEach(b => b.classList.toggle('selected', b.dataset.mode === 'normal'));
+  document.getElementById('personaSectionLabel').textContent = '📌 어떤 고객과 연습할까요?';
   document.getElementById('startBtn').disabled = true;
   showScreen('Setup');
   document.getElementById('rpTitle').textContent = '🎭 세일즈 롤플레이';
@@ -318,18 +351,76 @@ async function startSession() {
     persona_name: persona.name,
     persona_icon: persona.icon,
     level: selectedLevel,
+    mode: selectedMode,
     custom_context: document.getElementById('customContext').value.trim(),
-    history: []
+    history: [],
+    endTriggered: false
   };
   document.getElementById('rpTitle').textContent = persona.icon + ' ' + persona.name;
   const lvLabel = { soft:'🟢 소프트', normal:'🟡 일반', hard:'🔴 어려움' }[selectedLevel];
-  document.getElementById('rpSub').textContent = lvLabel + ' · 실전 연습';
+  const modeLabel = selectedMode === 'reverse' ? '🎭 내가 고객' : '💼 내가 영업인';
+  document.getElementById('rpSub').textContent = lvLabel + ' · ' + modeLabel;
   document.getElementById('chatPersonaName').textContent = persona.icon + ' ' + persona.name;
+  // 입력 placeholder mode에 따라
+  const inp = document.getElementById('chatInput');
+  inp.placeholder = selectedMode === 'reverse'
+    ? '고객 입장에서 반응해보세요... (🎤 음성)'
+    : '여기에 대응 메시지 입력... (🎤 음성)';
   updateTurnCount(0);
   document.getElementById('chatList').innerHTML = '';
-  addMeta('롤플레이 시작! 영업인 입장에서 먼저 인사·접근을 시작해보세요.');
+  if (selectedMode === 'reverse') {
+    addMeta('롤플레이 시작! AI 영업인이 먼저 다가옵니다. 고객 입장에서 반응해보세요.');
+  } else {
+    addMeta('롤플레이 시작! 영업인 입장에서 먼저 인사·접근을 시작해보세요.');
+  }
   showScreen('Chat');
-  setTimeout(() => document.getElementById('chatInput').focus(), 300);
+
+  if (selectedMode === 'reverse') {
+    // reverse: AI(영업인)가 먼저 인사
+    await requestFirstAiTurn();
+  } else {
+    setTimeout(() => document.getElementById('chatInput').focus(), 300);
+  }
+}
+
+async function requestFirstAiTurn() {
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+  try {
+    const token = await getAccessToken();
+    if (!token) { hideTyping(); showToast('로그인이 필요해요'); return; }
+    const res = await fetch('/api/roleplay-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({
+        persona_id: currentSession.persona_id,
+        custom_context: currentSession.custom_context,
+        level: currentSession.level,
+        mode: currentSession.mode,
+        history: [],
+        message: '' // 빈 메시지 + reverse → 서버가 시드로 AI 첫 인사 생성
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    hideTyping();
+    if (res.status === 429) {
+      addMeta('⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'));
+      return;
+    }
+    if (!res.ok || !data.reply) {
+      addMeta('AI 첫 응답 실패. 새로고침 후 다시 시도해주세요.');
+      return;
+    }
+    currentSession.id = data.session_id;
+    currentSession.history.push({ role: 'model', content: data.reply });
+    addBubble(data.reply, 'ai');
+    setTimeout(() => document.getElementById('chatInput').focus(), 300);
+  } catch (err) {
+    hideTyping();
+    addMeta('네트워크 오류: ' + String(err));
+  } finally {
+    document.getElementById('sendBtn').disabled = false;
+  }
 }
 
 function updateTurnCount(n) { document.getElementById('chatTurnCount').textContent = n; }
@@ -470,6 +561,7 @@ async function sendMessage() {
         persona_id: currentSession.persona_id,
         custom_context: currentSession.custom_context,
         level: currentSession.level,
+        mode: currentSession.mode,
         history: currentSession.history,
         message: msg
       })
@@ -495,11 +587,16 @@ async function sendMessage() {
     addBubble(data.reply, 'ai');
     updateTurnCount(data.turn_count);
 
-    // 10턴 도달 시 자동 종료
-    if (data.turn_count >= MAX_TURNS) {
+    // 10턴 도달 시 자동 종료 (한 번만 발동)
+    if (data.turn_count >= MAX_TURNS && !currentSession.endTriggered) {
+      currentSession.endTriggered = true;
+      // 입력 잠금
+      document.getElementById('chatInput').disabled = true;
+      document.getElementById('sendBtn').disabled = true;
+      document.getElementById('micBtn').disabled = true;
       setTimeout(() => {
         addMeta(MAX_TURNS + '턴 도달! 회고로 넘어갑니다.');
-        setTimeout(endSession, 1500);
+        setTimeout(() => endSession(true), 1500); // skipConfirm
       }, 600);
     }
   } catch (err) {
@@ -511,12 +608,16 @@ async function sendMessage() {
 }
 
 // ═══ 종료 / 회고 ═══
-async function endSession() {
+async function endSession(skipConfirm) {
   if (!currentSession || !currentSession.id) {
     showToast('아직 대화 내용이 없어요');
     return;
   }
-  if (!confirm('대화를 끝내고 코치 회고를 받을까요?')) return;
+  if (!skipConfirm && !confirm('대화를 끝내고 코치 회고를 받을까요?')) return;
+  // 입력 잠금 (확실히)
+  document.getElementById('chatInput').disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('micBtn').disabled = true;
   showScreen('Review');
   document.getElementById('reviewLoading').style.display = 'block';
   document.getElementById('reviewContent').style.display = 'none';
