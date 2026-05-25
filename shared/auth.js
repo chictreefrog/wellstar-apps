@@ -175,6 +175,14 @@ window.DinoAuth = (function() {
         if (pending && inviteInput && !inviteInput.value) {
           inviteInput.value = pending;
         }
+        // 초대 코드가 있으면 = 팀 합류 흐름 → 사업자번호 필수 표시
+        const bizInput = document.getElementById('dino-biz-code');
+        if (bizInput) {
+          const hasInvite = (pending || inviteInput?.value || '').trim().length > 0;
+          bizInput.placeholder = hasInvite
+            ? '사업자번호 / 설계사번호 (필수 — 팀 합류 시)'
+            : '사업자번호 / 설계사번호 (선택)';
+        }
       } catch {}
     }
   }
@@ -386,8 +394,19 @@ window.DinoAuth = (function() {
   // ═══ 프로필 저장 ═══
   async function saveProfile() {
     const name = document.getElementById('dino-name').value.trim();
+    const bizCode = document.getElementById('dino-biz-code').value.trim();
+    const inviteCode = document.getElementById('dino-invite').value.trim().toUpperCase();
+
     if (!name) {
       document.getElementById('dino-error-profile').textContent = '이름을 입력해주세요';
+      return;
+    }
+
+    // 팀 초대 코드로 합류하는 경우 = 사업자만 합류 가능
+    // 본인의 사업자번호 / 설계사번호 입력이 필수
+    if (inviteCode && !bizCode) {
+      document.getElementById('dino-error-profile').textContent =
+        '팀에 합류하려면 본인의 사업자번호 / 설계사번호 입력이 필요해요';
       return;
     }
 
@@ -396,8 +415,6 @@ window.DinoAuth = (function() {
     btn.textContent = '저장 중...';
 
     try {
-      const bizCode = document.getElementById('dino-biz-code').value.trim();
-      const inviteCode = document.getElementById('dino-invite').value.trim().toUpperCase();
 
       const { error: profileErr } = await supabase
         .from('profiles')
