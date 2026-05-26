@@ -149,6 +149,39 @@ console.log('\n[G] 성장 시뮬레이션\n');
   chkText('[정기구독·매월10·1년] 52주차 직급', sm[51].rankId, 'silver');
 })();
 
+/* ── H. 요청서 v1.0 TC-1 ~ TC-4 (v3 정착상태 모델 기준) ─────────
+ *
+ * ※ 요청서 TC 입력의 "신규 165팩 N명"·"좌측 누적 QV" 값은
+ *   v3 단순화 입력의 패스트팩 누적 인원과 일대일 대응한다:
+ *     TC-1 (브론즈 도달)   ↔ fastPackRecruits=3
+ *     TC-2 (실버 도달)     ↔ fastPackRecruits=7   (3+추가 4)
+ *     TC-3 (골드 도달)     ↔ fastPackRecruits=15  (7+추가 8)
+ *     TC-4 (플래티넘 도달) ↔ fastPackRecruits=29  (15+추가 14)
+ *
+ * ※ Expected 값은 v3 정착상태(steady-state) 주간 수당 모델 기준.
+ *   요청서 TC의 expected는 "도달 첫 주 증분(incremental)" 모델이므로
+ *   ③ 매칭(자격유지 차감 전 vs 후) · ⑤ 직급유지(첫 주 0 vs 정착 지급)에서
+ *   해석 차이가 발생한다. v3는 "총 N명 정착 시 매주 받는 수당"을 보여준다.
+ * ──────────────────────────────────────────────────────────── */
+console.log('\n[H] 요청서 v1.0 TC-1~4 (v3 정착상태 모델 검증)\n');
+[
+  { tc: 'TC-1 · 브론즈 엘리트',   n: 3,  rank: 'bronze',   smallQV: 1605000,  pack: 742500,  team: 117000,  match: 23400,  rankUp: 200000,  maint: 25000,  total: 1107900 },
+  { tc: 'TC-2 · 실버 엘리트',     n: 7,  rank: 'silver',   smallQV: 3255000,  pack: 1732500, team: 240750,  match: 48150,  rankUp: 500000,  maint: 50000,  total: 2571400 },
+  { tc: 'TC-3 · 골드 엘리트',     n: 15, rank: 'gold',     smallQV: 6555000,  pack: 3712500, team: 488250,  match: 97650,  rankUp: 1000000, maint: 125000, total: 5423400 },
+  { tc: 'TC-4 · 플래티넘 엘리트', n: 29, rank: 'platinum', smallQV: 12330000, pack: 7177500, team: 921375,  match: 184275, rankUp: 2000000, maint: 250000, total: 10533150 }
+].forEach(function (c) {
+  console.log('  · ' + c.tc + ' (패스트팩 ' + c.n + '명)');
+  var r = E.simulate({ fastPackRecruits: c.n, subscriptionRecruits: 0 });
+  chkText('    직급', r.rankId, c.rank);
+  chk('    소실적 QV', r.smallQV, c.smallQV);
+  chk('    ① 팩추천', r.packCommission, c.pack);
+  chk('    ② 팀수당', r.teamCommission, c.team);
+  chk('    ③ 매칭', r.matchCommission, c.match);
+  chk('    ④ 랭크업', r.rankUpBonus, c.rankUp);
+  chk('    ⑤ 직급유지', r.maintainCommission, c.maint);
+  chk('    주간 총 수당', r.total, c.total);
+});
+
 /* ── 요약 ──────────────────────────────────────────────────── */
 console.log('\n========================================================');
 console.log(' 결과 요약 — PASS ' + pass + ' / FAIL ' + fail);

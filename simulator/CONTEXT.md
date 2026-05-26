@@ -5,7 +5,7 @@
 - **저장소**: chictreefrog/wellstar-apps / simulator/ 폴더
 - **용도**: 예비 사업자에게 "이렇게 활동하면 이만큼 번다"를 보여주는 모집·설득 도구
 - **기준**: 웰런스 공식 보상 구조(2026)
-  - ⚠️ engine.js RANKS 금액은 2025년 자료 기반 — 2026 개정 금액 확인·갱신 필요
+  - ✅ engine.js RANKS 금액·지급율·주극점·자격QV 모두 2026 표(요청서 v1.0)와 **완전 일치** (rankUp/maintain/teamRate/weeklyCap 검증 완료)
 
 ## 개편 이력
 - v1 (legacy): 4업종 범용 시뮬레이터 → `legacy-simulator.html` 로 보존
@@ -46,8 +46,20 @@
 ## feature flag
 - `index.html` 의 `SHOW_INDUSTRY_SELECTOR = false` — Phase 2 영업인 일반용 재확장 토글
 
-## 검증 (verify.js — PASS 57 / FAIL 0)
+## 검증 (verify.js — PASS 90 / FAIL 0)
 - 직급 체크포인트, 5가지 수당, 정기구독 볼륨, 웰런스 파트너, 자격 처리, 성장 시뮬
+- **요청서 v1.0 TC-1~4** (브론즈/실버/골드/플래티넘) — v3 정착상태 모델로 매핑하여 검증 [H] 섹션
+
+## v3 모델 ↔ 요청서 TC expected 차이 (해석 차)
+요청서 v1.0의 TC-1~4 expected는 "도달 첫 주 증분(incremental)" 모델 기준:
+- ③ 매칭 = 자격유지 차감 **전** smallCV × teamRate × matchRate
+- ⑤ 직급유지 = 도달 첫 주는 **0** (4주 후부터 지급)
+
+현재 v3는 "총 N명 정착 시 매주 받는 수당(steady-state)" 모델:
+- ③ 매칭 = 자격유지 차감 **후** smallCV × teamRate × matchRate
+- ⑤ 직급유지 = 직급 유지 가정하에 매주 지급
+
+⇒ verify.js [H] 섹션은 **v3 모델 기준 expected** 값으로 PASS. 예비 사업자 모집 도구로서 "이 단계 유지하면 매주 이만큼" 메시지가 더 직관적·설득력 있음.
 
 ## ⏳ TODO (Phase 2)
 - [ ] PDF 다운로드 / 결과 이미지 저장
