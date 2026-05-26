@@ -145,6 +145,18 @@
       ]
     },
     {
+      "source": "/roleplay/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/diary/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
       "source": "/saju/sw.js",
       "headers": [
         { "key": "Service-Worker-Allowed", "value": "/saju/" },

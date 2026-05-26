@@ -141,6 +141,16 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
       <p>AI 고객과 실전처럼 대화하면서<br>거절 대응을 연습해요</p>
     </div>
 
+    <!-- 오늘 사용 한도 표시 -->
+    <div id="usageBar" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:22px">📊</div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:2px">오늘 사용</div>
+        <div id="usageText" style="font-size:15px;font-weight:800">불러오는 중...</div>
+      </div>
+      <div id="usageLimit" style="font-size:11px;color:var(--text3);text-align:right;line-height:1.5"></div>
+    </div>
+
     <div class="section">
       <div class="section-label">🎭 역할 선택</div>
       <div class="level-row">
@@ -173,7 +183,6 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
     </div>
 
     <button class="start-btn" id="startBtn" onclick="startSession()" disabled>롤플레이 시작 →</button>
-    <div class="daily-hint">하루 사용 한도: 게스트 1회 / 회원 5회</div>
 
     <!-- 과거 회고 목록 -->
     <div class="section" id="historySection" style="margin-top:24px;display:none">
@@ -292,7 +301,9 @@ function selectPersona(id) {
   document.querySelectorAll('.persona-card').forEach(c => {
     c.classList.toggle('selected', c.dataset.persona === id);
   });
-  document.getElementById('startBtn').disabled = false;
+  const startBtn = document.getElementById('startBtn');
+  // 한도 도달 상태(locked)면 disabled 유지
+  if (!startBtn.dataset.locked) startBtn.disabled = false;
 }
 
 function selectLevel(lv) {
@@ -697,8 +708,9 @@ async function fetchReview() {
     try {
       window.dinoLogActivity && window.dinoLogActivity('roleplay', '롤플레이 완료: ' + currentSession.persona_name);
     } catch {}
-    // 회고 목록 갱신 (다음에 메인 가면 보임)
+    // 회고 목록 + 사용량 갱신 (다음에 메인 가면 반영)
     loadHistory().catch(() => {});
+    loadTodayUsage().catch(() => {});
   } catch (err) {
     showReviewError();
   }
@@ -720,6 +732,53 @@ function showToast(msg) {
   t.textContent = msg;
   t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 2500);
+}
+
+// ═══ 오늘 사용 횟수 표시 ═══
+async function loadTodayUsage() {
+  if (!window.dinoSupabase) return;
+  try {
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) return;
+
+    // KST 자정 계산 (UTC 기준)
+    const now = new Date();
+    const kstNow = new Date(now.getTime() + 9 * 3600 * 1000);
+    kstNow.setUTCHours(0, 0, 0, 0);
+    const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+
+    // 오늘 시작한 세션 수 + 본인 role
+    const [{ count }, profileRes] = await Promise.all([
+      window.dinoSupabase
+        .from('roleplay_sessions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+        .gte('created_at', kstMidnightUTC.toISOString()),
+      window.dinoSupabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+    ]);
+
+    const role = profileRes?.data?.role || 'guest';
+    const limit = role === 'guest' ? 1 : 5;
+    const used = count || 0;
+    const remaining = Math.max(0, limit - used);
+
+    document.getElementById('usageText').innerHTML =
+      `<span style="color:${remaining === 0 ? '#FF453A' : 'var(--accent)'}">${used}회</span> / ${limit}회`;
+    document.getElementById('usageLimit').innerHTML =
+      `남은 횟수<br><b style="color:${remaining === 0 ? '#FF453A' : 'var(--green)'};font-size:14px">${remaining}회</b>`;
+
+    // 한도 다 쓰면 시작 버튼 라벨 변경 (단, 인원 제한 명시)
+    const startBtn = document.getElementById('startBtn');
+    if (remaining === 0) {
+      startBtn.textContent = '오늘 사용 한도 도달 — 내일 다시';
+      startBtn.disabled = true;
+      startBtn.dataset.locked = '1';
+    }
+  } catch (e) { console.error('usage load err:', e); }
 }
 
 // ═══ 과거 세션 목록 (회고 완료 + 미완성 모두) ═══
@@ -859,13 +918,19 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
   });
-  // 로그인 후 회고 목록 로드
+  // 로그인 후 회고 목록 + 사용량 로드
   window.addEventListener('dino-auth-change', (e) => {
-    if (e.detail?.user) loadHistory();
+    if (e.detail?.user) {
+      loadHistory();
+      loadTodayUsage();
+    }
   });
   // 이미 로그인 상태면 바로 로드
   setTimeout(() => {
-    if (window.DinoAuth?.isLoggedIn?.()) loadHistory();
+    if (window.DinoAuth?.isLoggedIn?.()) {
+      loadHistory();
+      loadTodayUsage();
+    }
   }, 800);
 });
 

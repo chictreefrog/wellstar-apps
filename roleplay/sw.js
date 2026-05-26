@@ -1,4 +1,4 @@
-const CACHE_NAME = 'roleplay-v7';
+const CACHE_NAME = 'roleplay-v8';
 const APP_PATH = '/roleplay/';
 
 self.addEventListener('install', e => {
