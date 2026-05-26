@@ -664,6 +664,18 @@ textarea { resize: none; min-height: 80px; }
   </div>
 </div>
 
+<!-- ══ 거절 저널 상세 모달 ══ -->
+<div id="modal-journal-detail" class="modal-overlay" onclick="closeModalIf(event,'modal-journal-detail')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💔 거절 기록 상세</div>
+    <div id="journal-detail-body"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-secondary" onclick="closeModal('modal-journal-detail')" style="flex:1">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 거절 저널 모달 ══ -->
 <div id="modal-journal" class="modal-overlay" onclick="closeModalIf(event,'modal-journal')">
   <div class="modal">
@@ -1278,15 +1290,19 @@ function renderJournalList() {
   el.innerHTML = journals.map(j => {
     const dateLabel = (j.date || '').slice(5).replace('-', '월 ') + '일';
     const sit = sitLabels[j.situation] || j.situation || '거절';
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+    const hasCoaching = !!(j.coaching && j.coaching.length > 10);
+    // 카드 전체를 클릭 가능하게 (삭제 버튼은 stopPropagation)
+    return `<div onclick="openJournalDetail('${j.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:transform .15s">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;color:var(--text)">${j.customer || '고객 미입력'}</span>
         <span style="font-size:11px;color:#FF9F0A;background:rgba(255,159,10,0.12);border-radius:10px;padding:2px 8px">${sit}</span>
+        ${hasCoaching ? '<span style="font-size:11px;color:var(--accent);background:rgba(255,107,53,0.12);border-radius:10px;padding:2px 8px">🦕 코칭</span>' : ''}
         <span style="font-size:11px;color:var(--text3);margin-left:auto">${dateLabel}</span>
-        <button onclick="deleteJournal('${j.id}')" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:0 2px" title="삭제">×</button>
+        <button onclick="event.stopPropagation();deleteJournal('${j.id}')" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="삭제">×</button>
       </div>
       ${j.feeling ? `<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:6px"><b style="color:var(--text3);font-size:11px">느낌:</b> ${j.feeling}</div>` : ''}
       ${j.next ? `<div style="font-size:13px;color:var(--text2);line-height:1.5"><b style="color:var(--text3);font-size:11px">다음에:</b> ${j.next}</div>` : ''}
+      ${hasCoaching ? '<div style="font-size:11px;color:var(--accent);margin-top:8px;text-align:right">탭해서 코칭 보기 →</div>' : ''}
     </div>`;
   }).join('');
 }
@@ -1297,6 +1313,58 @@ function deleteJournal(id) {
   save(KEYS.journal, journals);
   renderJournalList();
   showToast('기록 삭제됨');
+}
+
+// 거절 기록 카드 클릭 → 상세 모달 (코칭 내용 포함)
+function openJournalDetail(id) {
+  const j = load(KEYS.journal).find(x => x.id === id);
+  if (!j) return;
+  const sitLabels = {
+    '처음부터 관심없음':'처음부터 관심없음',
+    '생각해보겠다 후 연락두절':'생각본다 후 잠수',
+    '가격 문제':'가격 거절',
+    '이미 지인이 있음':'지인 있음',
+    '기타':'기타'
+  };
+  const sit = sitLabels[j.situation] || j.situation || '거절';
+  const dateLabel = (j.date || '').replace(/-/g, '.');
+  const hasCoaching = !!(j.coaching && j.coaching.length > 10);
+
+  const body = document.getElementById('journal-detail-body');
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:15px;font-weight:700">${j.customer || '고객 미입력'}</span>
+      <span style="font-size:11px;color:#FF9F0A;background:rgba(255,159,10,0.12);border-radius:10px;padding:2px 8px">${sit}</span>
+      <span style="font-size:12px;color:var(--text3);margin-left:auto">${dateLabel}</span>
+    </div>
+    ${j.feeling ? `<div style="background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">💭 그때 내 느낌</div><div style="font-size:14px;color:var(--text);line-height:1.6">${j.feeling}</div></div>` : ''}
+    ${j.next ? `<div style="background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:14px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">🎯 다음에는 이렇게</div><div style="font-size:14px;color:var(--text);line-height:1.6">${j.next}</div></div>` : ''}
+    ${hasCoaching
+      ? `<div style="border-top:1px solid var(--border);padding-top:14px"><div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:10px">🦕 옆집디노의 코칭</div><div class="ai-result" style="background:rgba(255,107,53,0.06);border-left:3px solid var(--accent);padding:14px;border-radius:8px;font-size:14px;line-height:1.7">${j.coaching}</div></div>`
+      : `<div style="border-top:1px solid var(--border);padding-top:14px;text-align:center"><div style="font-size:13px;color:var(--text3);margin-bottom:10px">이 기록엔 코칭이 없어요</div><button onclick="regenerateCoachingForJournal('${j.id}')" style="padding:10px 20px;border:none;border-radius:10px;background:var(--accent);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🦕 지금 코칭 받기</button></div>`
+    }
+  `;
+  openModal('modal-journal-detail');
+}
+
+// 코칭이 없는 기존 기록에 코칭 새로 받기
+async function regenerateCoachingForJournal(id) {
+  const journals = load(KEYS.journal);
+  const j = journals.find(x => x.id === id);
+  if (!j) return;
+  const btnArea = document.querySelector('#journal-detail-body button');
+  if (btnArea) { btnArea.disabled = true; btnArea.textContent = '받는 중...'; }
+  try {
+    const result = await callDiaryAI('coaching', { situation: j.situation, feeling: j.feeling });
+    j.coaching = result;
+    save(KEYS.journal, journals);
+    openJournalDetail(id);  // 모달 다시 그리기
+    renderJournalList();    // 목록 카드에 '🦕 코칭' 배지 갱신
+  } catch (err) {
+    if (btnArea) { btnArea.disabled = false; btnArea.textContent = '🔄 다시 시도'; }
+    if (err.code === 'ai_truncated') showToast('응답이 끊겼어요. 다시 시도해주세요');
+    else showToast('네트워크 오류');
+  }
 }
 
 function saveGoals() {
@@ -1332,6 +1400,9 @@ function saveJournal() {
   const journals = load(KEYS.journal);
   const customer = document.getElementById('j-customer').value.trim();
   const feeling = document.getElementById('j-feeling').value.trim();
+  // AI 코칭 받았으면 그 내용도 같이 저장 (카드 클릭으로 다시 볼 수 있도록)
+  const aiResultEl = document.getElementById('ai-coaching-result');
+  const coachingHTML = aiResultEl?.querySelector('.ai-result')?.innerHTML || '';
   journals.push({
     id: genId(),
     date: todayStr(),
@@ -1339,6 +1410,7 @@ function saveJournal() {
     situation: selectedSituation,
     feeling,
     next: document.getElementById('j-next').value.trim(),
+    coaching: coachingHTML
   });
   save(KEYS.journal, journals);
   const situationLabels = {
