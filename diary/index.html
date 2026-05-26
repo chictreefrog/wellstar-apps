@@ -469,6 +469,9 @@ textarea { resize: none; min-height: 80px; }
 
     <div class="section-title">⭐ 우선 연락 고객 (자동 추천)</div>
     <div id="recommended-customers" style="padding:0 16px 16px"></div>
+
+    <div class="section-title">💔 거절 기록</div>
+    <div id="journal-list" style="padding:0 16px 24px"></div>
   </div>
 
   <!-- ── 설정 ── -->
@@ -1249,6 +1252,51 @@ function renderReview() {
       </div>`;
     }).join('');
   }
+
+  // 거절 회복 저널 목록 (최근순)
+  renderJournalList();
+}
+
+// ══════════════════════════════
+// 거절 회복 저널 목록 렌더링 (리뷰 탭)
+// ══════════════════════════════
+function renderJournalList() {
+  const el = document.getElementById('journal-list');
+  if (!el) return;
+  const journals = load(KEYS.journal).slice().reverse();  // 최근순
+  if (!journals.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-text">아직 기록된 거절이 없어요</div><div style="font-size:12px;color:var(--text3);margin-top:4px">홈에서 '거절 회복 저널'로 기록하면 여기에 쌓여요</div></div>`;
+    return;
+  }
+  const sitLabels = {
+    '처음부터 관심없음':'처음부터 관심없음',
+    '생각해보겠다 후 연락두절':'생각본다 후 잠수',
+    '가격 문제':'가격 거절',
+    '이미 지인이 있음':'지인 있음',
+    '기타':'기타'
+  };
+  el.innerHTML = journals.map(j => {
+    const dateLabel = (j.date || '').slice(5).replace('-', '월 ') + '일';
+    const sit = sitLabels[j.situation] || j.situation || '거절';
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;color:var(--text)">${j.customer || '고객 미입력'}</span>
+        <span style="font-size:11px;color:#FF9F0A;background:rgba(255,159,10,0.12);border-radius:10px;padding:2px 8px">${sit}</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:auto">${dateLabel}</span>
+        <button onclick="deleteJournal('${j.id}')" style="background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:0 2px" title="삭제">×</button>
+      </div>
+      ${j.feeling ? `<div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:6px"><b style="color:var(--text3);font-size:11px">느낌:</b> ${j.feeling}</div>` : ''}
+      ${j.next ? `<div style="font-size:13px;color:var(--text2);line-height:1.5"><b style="color:var(--text3);font-size:11px">다음에:</b> ${j.next}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function deleteJournal(id) {
+  if (!confirm('이 거절 기록을 삭제할까요?')) return;
+  const journals = load(KEYS.journal).filter(j => j.id !== id);
+  save(KEYS.journal, journals);
+  renderJournalList();
+  showToast('기록 삭제됨');
 }
 
 function saveGoals() {
@@ -1565,8 +1613,14 @@ async function callDiaryAI(type, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type, ...payload })
   });
-  if (!res.ok) throw new Error('API 오류');
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // 잘림(503 ai_truncated)은 별도 에러 — 호출부에서 처리
+    const err = new Error(data?.error || 'API 오류');
+    err.code = data?.error;
+    err.partial = data?.partial || '';
+    throw err;
+  }
   return data.result;
 }
 
@@ -1640,7 +1694,17 @@ async function refreshAiInsight(force) {
       localStorage.setItem(INSIGHT_CACHE_KEY, JSON.stringify({ eventTs, result }));
     } catch {}
   } catch(e) {
-    el.innerHTML = generateLocalInsight();
+    // 잘림 또는 API 에러 → 캐시된 마지막 정상 결과 있으면 그걸로, 없으면 로컬 인사이트
+    try {
+      const cached = JSON.parse(localStorage.getItem(INSIGHT_CACHE_KEY) || 'null');
+      if (cached?.result) {
+        el.innerHTML = cached.result;
+      } else {
+        el.innerHTML = generateLocalInsight();
+      }
+    } catch {
+      el.innerHTML = generateLocalInsight();
+    }
   }
   btn.style.pointerEvents = 'auto';
 }
@@ -1699,8 +1763,16 @@ async function getAiJournalCoaching() {
   try {
     const result = await callDiaryAI('coaching', { situation, feeling });
     el.innerHTML = `<div class="ai-result">${result}</div>`;
-  } catch {
-    el.innerHTML = '<div class="ai-result" style="color:var(--text3)">네트워크 연결을 확인하고 다시 시도해주세요.</div>';
+  } catch (err) {
+    // 잘림 감지 시: 명확한 안내 + 재시도 버튼
+    if (err.code === 'ai_truncated') {
+      el.innerHTML = `<div class="ai-result" style="color:var(--text3);font-size:13px">
+        ⚠️ 응답이 중간에 끊겼어요. 다시 시도해주세요.
+        <button onclick="getAiJournalCoaching()" style="margin-top:8px;padding:6px 14px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 다시 받기</button>
+      </div>`;
+    } else {
+      el.innerHTML = '<div class="ai-result" style="color:var(--text3)">네트워크 연결을 확인하고 다시 시도해주세요.</div>';
+    }
   }
 }
 

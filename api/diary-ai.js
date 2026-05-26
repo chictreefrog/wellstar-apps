@@ -35,15 +35,44 @@ module.exports = async function handler(req, res) {
     default: return res.status(400).json({ error: 'unknown type' });
   }
 
-  try {
+  // type별 토큰 한도 차등 — 한국어 1자 ≈ 1.5~3 토큰
+  // insight: 100자 → ~300토큰 여유롭게 1024
+  // message: 80자 → ~250토큰 여유롭게 1024
+  // coaching: 450자 → ~1000토큰 안전하게 4096
+  const TOKEN_LIMIT = { insight: 1024, message: 1024, coaching: 4096 };
+  const maxOutputTokens = TOKEN_LIMIT[type] || 2048;
+
+  // 최대 2회 재시도 — 잘림(MAX_TOKENS) 또는 빈 응답 시
+  async function generateOnce() {
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: { temperature: 0.85, maxOutputTokens: 1200 }
+      config: { temperature: 0.85, maxOutputTokens }
     });
-    const result = (response.text || '').trim();
-    if (!result) throw new Error('empty response');
-    return res.status(200).json({ result });
+    const text = (response.text || '').trim();
+    // finishReason 확인 — Gemini SDK는 candidates[0].finishReason 으로 노출
+    const finishReason = response?.candidates?.[0]?.finishReason || 'UNKNOWN';
+    return { text, finishReason };
+  }
+
+  try {
+    let attempt = 0, last = null;
+    while (attempt < 2) {
+      attempt++;
+      last = await generateOnce();
+      // 정상 완료된 응답이면 즉시 반환
+      if (last.text && (last.finishReason === 'STOP' || last.finishReason === 'UNKNOWN')) {
+        return res.status(200).json({ result: last.text });
+      }
+      // MAX_TOKENS 또는 빈 응답이면 재시도
+      console.warn(`diary-ai [${type}] attempt ${attempt} finishReason=${last.finishReason} len=${last.text.length}`);
+    }
+    // 재시도해도 잘림 → 503 (프론트가 에러 처리하도록)
+    return res.status(503).json({
+      error: 'ai_truncated',
+      detail: `finishReason=${last?.finishReason || 'unknown'}, len=${last?.text?.length || 0}`,
+      partial: last?.text || ''
+    });
   } catch (err) {
     console.error('diary-ai error:', err);
     return res.status(503).json({ error: 'ai_unavailable', detail: String(err?.message || err).slice(0, 200) });
