@@ -734,20 +734,36 @@ function showToast(msg) {
   setTimeout(() => t.style.display = 'none', 2500);
 }
 
+// ═══ Supabase 준비 대기 헬퍼 ═══
+async function waitSupabase(maxMs) {
+  if (window.dinoSupabase) return true;
+  await Promise.race([
+    new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true })),
+    new Promise(r => setTimeout(r, maxMs || 5000))
+  ]);
+  return !!window.dinoSupabase;
+}
+
 // ═══ 오늘 사용 횟수 표시 ═══
 async function loadTodayUsage() {
-  if (!window.dinoSupabase) return;
+  const tEl = document.getElementById('usageText');
+  const lEl = document.getElementById('usageLimit');
+  if (!tEl || !lEl) return;
   try {
-    const { data: { session } } = await window.dinoSupabase.auth.getSession();
-    if (!session) return;
+    const ok = await waitSupabase(5000);
+    if (!ok) { tEl.textContent = '연결 실패'; lEl.textContent = ''; return; }
 
-    // KST 자정 계산 (UTC 기준)
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) {
+      tEl.textContent = '로그인 필요'; lEl.textContent = '';
+      return;
+    }
+
     const now = new Date();
     const kstNow = new Date(now.getTime() + 9 * 3600 * 1000);
     kstNow.setUTCHours(0, 0, 0, 0);
     const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
 
-    // 오늘 시작한 세션 수 + 본인 role
     const [{ count }, profileRes] = await Promise.all([
       window.dinoSupabase
         .from('roleplay_sessions')
@@ -766,29 +782,43 @@ async function loadTodayUsage() {
     const used = count || 0;
     const remaining = Math.max(0, limit - used);
 
-    document.getElementById('usageText').innerHTML =
-      `<span style="color:${remaining === 0 ? '#FF453A' : 'var(--accent)'}">${used}회</span> / ${limit}회`;
-    document.getElementById('usageLimit').innerHTML =
-      `남은 횟수<br><b style="color:${remaining === 0 ? '#FF453A' : 'var(--green)'};font-size:14px">${remaining}회</b>`;
+    tEl.innerHTML = `<span style="color:${remaining === 0 ? '#FF453A' : 'var(--accent)'}">${used}회</span> / ${limit}회`;
+    lEl.innerHTML = `남은 횟수<br><b style="color:${remaining === 0 ? '#FF453A' : 'var(--green)'};font-size:14px">${remaining}회</b>`;
 
-    // 한도 다 쓰면 시작 버튼 라벨 변경 (단, 인원 제한 명시)
     const startBtn = document.getElementById('startBtn');
     if (remaining === 0) {
       startBtn.textContent = '오늘 사용 한도 도달 — 내일 다시';
       startBtn.disabled = true;
       startBtn.dataset.locked = '1';
     }
-  } catch (e) { console.error('usage load err:', e); }
+  } catch (e) {
+    console.error('usage load err:', e);
+    if (tEl) tEl.textContent = '로딩 오류';
+    if (lEl) lEl.textContent = '새로고침해주세요';
+  }
 }
 
 // ═══ 과거 세션 목록 (회고 완료 + 미완성 모두) ═══
+function showHistoryError(msg) {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (!section || !list) return;
+  section.style.display = 'block';
+  list.innerHTML = `<div style="background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.3);border-radius:12px;padding:14px;font-size:13px;color:#FF9F0A;text-align:center">${msg}</div>`;
+}
+
 async function loadHistory() {
-  if (!window.dinoSupabase) {
-    await new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true }));
-  }
   try {
+    const ok = await waitSupabase(5000);
+    if (!ok) { showHistoryError('연결 실패 — 새로고침해주세요'); return; }
+
     const { data: { session } } = await window.dinoSupabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      // 비로그인은 섹션 자체를 숨김 (로그인 게이트가 위에 떠 있음)
+      const sec = document.getElementById('historySection');
+      if (sec) sec.style.display = 'none';
+      return;
+    }
     // 1턴 이상인 모든 세션 (완료/미완성 다 표시)
     const { data, error } = await window.dinoSupabase
       .from('roleplay_sessions')
@@ -797,9 +827,16 @@ async function loadHistory() {
       .gte('turn_count', 1)
       .order('created_at', { ascending: false })
       .limit(20);
-    if (error) { console.error(error); return; }
+    if (error) {
+      console.error('history load err:', error);
+      showHistoryError('회고 목록 로딩 실패 — 새로고침해주세요');
+      return;
+    }
     renderHistory(data || []);
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error('history load err:', e);
+    showHistoryError('회고 목록 로딩 실패 — 새로고침해주세요');
+  }
 }
 
 function renderHistory(sessions) {
@@ -911,6 +948,16 @@ async function regenerateReview(sessionId) {
 }
 
 // 채팅 input 자동 높이 + 페이지 초기 로드 시 과거 회고 호출
+let __dataLoadedOnce = false;
+function tryLoadUserData(reason) {
+  if (__dataLoadedOnce) return;
+  if (!window.DinoAuth?.isLoggedIn?.()) return;
+  __dataLoadedOnce = true;
+  console.log('[roleplay] loading user data —', reason);
+  loadHistory();
+  loadTodayUsage();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderPersonas();
   const inp = document.getElementById('chatInput');
@@ -918,20 +965,24 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
   });
-  // 로그인 후 회고 목록 + 사용량 로드
+
+  // 멀티 트리거 — 어떤 신호든 먼저 오는 걸로 로드
+  // 1) supabase 준비 즉시
+  if (window.dinoSupabase) {
+    tryLoadUserData('supabase-already-ready');
+  } else {
+    window.addEventListener('dino-supabase-ready', () => tryLoadUserData('supabase-ready'), { once: true });
+  }
+  // 2) 로그인 상태 변경 시 (재로그인/세션 갱신 포함 → 강제 재로드)
   window.addEventListener('dino-auth-change', (e) => {
     if (e.detail?.user) {
-      loadHistory();
-      loadTodayUsage();
+      __dataLoadedOnce = false;  // 로그인 상태 변경은 강제 재로드
+      tryLoadUserData('auth-change');
     }
   });
-  // 이미 로그인 상태면 바로 로드
-  setTimeout(() => {
-    if (window.DinoAuth?.isLoggedIn?.()) {
-      loadHistory();
-      loadTodayUsage();
-    }
-  }, 800);
+  // 3) 지연 fallback — 위 이벤트가 누락된 경우 보험
+  setTimeout(() => tryLoadUserData('fallback-1s'), 1000);
+  setTimeout(() => tryLoadUserData('fallback-3s'), 3000);
 });
 
 // 서비스워커
