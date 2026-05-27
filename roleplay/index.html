@@ -934,7 +934,18 @@ async function regenerateReview(sessionId) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.review) {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 다시 시도'; }
-      showToast('회고 생성 실패 — 잠시 후 다시 시도');
+      // 잘림 / 일반 오류 구분 메시지
+      if (data?.error === 'ai_truncated') {
+        showToast('응답이 끊겼어요. 다시 시도해주세요');
+      } else if (data?.error === 'ai_unavailable') {
+        showToast('AI 서버 응답 오류 — 잠시 후 다시 시도');
+      } else if (data?.error === 'session_not_found') {
+        showToast('세션을 찾을 수 없어요');
+      } else if (data?.error === 'empty_session') {
+        showToast('대화 내용이 없는 세션이에요');
+      } else {
+        showToast('회고 생성 실패 — 잠시 후 다시 시도');
+      }
       return;
     }
     showToast('회고가 생성됐어요!');
@@ -999,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 서비스워커 — 강제 업데이트 + 자동 reload
-const BUILD_ID = 'v11-fix-auth-gate';
+const BUILD_ID = 'v12-review-truncation';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     // PWA가 다시 보일 때마다 SW 업데이트 체크

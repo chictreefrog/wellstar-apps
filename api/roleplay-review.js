@@ -84,42 +84,72 @@ ${dialog}
 }`;
 
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-  let review;
-  let rawText = '';
-  try {
+  // JSON 4필드(각 2~3줄) → 한국어 약 900자 → 토큰 1800~2400 필요
+  // 여유롭게 4096로 상향 (이전 1500은 잘림 빈발)
+  const MAX_TOKENS = 4096;
+
+  // 시도 1: responseMimeType=application/json (Gemini가 JSON 구조 보장)
+  // 시도 2: mimeType 없이 + 정규식 JSON 추출 (fallback)
+  async function generateAttempt(useMimeType) {
+    const cfg = useMimeType
+      ? { temperature: 0.7, maxOutputTokens: MAX_TOKENS, responseMimeType: 'application/json' }
+      : { temperature: 0.5, maxOutputTokens: MAX_TOKENS };
+    const textPrompt = useMimeType ? prompt : (prompt + '\n\n반드시 위 JSON 형식으로만 응답하세요.');
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: { temperature: 0.7, maxOutputTokens: 1500, responseMimeType: 'application/json' }
+      contents: [{ role: 'user', parts: [{ text: textPrompt }] }],
+      config: cfg
     });
-    // response.text 우선, 없으면 candidates 경로 폴백
-    rawText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleaned = rawText.trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
-    if (!cleaned) throw new Error('empty_response');
-    review = JSON.parse(cleaned);
-  } catch (err) {
-    console.error('roleplay-review error:', err, 'raw:', rawText.slice(0, 300));
-    // 한 번 더 재시도 (responseMimeType 없이)
+    const text = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const finishReason = response?.candidates?.[0]?.finishReason || 'UNKNOWN';
+    return { text, finishReason };
+  }
+
+  function tryParseJson(text) {
+    if (!text) return null;
+    const cleaned = text.trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
+    // 1차: 그대로 파싱
+    try { return JSON.parse(cleaned); } catch {}
+    // 2차: { ... } 영역 추출 후 파싱
+    const m = cleaned.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch {} }
+    return null;
+  }
+
+  let review = null;
+  let lastError = null;
+  let lastFinishReason = 'UNKNOWN';
+
+  for (const useMimeType of [true, false]) {
     try {
-      const retry = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{ role: 'user', parts: [{ text: prompt + '\n\n반드시 위 JSON 형식으로만 응답하세요.' }] }],
-        config: { temperature: 0.5, maxOutputTokens: 1500 }
-      });
-      const text2 = (retry.text || '').trim().replace(/^```json\n?/i, '').replace(/```\s*$/i, '').trim();
-      // { 첫 등장부터 } 끝까지 추출
-      const m = text2.match(/\{[\s\S]*\}/);
-      if (m) review = JSON.parse(m[0]);
-    } catch (err2) {
-      console.error('roleplay-review retry error:', err2);
-    }
-    if (!review) {
-      return res.status(503).json({ error: 'ai_unavailable', detail: String(err?.message || err).slice(0, 200) });
+      const { text, finishReason } = await generateAttempt(useMimeType);
+      lastFinishReason = finishReason;
+      console.log(`[roleplay-review] mimeType=${useMimeType} finishReason=${finishReason} len=${text.length}`);
+
+      // MAX_TOKENS로 잘렸으면 JSON이 깨질 확률 매우 높음 → 다음 시도로
+      if (finishReason === 'MAX_TOKENS') {
+        lastError = new Error('truncated_at_max_tokens');
+        continue;
+      }
+
+      const parsed = tryParseJson(text);
+      if (parsed && parsed.good && parsed.improve && parsed.summary) {
+        review = parsed;
+        break;
+      }
+      lastError = new Error('parse_or_format_failed');
+    } catch (err) {
+      console.error('[roleplay-review] attempt error:', err);
+      lastError = err;
     }
   }
 
-  if (!review?.good || !review?.improve || !review?.summary) {
-    return res.status(503).json({ error: 'ai_format', got: Object.keys(review || {}) });
+  if (!review) {
+    return res.status(503).json({
+      error: lastFinishReason === 'MAX_TOKENS' ? 'ai_truncated' : 'ai_unavailable',
+      detail: String(lastError?.message || lastError || 'unknown').slice(0, 200),
+      finishReason: lastFinishReason
+    });
   }
 
   // DB 업데이트
