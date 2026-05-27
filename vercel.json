@@ -20,7 +20,8 @@
     { "source": "/challenge", "destination": "/challenge/index.html" },
     { "source": "/saju", "destination": "/saju/index.html" },
     { "source": "/branding-coach", "destination": "/branding-coach/index.html" },
-    { "source": "/roleplay", "destination": "/roleplay/index.html" }
+    { "source": "/roleplay", "destination": "/roleplay/index.html" },
+    { "source": "/library", "destination": "/library/index.html" }
   ],
   "headers": [
     {
@@ -193,6 +194,25 @@
       "source": "/roleplay/manifest.json",
       "headers": [
         { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/library/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/library/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/library/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/library/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]
     }
   ]
