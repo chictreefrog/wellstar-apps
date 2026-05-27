@@ -949,9 +949,17 @@ async function regenerateReview(sessionId) {
 
 // 채팅 input 자동 높이 + 페이지 초기 로드 시 과거 회고 호출
 let __dataLoadedOnce = false;
-function tryLoadUserData(reason) {
+// ❗ DinoAuth.isLoggedIn() 의존 제거 — 그 함수는 DinoAuth.init() 후에야 true가 되는데
+//    이전 버전에서 init 호출이 누락되어 영원히 false → 모든 데이터 로드 실패였음.
+//    이제는 supabase 세션 직접 체크로 견고하게.
+async function tryLoadUserData(reason) {
   if (__dataLoadedOnce) return;
-  if (!window.DinoAuth?.isLoggedIn?.()) return;
+  const ok = await waitSupabase(5000);
+  if (!ok) return;
+  try {
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) return;  // 비로그인 — login-gate가 처리함
+  } catch { return; }
   __dataLoadedOnce = true;
   console.log('[roleplay] loading user data —', reason);
   loadHistory();
@@ -965,6 +973,11 @@ document.addEventListener('DOMContentLoaded', () => {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
   });
+
+  // DinoAuth.init() 명시 호출 — 다른 앱과 동일하게 (다이어리 패턴)
+  if (window.DinoAuth?.init) {
+    window.DinoAuth.init().catch(e => console.error('DinoAuth.init failed:', e));
+  }
 
   // 멀티 트리거 — 어떤 신호든 먼저 오는 걸로 로드
   // 1) supabase 준비 즉시
@@ -986,7 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 서비스워커 — 강제 업데이트 + 자동 reload
-const BUILD_ID = 'v10-2026-05-27';
+const BUILD_ID = 'v11-fix-auth-gate';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     // PWA가 다시 보일 때마다 SW 업데이트 체크
