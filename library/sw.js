@@ -1,4 +1,4 @@
-const CACHE_NAME = 'library-v2';
+const CACHE_NAME = 'library-v3';
 const APP_PATH = '/library/';
 
 self.addEventListener('install', e => {

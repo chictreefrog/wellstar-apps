@@ -335,19 +335,41 @@ body {
         <textarea class="form-textarea" id="up-description" placeholder="이 콘텐츠의 용도/내용을 짧게..."></textarea>
       </div>
 
+      <!-- 자료 출처 토글 (파일 직접 업로드 vs 외부 링크) -->
+      <div class="form-group" id="sourceToggleGroup">
+        <label class="form-label">자료 출처 *</label>
+        <div style="display:flex;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px">
+          <button type="button" class="src-tab active" data-src="file" onclick="setSource('file')" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📎 파일 업로드</button>
+          <button type="button" class="src-tab" data-src="link" onclick="setSource('link')" style="flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔗 외부 링크</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">큰 파일은 구글드라이브/유튜브/네이버블로그 등에 올리고 링크로 공유하세요</div>
+      </div>
+
       <div class="form-group" id="externalUrlGroup" style="display:none">
-        <label class="form-label">영상 URL *</label>
-        <input type="url" class="form-input" id="up-external-url" placeholder="https://youtube.com/...">
+        <label class="form-label">외부 링크 URL *</label>
+        <input type="url" class="form-input" id="up-external-url" placeholder="https://drive.google.com/... 또는 https://youtube.com/...">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">구글드라이브 · 유튜브 · 인스타 릴스 · 네이버 블로그 등 모두 가능</div>
       </div>
 
       <div class="form-group" id="fileGroup">
-        <label class="form-label">파일 업로드 *</label>
+        <label class="form-label">파일 선택 *</label>
         <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
           <div class="file-drop-icon">📎</div>
           <div class="file-drop-text">탭해서 파일 선택<br><small style="font-size:10px;color:var(--text3)">최대 100MB · 이미지/PDF/영상</small></div>
           <div class="file-name" id="fileName"></div>
         </div>
         <input type="file" id="fileInput" style="display:none" onchange="onFileSelected(event)">
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">📷 썸네일도 자동 등록됩니다 (이미지일 때)</div>
+      </div>
+
+      <div class="form-group" id="thumbnailGroup" style="display:none">
+        <label class="form-label">썸네일 이미지 (선택)</label>
+        <div class="file-drop" id="thumbDrop" onclick="document.getElementById('thumbInput').click()">
+          <div class="file-drop-icon">🖼️</div>
+          <div class="file-drop-text">탭해서 썸네일 선택<br><small style="font-size:10px;color:var(--text3)">목록에 보일 미리보기 이미지</small></div>
+          <div class="file-name" id="thumbName"></div>
+        </div>
+        <input type="file" id="thumbInput" accept="image/*" style="display:none" onchange="onThumbSelected(event)">
       </div>
 
       <div class="form-group">
@@ -368,7 +390,7 @@ body {
 <div class="build-label" id="buildLabel">library-v1</div>
 
 <script>
-const BUILD_ID = 'library-v2-modal-fix';
+const BUILD_ID = 'library-v3-link-source';
 console.log('[library]', BUILD_ID);
 
 const CATEGORY_INFO = {
@@ -458,7 +480,7 @@ function renderContents() {
     const cat = CATEGORY_INFO[c.category] || { icon: '📦', label: c.category };
     const isVideo = c.category === 'short_video' || c.category === 'long_video_link';
     const thumbStyle = c.thumbnail_url
-      ? `background-image:url('${c.thumbnail_url}')`
+      ? `background-image:url('${escapeAttr(c.thumbnail_url)}')`
       : '';
     const thumbContent = c.thumbnail_url ? '' : cat.icon;
     const playOverlay = (isVideo && c.thumbnail_url) ? '<div class="play-overlay">▶</div>' : '';
@@ -466,7 +488,7 @@ function renderContents() {
       ? '<span class="global-badge">🌐 전체</span>'
       : '<span class="team-badge">👥 팀</span>';
     return `
-      <div class="content-card" onclick="openDetail('${c.id}')">
+      <div class="content-card" data-id="${escapeAttr(c.id)}">
         <div class="card-thumb" style="${thumbStyle}">${thumbContent}${playOverlay}</div>
         <div class="card-body">
           <div class="card-header">
@@ -485,6 +507,21 @@ function renderContents() {
         </div>
       </div>`;
   }).join('') + '</div>';
+
+  // ❗ inline onclick 대신 event delegation — UUID escape 문제 / SW 캐시 회피
+  list.onclick = (e) => {
+    const card = e.target.closest('.content-card');
+    if (!card) return;
+    const id = card.dataset.id;
+    if (!id) { console.error('[library] card click — no data-id'); return; }
+    console.log('[library] card click —', id);
+    openDetail(id);
+  };
+}
+
+function escapeAttr(s) {
+  if (!s) return '';
+  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function escapeHtml(s) {
@@ -512,17 +549,17 @@ function setCategory(cat) {
 
 // ═══ 상세 모달 ═══
 async function openDetail(id) {
+  console.log('[library] openDetail called —', id);
   const c = allContents.find(x => x.id === id);
-  if (!c) return;
+  if (!c) { console.error('[library] content not found —', id); return; }
   const cat = CATEGORY_INFO[c.category];
 
-  // view_count 증가 (비동기, 응답 안 기다림)
-  window.dinoSupabase.rpc('increment_content_view', { content_id: id }).catch(() => {
-    // RPC가 없으면 직접 update (조회수는 정확하지 않아도 OK)
+  // view_count 증가 (비동기, 응답 안 기다림, 실패해도 모달은 표시)
+  try {
     window.dinoSupabase.from('contents')
       .update({ view_count: (c.view_count || 0) + 1 })
-      .eq('id', id).then(() => {});
-  });
+      .eq('id', id).then(() => {}).catch(() => {});
+  } catch {}
 
   document.getElementById('detailTitle').textContent = c.title;
   const body = document.getElementById('detailBody');
@@ -633,44 +670,91 @@ async function togglePin(id, value) {
 }
 
 // ═══ 업로드 ═══
+let currentSource = 'file';     // 'file' | 'link'
+let selectedThumb = null;
+
 function openUploadModal() {
-  // 카테고리에 따라 파일/URL 필드 토글
   const catEl = document.getElementById('up-category');
   catEl.onchange = () => updateUploadFields(catEl.value);
   updateUploadFields(catEl.value);
 
-  // admin이면 visibility 선택 노출, leader면 자동 team
   document.getElementById('visibilityGroup').style.display = myRole === 'admin' ? 'block' : 'none';
-
   document.getElementById('uploadModal').classList.add('open');
 }
+
 function closeUploadModal() {
   document.getElementById('uploadModal').classList.remove('open');
-  // 입력 초기화
   ['up-title','up-description','up-external-url','up-share-message'].forEach(id => {
     document.getElementById(id).value = '';
   });
   selectedFile = null;
+  selectedThumb = null;
   document.getElementById('fileName').textContent = '';
+  document.getElementById('thumbName').textContent = '';
   document.getElementById('fileDrop').classList.remove('has-file');
+  document.getElementById('thumbDrop').classList.remove('has-file');
+  // category default로 리셋
+  document.getElementById('up-category').value = 'card_news';
+  setSource('file');
+  updateUploadFields('card_news');
+}
+
+function setSource(src) {
+  currentSource = src;
+  document.querySelectorAll('.src-tab').forEach(b => {
+    const active = b.dataset.src === src;
+    b.classList.toggle('active', active);
+    b.style.background = active ? 'var(--accent)' : 'transparent';
+    b.style.color = active ? '#fff' : 'var(--text2)';
+  });
+  document.getElementById('fileGroup').style.display = src === 'file' ? 'block' : 'none';
+  document.getElementById('externalUrlGroup').style.display = src === 'link' ? 'block' : 'none';
+  // 외부 링크일 때 영상이 아니면 썸네일 업로드 옵션 노출
+  const cat = document.getElementById('up-category').value;
+  const showThumb = (src === 'link' && cat !== 'long_video_link' && cat !== 'short_video');
+  // 영상 링크는 YouTube 등이 썸네일 자동 추출 가능, 다른 외부 링크는 썸네일 수동
+  document.getElementById('thumbnailGroup').style.display = (src === 'link') ? 'block' : 'none';
 }
 
 function updateUploadFields(cat) {
-  const isLink = cat === 'long_video_link';
-  document.getElementById('externalUrlGroup').style.display = isLink ? 'block' : 'none';
-  document.getElementById('fileGroup').style.display = isLink ? 'none' : 'block';
+  // 숏폼·영상링크는 외부 링크가 기본 (사용자 요청)
+  const linkOnly = (cat === 'short_video' || cat === 'long_video_link');
+
+  // 자료 출처 토글: 영상 카테고리는 토글 숨기고 강제 link 모드
+  document.getElementById('sourceToggleGroup').style.display = linkOnly ? 'none' : 'block';
+
+  if (linkOnly) {
+    setSource('link');
+  } else if (currentSource !== 'file' && currentSource !== 'link') {
+    setSource('file');
+  } else {
+    // 현재 선택 유지
+    setSource(currentSource);
+  }
 }
 
 function onFileSelected(event) {
   const file = event.target.files[0];
   if (!file) return;
   if (file.size > 100 * 1024 * 1024) {
-    showToast('파일이 너무 커요 (최대 100MB)');
+    showToast('파일이 너무 커요. 100MB 넘으면 구글드라이브 링크로 올려주세요');
     return;
   }
   selectedFile = file;
   document.getElementById('fileName').textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)';
   document.getElementById('fileDrop').classList.add('has-file');
+}
+
+function onThumbSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('썸네일은 5MB 이하로');
+    return;
+  }
+  selectedThumb = file;
+  document.getElementById('thumbName').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + 'KB)';
+  document.getElementById('thumbDrop').classList.add('has-file');
 }
 
 async function submitUpload() {
@@ -682,8 +766,11 @@ async function submitUpload() {
   const externalUrl = document.getElementById('up-external-url').value.trim();
 
   if (!title) { showToast('제목을 입력하세요'); return; }
-  if (category === 'long_video_link') {
-    if (!externalUrl) { showToast('영상 URL을 입력하세요'); return; }
+
+  // source 검증
+  if (currentSource === 'link') {
+    if (!externalUrl) { showToast('외부 링크 URL을 입력하세요'); return; }
+    if (!/^https?:\/\//i.test(externalUrl)) { showToast('http:// 또는 https://로 시작해야 해요'); return; }
   } else {
     if (!selectedFile) { showToast('파일을 선택하세요'); return; }
   }
@@ -694,8 +781,8 @@ async function submitUpload() {
     let file_url = null;
     let thumbnail_url = null;
 
-    // 파일 업로드
-    if (selectedFile) {
+    // 1) 본체 파일 업로드 (file 모드)
+    if (currentSource === 'file' && selectedFile) {
       const ext = selectedFile.name.split('.').pop().toLowerCase();
       const path = `${myProfile.id}/${Date.now()}_${Math.random().toString(36).slice(2,7)}.${ext}`;
       const { error: upErr } = await window.dinoSupabase.storage
@@ -704,8 +791,26 @@ async function submitUpload() {
       const { data: { publicUrl } } = window.dinoSupabase.storage
         .from('contents').getPublicUrl(path);
       file_url = publicUrl;
-      // 이미지면 썸네일로도 사용
       if (selectedFile.type.startsWith('image/')) thumbnail_url = publicUrl;
+    }
+
+    // 2) 썸네일만 별도 업로드 (link 모드에서 썸네일 선택했을 때)
+    if (currentSource === 'link' && selectedThumb) {
+      const ext = selectedThumb.name.split('.').pop().toLowerCase();
+      const path = `${myProfile.id}/thumb_${Date.now()}_${Math.random().toString(36).slice(2,7)}.${ext}`;
+      const { error: upErr } = await window.dinoSupabase.storage
+        .from('contents').upload(path, selectedThumb);
+      if (!upErr) {
+        const { data: { publicUrl } } = window.dinoSupabase.storage
+          .from('contents').getPublicUrl(path);
+        thumbnail_url = publicUrl;
+      }
+    }
+
+    // 3) YouTube URL 자동 썸네일 추출
+    if (currentSource === 'link' && !thumbnail_url) {
+      const ytMatch = externalUrl.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      if (ytMatch) thumbnail_url = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
     }
 
     // visibility 결정
@@ -716,7 +821,6 @@ async function submitUpload() {
       if (visibility === 'global') team_id = null;
     }
 
-    // DB insert
     const { error: dbErr } = await window.dinoSupabase.from('contents').insert({
       owner_id: myProfile.id,
       owner_role: myRole,
@@ -727,7 +831,7 @@ async function submitUpload() {
       description: description || null,
       file_url,
       thumbnail_url,
-      external_url: externalUrl || null,
+      external_url: currentSource === 'link' ? externalUrl : null,
       share_message: shareMessage || null
     });
     if (dbErr) throw dbErr;
