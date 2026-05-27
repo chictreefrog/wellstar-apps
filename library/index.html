@@ -135,17 +135,23 @@ body {
 .modal-overlay.open { display: flex }
 .modal {
   background: var(--bg2); width: 100%; max-width: 480px;
-  border-radius: 20px 20px 0 0; max-height: 88vh;
+  border-radius: 20px 20px 0 0;
+  /* 하단 nav(64px) + safe-area 고려 — 모달이 nav 위까지만 차지 */
+  max-height: calc(100vh - 80px);
   display: flex; flex-direction: column; animation: slideUp .3s ease;
+  /* nav에 가려지지 않도록 margin-bottom 추가 */
+  margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 @keyframes slideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
 .modal-handle {
   width: 40px; height: 4px; background: rgba(255,255,255,0.2);
   border-radius: 2px; margin: 10px auto 0;
+  flex-shrink: 0;
 }
 .modal-header {
   padding: 14px 18px 10px;
   display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
 }
 .modal-title { font-size: 16px; font-weight: 700 }
 .modal-close {
@@ -153,7 +159,14 @@ body {
   width: 32px; height: 32px; border-radius: 8px; font-size: 16px; cursor: pointer;
 }
 .modal-body {
-  padding: 0 18px 20px; overflow-y: auto; flex: 1;
+  padding: 0 18px 20px; overflow-y: auto; flex: 1; min-height: 0;
+}
+/* 업로드 모달의 액션 버튼은 항상 하단 sticky로 노출 */
+.modal-body .btn-row.sticky-actions {
+  position: sticky; bottom: 0;
+  background: var(--bg2); padding: 12px 0 4px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 /* Detail */
@@ -343,7 +356,7 @@ body {
         <div style="font-size:11px;color:var(--text3);margin-top:4px">파트너들이 이 콘텐츠를 카톡 공유할 때 자동 복사됩니다</div>
       </div>
 
-      <div class="btn-row">
+      <div class="btn-row sticky-actions">
         <button class="btn-secondary" onclick="closeUploadModal()">취소</button>
         <button class="btn-primary" id="uploadSubmitBtn" onclick="submitUpload()">업로드</button>
       </div>
@@ -355,7 +368,7 @@ body {
 <div class="build-label" id="buildLabel">library-v1</div>
 
 <script>
-const BUILD_ID = 'library-v1-2026-05-28';
+const BUILD_ID = 'library-v2-modal-fix';
 console.log('[library]', BUILD_ID);
 
 const CATEGORY_INFO = {
@@ -468,6 +481,7 @@ function renderContents() {
             <span>📤 ${c.share_count || 0}</span>
             <span style="margin-left:auto">${formatDate(c.created_at)}</span>
           </div>
+          <div style="font-size:11px;color:var(--accent);margin-top:6px;text-align:right">탭해서 다운로드/공유 →</div>
         </div>
       </div>`;
   }).join('') + '</div>';
