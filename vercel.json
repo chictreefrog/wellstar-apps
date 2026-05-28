@@ -22,7 +22,8 @@
     { "source": "/branding-coach", "destination": "/branding-coach/index.html" },
     { "source": "/roleplay", "destination": "/roleplay/index.html" },
     { "source": "/library", "destination": "/library/index.html" },
-    { "source": "/p/:slug", "destination": "/p/index.html" }
+    { "source": "/p/:slug", "destination": "/p/index.html" },
+    { "source": "/care", "destination": "/care/index.html" }
   ],
   "headers": [
     {
@@ -212,6 +213,25 @@
     },
     {
       "source": "/library/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/care/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/care/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/care/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/care/index.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]

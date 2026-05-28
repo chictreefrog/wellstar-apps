@@ -1,0 +1,15 @@
+{
+  "name": "옆집디노 안심케어",
+  "short_name": "안심케어",
+  "description": "매일 약 체크인으로 부모님 안부를 확인해요",
+  "start_url": "./",
+  "scope": "/care/",
+  "display": "standalone",
+  "background_color": "#FBF6EE",
+  "theme_color": "#2E7D5B",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

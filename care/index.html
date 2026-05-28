@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light" data-fontscale="lg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2E7D5B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="안심케어">
+<meta name="description" content="매일 약 체크인으로 부모님 안부를 확인해요">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>옆집디노 안심케어</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --bg:#FBF6EE; --surface:#FFFFFF; --surface-2:#F3ECDE;
+    --ink:#352C22; --ink-soft:#7A6E5D; --line:#E7DDCB;
+    --green:#2E7D5B; --green-soft:#E4F1EA; --green-ink:#1F6347;
+    --amber:#E8A33D; --amber-soft:#FBEED4;
+    --danger:#C9533F;
+    --shadow:0 6px 22px rgba(53,44,34,.08);
+    --shadow-lg:0 14px 40px rgba(53,44,34,.14);
+    --r:22px;
+    --fs:1; /* font scale multiplier, set by JS */
+  }
+  html[data-theme="dark"]{
+    --bg:#1C1915; --surface:#272218; --surface-2:#322B20;
+    --ink:#F4ECDD; --ink-soft:#B6A98F; --line:#3D3526;
+    --green:#4FB587; --green-soft:#1F3A2E; --green-ink:#7FD3AB;
+    --amber:#F0BB63; --amber-soft:#3A2F18;
+    --danger:#E5715C;
+    --shadow:0 6px 22px rgba(0,0,0,.3);
+    --shadow-lg:0 16px 44px rgba(0,0,0,.45);
+  }
+  html[data-fontscale="md"]{--fs:.9}
+  html[data-fontscale="lg"]{--fs:1.06}
+  html[data-fontscale="xl"]{--fs:1.22}
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-size:calc(17px * var(--fs)); line-height:1.55;
+    letter-spacing:-.01em;
+    transition:background .3s,color .3s;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:480px; margin:0 auto; min-height:100dvh;
+    display:flex; flex-direction:column;
+    padding:0 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  .hidden{display:none !important}
+
+  /* ---------- header ---------- */
+  header{
+    padding:calc(22px + env(safe-area-inset-top)) 2px 8px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.05em}
+  .brand .dino{font-size:1.5em;line-height:1}
+  .brand small{font-weight:600;color:var(--ink-soft);font-size:.62em;display:block;letter-spacing:0}
+  .icon-btn{
+    width:46px;height:46px;border:none;border-radius:14px;
+    background:var(--surface);box-shadow:var(--shadow);
+    color:var(--ink);font-size:1.25em;cursor:pointer;
+    display:grid;place-items:center;transition:transform .15s;
+  }
+  .icon-btn:active{transform:scale(.92)}
+
+  /* ---------- 안심 배너 ---------- */
+  .safe-banner{
+    margin-top:6px;border-radius:var(--r);padding:20px 22px;
+    background:linear-gradient(135deg,var(--green-soft),var(--surface));
+    border:1.5px solid var(--green);box-shadow:var(--shadow);
+    display:flex;align-items:center;gap:16px;
+  }
+  .safe-banner.warn{background:linear-gradient(135deg,var(--amber-soft),var(--surface));border-color:var(--amber)}
+  .safe-ico{font-size:2.1em;line-height:1}
+  .safe-banner .t{font-weight:800;font-size:1.12em}
+  .safe-banner .s{color:var(--ink-soft);font-size:.86em;margin-top:2px}
+
+  /* ---------- greeting ---------- */
+  .greet{margin:26px 2px 14px}
+  .greet h1{font-size:1.55em;font-weight:800;line-height:1.3}
+  .greet p{color:var(--ink-soft);margin-top:4px;font-size:.92em}
+
+  /* ---------- section title ---------- */
+  .sec-title{display:flex;align-items:baseline;justify-content:space-between;margin:24px 4px 12px}
+  .sec-title h2{font-size:1.15em;font-weight:800}
+  .sec-title .count{color:var(--green-ink);font-weight:700;font-size:.9em}
+
+  /* ---------- med card ---------- */
+  .med{
+    background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);
+    padding:18px 18px;margin-bottom:14px;display:flex;align-items:center;gap:16px;
+    border:2px solid transparent;transition:.25s;
+  }
+  .med.done{background:var(--green-soft);border-color:var(--green)}
+  .med .pill{
+    width:54px;height:54px;flex:none;border-radius:16px;background:var(--surface-2);
+    display:grid;place-items:center;font-size:1.7em;
+  }
+  .med.done .pill{background:var(--green);color:#fff}
+  .med .meta{flex:1;min-width:0}
+  .med .meta .nm{font-weight:800;font-size:1.1em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .med .meta .tm{color:var(--ink-soft);font-size:.88em;margin-top:2px}
+  .med.done .meta .tm{color:var(--green-ink)}
+  .take-btn{
+    flex:none;border:none;cursor:pointer;border-radius:15px;
+    padding:14px 20px;font-weight:800;font-size:1em;font-family:inherit;
+    background:var(--green);color:#fff;box-shadow:0 4px 12px rgba(46,125,91,.32);
+    transition:transform .12s;min-width:96px;
+  }
+  .take-btn:active{transform:scale(.94)}
+  .med.done .take-btn{background:var(--surface);color:var(--green-ink);box-shadow:none;font-weight:800}
+
+  /* ---------- 오늘 한 것 (보조 습관) ---------- */
+  .habits{display:flex;gap:10px;margin-top:4px}
+  .habit{
+    flex:1;background:var(--surface);border:none;border-radius:18px;box-shadow:var(--shadow);
+    padding:16px 8px;cursor:pointer;font-family:inherit;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:6px;transition:.2s;
+  }
+  .habit .e{font-size:1.7em}
+  .habit .l{font-size:.82em;font-weight:700}
+  .habit.on{background:var(--green-soft);box-shadow:inset 0 0 0 2px var(--green)}
+  .habit:active{transform:scale(.95)}
+
+  /* ---------- all done ---------- */
+  .alldone{
+    text-align:center;background:var(--surface);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:30px 22px;margin-top:14px;
+  }
+  .alldone .big{font-size:3em;line-height:1}
+  .alldone h3{font-size:1.25em;font-weight:800;margin-top:10px}
+  .alldone p{color:var(--ink-soft);margin-top:6px;font-size:.92em}
+
+  /* ---------- footer ---------- */
+  .foot{margin-top:auto;padding:30px 0 6px;text-align:center;color:var(--ink-soft);font-size:.8em}
+  .foot b{color:var(--green-ink)}
+
+  /* ---------- generic buttons & forms ---------- */
+  .btn{
+    width:100%;border:none;cursor:pointer;font-family:inherit;font-weight:800;
+    border-radius:16px;padding:17px;font-size:1.05em;background:var(--green);color:#fff;
+    box-shadow:0 6px 16px rgba(46,125,91,.3);transition:transform .12s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+  .btn.danger{background:transparent;color:var(--danger);box-shadow:none;font-weight:700}
+  label{display:block;font-weight:700;font-size:.92em;margin:18px 2px 8px}
+  input,select{
+    width:100%;font-family:inherit;font-size:1.02em;color:var(--ink);
+    background:var(--surface);border:1.5px solid var(--line);border-radius:14px;
+    padding:15px 16px;outline:none;transition:.2s;
+  }
+  input:focus,select:focus{border-color:var(--green)}
+  .field-row{display:flex;gap:10px}
+  .field-row>*{flex:1}
+
+  /* ---------- onboarding / settings screens ---------- */
+  .screen{padding-bottom:20px}
+  .screen h1.title{font-size:1.7em;font-weight:800;margin:10px 2px 6px;line-height:1.3}
+  .screen p.lead{color:var(--ink-soft);margin:0 2px 8px;font-size:.95em}
+  .card-box{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-top:16px}
+  .step-dino{font-size:2.6em;text-align:center;margin:8px 0}
+
+  /* med list editor */
+  .med-edit{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .med-edit .info{flex:1;min-width:0}
+  .med-edit .info b{display:block;font-size:1em}
+  .med-edit .info span{color:var(--ink-soft);font-size:.84em}
+  .med-edit button{border:none;background:transparent;color:var(--danger);font-size:1.3em;cursor:pointer;padding:4px 8px}
+
+  /* segmented */
+  .seg{display:flex;gap:8px;margin-top:6px}
+  .seg button{
+    flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+    font-family:inherit;font-weight:700;border-radius:13px;padding:13px 4px;cursor:pointer;font-size:.95em;transition:.2s
+  }
+  .seg button.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+  /* preview bubble */
+  .sms-prev{background:var(--surface-2);border-radius:16px;padding:16px;margin-top:12px;font-size:.92em;line-height:1.6}
+  .sms-prev .tag{display:inline-block;background:var(--green);color:#fff;font-size:.72em;font-weight:700;padding:3px 9px;border-radius:8px;margin-bottom:8px}
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);padding:14px 22px;border-radius:30px;font-weight:700;font-size:.95em;
+    box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.3s;z-index:50;max-width:90%;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .add-link{display:block;text-align:center;color:var(--green-ink);font-weight:800;padding:12px;cursor:pointer;font-size:.96em}
+  .divider{height:1px;background:var(--line);margin:22px 0}
+  .row-link{display:flex;align-items:center;justify-content:space-between;padding:16px 2px;cursor:pointer;font-weight:700}
+  .row-link .v{color:var(--ink-soft);font-weight:600;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ 메인 (부모님 매일 사용) ============ -->
+  <div id="home">
+    <header>
+      <div class="brand">
+        <span class="dino">🦕</span>
+        <div>옆집디노 안심케어<small>오늘도 건강하게</small></div>
+      </div>
+      <button class="icon-btn" onclick="go('settings')" aria-label="설정">⚙️</button>
+    </header>
+
+    <div id="safeBanner" class="safe-banner">
+      <span class="safe-ico">💚</span>
+      <div>
+        <div class="t" id="safeTitle">오늘 안심 확인 ✓</div>
+        <div class="s" id="safeSub">가족이 안심하고 있어요</div>
+      </div>
+    </div>
+
+    <div class="greet">
+      <h1 id="greetTitle">안녕하세요 👋</h1>
+      <p id="greetDate"></p>
+    </div>
+
+    <div class="sec-title">
+      <h2>오늘의 약</h2>
+      <span class="count" id="medCount"></span>
+    </div>
+    <div id="medList"></div>
+    <div id="allDone" class="alldone hidden">
+      <div class="big">🌿</div>
+      <h3>오늘 약 다 드셨어요!</h3>
+      <p>참 잘하셨어요. 내일도 함께해요 🦕</p>
+    </div>
+
+    <div class="sec-title"><h2>오늘 한 것</h2></div>
+    <div class="habits">
+      <button class="habit" data-habit="water" onclick="toggleHabit('water',this)"><span class="e">💧</span><span class="l">물 한잔</span></button>
+      <button class="habit" data-habit="walk" onclick="toggleHabit('walk',this)"><span class="e">🚶</span><span class="l">산책</span></button>
+      <button class="habit" data-habit="mood" onclick="toggleHabit('mood',this)"><span class="e">😊</span><span class="l">기분 좋음</span></button>
+    </div>
+
+    <div class="foot">
+      마지막 확인 <b id="lastSeen">—</b><br>
+      🦕 옆집디노가 가족과 함께해요
+    </div>
+  </div>
+
+  <!-- ============ 온보딩 (자녀 세팅) ============ -->
+  <div id="onboard" class="screen hidden">
+    <div class="step-dino">🦕</div>
+    <h1 class="title">부모님 안심케어<br>준비하기</h1>
+    <p class="lead">자녀가 먼저 세팅해주세요. 1분이면 끝나요.</p>
+
+    <div class="card-box">
+      <label>부모님을 뭐라고 부를까요?</label>
+      <input id="obParent" placeholder="예: 어머니, 아버지, 김영자님" autocomplete="off">
+
+      <label>내 이름 (자녀)</label>
+      <input id="obGuardian" placeholder="예: 딸 지은" autocomplete="off">
+
+      <label>안부 받을 내 휴대폰 번호</label>
+      <input id="obPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000" autocomplete="off">
+      <p class="lead" style="margin-top:8px;font-size:.85em">며칠간 부모님이 앱에서 안부 신호가 없으면 이 번호로 문자가 가요.</p>
+
+      <label>안부가 며칠 끊기면 알릴까요?</label>
+      <div class="seg" id="obDays">
+        <button data-d="2">2일</button>
+        <button data-d="3" class="active">3일</button>
+        <button data-d="4">4일</button>
+      </div>
+    </div>
+
+    <button class="btn" style="margin-top:18px" onclick="saveOnboard()">다음: 약 등록하기</button>
+  </div>
+
+  <!-- ============ 약 등록/편집 ============ -->
+  <div id="meds" class="screen hidden">
+    <header style="padding-left:0;padding-right:0">
+      <div class="brand"><span class="dino">💊</span><div>약 등록</div></div>
+      <button class="icon-btn" onclick="go('home')" aria-label="닫기">✕</button>
+    </header>
+    <p class="lead">부모님이 드시는 약을 추가해주세요. 시간에 맞춰 알림이 가요.</p>
+
+    <div class="card-box">
+      <label>약 이름</label>
+      <input id="mName" placeholder="예: 혈압약, 당뇨약, 관절약" autocomplete="off">
+      <label>복용 시간</label>
+      <div class="field-row">
+        <input id="mTime" type="time" value="08:00">
+        <button class="btn ghost" style="flex:none;width:auto;padding:15px 22px" onclick="addMed()">+ 추가</button>
+      </div>
+      <p class="lead" style="margin-top:10px;font-size:.84em">⚠️ 이 앱은 복용 시간을 알려주는 알람이에요. 약의 종류·용량은 꼭 의사·약사와 상의하세요.</p>
+    </div>
+
+    <div class="sec-title"><h2>등록된 약</h2><span class="count" id="mEditCount"></span></div>
+    <div id="medEditList"></div>
+
+    <button class="btn" style="margin-top:18px" onclick="finishMeds()">완료하고 시작하기 🦕</button>
+  </div>
+
+  <!-- ============ 설정 ============ -->
+  <div id="settings" class="screen hidden">
+    <header style="padding-left:0;padding-right:0">
+      <div class="brand"><span class="dino">⚙️</span><div>설정</div></div>
+      <button class="icon-btn" onclick="go('home')" aria-label="닫기">✕</button>
+    </header>
+
+    <div class="card-box" style="margin-top:8px">
+      <div class="row-link" onclick="go('meds')"><span>💊 약 관리</span><span class="v" id="setMedCount">→</span></div>
+      <div class="divider" style="margin:0"></div>
+      <div class="row-link" onclick="toggleNotifPermission()"><span>🔔 약 시간 알림</span><span class="v" id="notifStatus">상태 확인 중…</span></div>
+      <div class="divider" style="margin:0"></div>
+      <div class="row-link" onclick="installPWA()"><span>📲 홈 화면에 추가</span><span class="v" id="installStatus">→</span></div>
+      <div class="divider" style="margin:0"></div>
+      <div class="row-link" onclick="previewSms()"><span>📩 안부 문자 미리보기</span><span class="v">→</span></div>
+    </div>
+    <div id="smsPreviewBox"></div>
+
+    <div class="card-box">
+      <label style="margin-top:0">글자 크기</label>
+      <div class="seg" id="setFont">
+        <button data-f="md">보통</button>
+        <button data-f="lg" class="active">크게</button>
+        <button data-f="xl">아주 크게</button>
+      </div>
+      <label>화면 테마</label>
+      <div class="seg" id="setTheme">
+        <button data-t="light" class="active">밝게 ☀️</button>
+        <button data-t="dark">어둡게 🌙</button>
+      </div>
+    </div>
+
+    <div class="card-box">
+      <label style="margin-top:0">부모님 호칭</label>
+      <input id="setParent" placeholder="예: 엄마, 어머니, 김영자님" autocomplete="off">
+      <label>자녀 이름</label>
+      <input id="setGuardian" placeholder="예: 딸 지은" autocomplete="off">
+      <label>자녀 연락처</label>
+      <input id="setPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000">
+      <label>안부 끊김 기준</label>
+      <div class="seg" id="setDays">
+        <button data-d="2">2일</button>
+        <button data-d="3">3일</button>
+        <button data-d="4">4일</button>
+      </div>
+      <button class="btn" style="margin-top:18px" onclick="saveSettings()">저장</button>
+    </div>
+
+    <button class="btn danger" style="margin-top:8px" onclick="resetAll()">전체 초기화</button>
+    <div class="foot">🦕 옆집디노 안심케어 · v1</div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   옆집디노 안심케어 v1
+   - 약 복용 체크인(부모님) + 안부 끊김 시 자녀 문자(자녀)
+   - localStorage 키 = 향후 Supabase 컬럼명과 일치하게 설계
+   - 실제 문자 발송 / 안부 끊김 감지는 서버(Supabase + SMS API)에서 처리.
+     아래 syncCheckin()이 백엔드 연동 지점. (CONTEXT.md 참고)
+   ========================================================= */
+
+const LS = {
+  profile:'care_profile',   // {parent_name,guardian_name,guardian_phone,alert_after_days,theme,font_scale}
+  meds:'care_meds',         // [{id,name,time,created_at}]
+  log:'care_daily_log',     // { 'YYYY-MM-DD': { taken:[medId], habits:[..] } }
+  lastActive:'care_last_active_at' // ISO string (= 안부 신호)
+};
+
+const $ = s=>document.querySelector(s);
+const todayKey = ()=> new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD (local)
+const load = (k,d)=>{ try{return JSON.parse(localStorage.getItem(k)) ?? d}catch(e){return d} };
+const save = (k,v)=> localStorage.setItem(k,JSON.stringify(v));
+
+let profile = load(LS.profile,null);
+let meds    = load(LS.meds,[]);
+let log     = load(LS.log,{});
+
+/* ---------- screen routing ---------- */
+const SCREENS=['home','onboard','meds','settings'];
+function go(name){
+  SCREENS.forEach(s=>$('#'+s).classList.toggle('hidden', s!==name));
+  window.scrollTo(0,0);
+  if(name==='home') renderHome();
+  if(name==='meds') renderMedEdit();
+  if(name==='settings') renderSettings();
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------- theme & font ---------- */
+function applyPrefs(){
+  document.documentElement.dataset.theme = profile?.theme || 'light';
+  document.documentElement.dataset.fontscale = profile?.font_scale || 'lg';
+}
+
+/* ---------- 안부 신호 (= 마지막 활동 갱신) ---------- */
+function pingSafe(){
+  const now = new Date().toISOString();
+  localStorage.setItem(LS.lastActive, now);
+  syncCheckin(now);     // 백엔드 연동 지점
+  renderSafeBanner();
+}
+
+/* ★ 백엔드 연동 지점 ★
+   체크인할 때마다 서버에 last_active를 기록.
+   서버(Supabase cron)가 매일 '며칠째 무응답?'을 검사해서,
+   기준 초과 시 SMS API로 자녀에게 안부 문자를 보냄.
+   (휴대폰은 백그라운드 감지가 안 되므로 감지는 반드시 서버에서.) */
+async function syncCheckin(iso){
+  // TODO(Claude Code): 실제 연동
+  // await fetch('https://blogtool.wellstar.life/api/care-checkin',{
+  //   method:'POST', headers:{'Content-Type':'application/json'},
+  //   body: JSON.stringify({ phone: profile.guardian_phone, last_active: iso })
+  // });
+}
+
+/* ---------- 메인 렌더 ---------- */
+function greetByHour(){
+  const h=new Date().getHours();
+  if(h<11) return '좋은 아침이에요 ☀️';
+  if(h<17) return '안녕하세요 🌿';
+  if(h<21) return '좋은 저녁이에요 🌆';
+  return '편안한 밤 보내세요 🌙';
+}
+function fmtKDate(){
+  const d=new Date(), days=['일','월','화','수','목','금','토'];
+  return `${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+}
+function fmtLastSeen(){
+  const iso=localStorage.getItem(LS.lastActive);
+  if(!iso) return '—';
+  const d=new Date(iso), now=new Date();
+  const sameDay=d.toLocaleDateString('sv-SE')===todayKey();
+  const hm=d.toTimeString().slice(0,5);
+  if(sameDay) return `오늘 ${hm}`;
+  const diff=Math.floor((now-d)/86400000);
+  return `${diff}일 전`;
+}
+
+function renderSafeBanner(){
+  const iso=localStorage.getItem(LS.lastActive);
+  const banner=$('#safeBanner');
+  $('#lastSeen').textContent=fmtLastSeen();
+  if(iso && new Date(iso).toLocaleDateString('sv-SE')===todayKey()){
+    banner.classList.remove('warn');
+    banner.querySelector('.safe-ico').textContent='💚';
+    $('#safeTitle').textContent='오늘 안심 확인 ✓';
+    $('#safeSub').textContent=`${profile?.guardian_name||'가족'}이 안심하고 있어요`;
+  }else{
+    banner.classList.add('warn');
+    banner.querySelector('.safe-ico').textContent='🌼';
+    $('#safeTitle').textContent='오늘 약을 챙겨볼까요?';
+    $('#safeSub').textContent='챙기시면 가족이 안심해요';
+  }
+}
+
+function renderHome(){
+  $('#greetTitle').textContent = (profile?.parent_name? profile.parent_name+', ':'') + greetByHour();
+  $('#greetDate').textContent = fmtKDate();
+  renderSafeBanner();
+
+  const day = log[todayKey()] || {taken:[],habits:[]};
+  const list=$('#medList'); list.innerHTML='';
+  const sorted=[...meds].sort((a,b)=>a.time.localeCompare(b.time));
+
+  if(sorted.length===0){
+    list.innerHTML=`<div class="alldone"><div class="big">💊</div><h3>등록된 약이 없어요</h3>
+      <p>설정 → 약 관리에서 추가해주세요</p></div>`;
+  }
+  sorted.forEach(m=>{
+    const done=day.taken.includes(m.id);
+    const el=document.createElement('div');
+    el.className='med'+(done?' done':'');
+    el.innerHTML=`
+      <div class="pill">${done?'✓':'💊'}</div>
+      <div class="meta"><div class="nm">${esc(m.name)}</div><div class="tm">⏰ ${m.time}</div></div>
+      <button class="take-btn">${done?'완료':'먹었어요'}</button>`;
+    el.querySelector('.take-btn').onclick=()=>toggleTake(m.id);
+    list.appendChild(el);
+  });
+
+  const total=sorted.length, taken=day.taken.filter(id=>meds.some(m=>m.id===id)).length;
+  $('#medCount').textContent = total? `${taken}/${total}` : '';
+  $('#allDone').classList.toggle('hidden', !(total>0 && taken>=total));
+
+  document.querySelectorAll('.habit').forEach(h=>{
+    h.classList.toggle('on', (day.habits||[]).includes(h.dataset.habit));
+  });
+}
+
+function toggleTake(id){
+  const k=todayKey(); const day=log[k]||{taken:[],habits:[]};
+  const i=day.taken.indexOf(id);
+  if(i>=0){ day.taken.splice(i,1); }
+  else{ day.taken.push(id); pingSafe(); toast('참 잘하셨어요! 오늘도 안심이에요 💚'); }
+  log[k]=day; save(LS.log,log); renderHome();
+}
+function toggleHabit(name,el){
+  const k=todayKey(); const day=log[k]||{taken:[],habits:[]};
+  day.habits=day.habits||[];
+  const i=day.habits.indexOf(name);
+  if(i>=0) day.habits.splice(i,1); else { day.habits.push(name); pingSafe(); }
+  log[k]=day; save(LS.log,log); el.classList.toggle('on');
+  renderSafeBanner();
+}
+
+/* ---------- 온보딩 ---------- */
+let obDays=3;
+document.querySelectorAll('#obDays button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#obDays button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); obDays=+b.dataset.d;
+});
+function saveOnboard(){
+  const parent=$('#obParent').value.trim();
+  const guardian=$('#obGuardian').value.trim();
+  const phone=$('#obPhone').value.trim();
+  if(!parent){ toast('부모님 호칭을 입력해주세요'); return; }
+  if(!phone){ toast('안부 받을 번호를 입력해주세요'); return; }
+  profile={ parent_name:parent, guardian_name:guardian, guardian_phone:phone,
+            alert_after_days:obDays, theme:'light', font_scale:'lg' };
+  save(LS.profile,profile); applyPrefs();
+  go('meds');
+}
+
+/* ---------- 약 등록/편집 ---------- */
+function addMed(){
+  const name=$('#mName').value.trim(); const time=$('#mTime').value;
+  if(!name){ toast('약 이름을 입력해주세요'); return; }
+  meds.push({ id:'m'+Date.now(), name, time, created_at:new Date().toISOString() });
+  save(LS.meds,meds); $('#mName').value=''; renderMedEdit(); toast('약이 추가됐어요');
+}
+function delMed(id){ meds=meds.filter(m=>m.id!==id); save(LS.meds,meds); renderMedEdit(); }
+function renderMedEdit(){
+  const box=$('#medEditList'); box.innerHTML='';
+  const sorted=[...meds].sort((a,b)=>a.time.localeCompare(b.time));
+  if(sorted.length===0){ box.innerHTML=`<p class="lead" style="text-align:center;padding:10px">아직 등록된 약이 없어요</p>`; }
+  sorted.forEach(m=>{
+    const el=document.createElement('div'); el.className='med-edit';
+    el.innerHTML=`<span style="font-size:1.5em">💊</span>
+      <div class="info"><b>${esc(m.name)}</b><span>⏰ ${m.time}</span></div>
+      <button aria-label="삭제">🗑️</button>`;
+    el.querySelector('button').onclick=()=>delMed(m.id);
+    box.appendChild(el);
+  });
+  $('#mEditCount').textContent = sorted.length? sorted.length+'개':'';
+}
+function finishMeds(){ go('home'); toast('준비 끝! 매일 함께해요 🦕'); }
+
+/* ---------- 설정 ---------- */
+function renderSettings(){
+  $('#setMedCount').textContent = meds.length? meds.length+'개 →':'없음 →';
+  $('#setParent').value = profile?.parent_name || '';
+  $('#setGuardian').value = profile?.guardian_name || '';
+  $('#setPhone').value = profile?.guardian_phone || '';
+  setSeg('setFont','f', profile?.font_scale||'lg');
+  setSeg('setTheme','t', profile?.theme||'light');
+  setSeg('setDays','d', String(profile?.alert_after_days||3));
+  $('#smsPreviewBox').innerHTML='';
+}
+function setSeg(id,attr,val){
+  document.querySelectorAll('#'+id+' button').forEach(b=>
+    b.classList.toggle('active', b.dataset[attr]===val));
+}
+document.querySelectorAll('#setFont button').forEach(b=>b.onclick=()=>{
+  setSeg('setFont','f',b.dataset.f); document.documentElement.dataset.fontscale=b.dataset.f;
+  if(profile){profile.font_scale=b.dataset.f; save(LS.profile,profile);}
+});
+document.querySelectorAll('#setTheme button').forEach(b=>b.onclick=()=>{
+  setSeg('setTheme','t',b.dataset.t); document.documentElement.dataset.theme=b.dataset.t;
+  if(profile){profile.theme=b.dataset.t; save(LS.profile,profile);}
+});
+document.querySelectorAll('#setDays button').forEach(b=>b.onclick=()=>setSeg('setDays','d',b.dataset.d));
+function saveSettings(){
+  if(!profile) profile={};
+  profile.parent_name=$('#setParent').value.trim();
+  profile.guardian_name=$('#setGuardian').value.trim();
+  profile.guardian_phone=$('#setPhone').value.trim();
+  profile.alert_after_days=+document.querySelector('#setDays button.active').dataset.d;
+  save(LS.profile,profile); toast('저장됐어요 ✓');
+}
+function previewSms(){
+  const d=profile?.alert_after_days||3;
+  const parent=profile?.parent_name||'어머니';
+  const box=$('#smsPreviewBox');
+  box.innerHTML=`<div class="sms-prev">
+    <span class="tag">미리보기 · 자녀에게 가는 문자</span><br>
+    [옆집디노 안심케어]<br>
+    ${esc(parent)}님이 <b>${d}일째</b> 약 확인이 없어요.<br>
+    한번 연락드려 보는 게 좋겠어요. 🦕</div>
+    <p class="lead" style="font-size:.82em;margin:10px 2px">실제 발송은 서버에서 자동으로 처리돼요(문자/SMS).</p>`;
+}
+function resetAll(){
+  if(!confirm('모든 정보가 지워져요. 계속할까요?')) return;
+  Object.values(LS).forEach(k=>localStorage.removeItem(k));
+  profile=null; meds=[]; log={}; init();
+}
+
+/* ---------- util ---------- */
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------- 알림: 약 시간 알림 ---------- */
+const NOTIF_KEY = 'care_notif_fired_today';  // YYYY-MM-DD::medId 로 중복 방지
+let notifTimer = null;
+
+function loadFiredToday() {
+  try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch { return {}; }
+}
+function markFired(medId) {
+  const key = todayKey() + '::' + medId;
+  const data = loadFiredToday();
+  // 오늘 날짜 외의 키 정리
+  Object.keys(data).forEach(k => { if (!k.startsWith(todayKey())) delete data[k]; });
+  data[key] = Date.now();
+  try { localStorage.setItem(NOTIF_KEY, JSON.stringify(data)); } catch {}
+}
+function alreadyFired(medId) {
+  return !!loadFiredToday()[todayKey() + '::' + medId];
+}
+
+// "HH:MM" 형식의 약 시간이 현재 시간 ±2분 이내인지
+function isMedTimeNow(timeStr) {
+  if (!timeStr || !/^\d{1,2}:\d{2}$/.test(timeStr)) return false;
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const medMin = h * 60 + m;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return Math.abs(nowMin - medMin) <= 1;  // ±1분 허용
+}
+
+// 1분마다 약 시간 비교 → 알림
+async function checkMedSchedule() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const todayLog = log[todayKey()] || { taken: [], habits: [] };
+  meds.forEach(med => {
+    if (!med.time) return;
+    if (todayLog.taken.includes(med.id)) return;  // 이미 먹은 약은 스킵
+    if (alreadyFired(med.id)) return;
+    if (!isMedTimeNow(med.time)) return;
+    showMedNotification(med);
+    markFired(med.id);
+  });
+}
+
+async function showMedNotification(med) {
+  const parent = profile?.parent_name || '';
+  const title = '💊 약 드실 시간이에요';
+  const body = (parent ? parent + ', ' : '') + (med.name || '약') + ' 한 번 챙겨주세요 🦕';
+
+  try {
+    if (navigator.serviceWorker?.controller) {
+      // SW를 통해 표시 (앱 닫혀있어도 가능)
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_MED_NOTIFICATION', title, body, tag: 'med-' + med.id
+      });
+    } else {
+      // 직접 표시
+      new Notification(title, { body, icon: 'icon-192.png' });
+    }
+  } catch (e) { console.warn('알림 실패:', e); }
+}
+
+function updateNotifStatus() {
+  const el = document.getElementById('notifStatus');
+  if (!el) return;
+  if (!('Notification' in window)) {
+    el.textContent = '미지원';
+    return;
+  }
+  const p = Notification.permission;
+  if (p === 'granted') el.textContent = '✅ 허용됨';
+  else if (p === 'denied') el.textContent = '❌ 차단됨';
+  else el.textContent = '👉 누르세요';
+}
+
+async function toggleNotifPermission() {
+  if (!('Notification' in window)) {
+    toast('이 기기는 알림 미지원');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    toast('알림이 차단됨 — 브라우저 설정에서 허용');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    // 테스트 알림 표시
+    showMedNotification({ id: 'test', name: '테스트 약' });
+    toast('🔔 알림이 곧 와요');
+    return;
+  }
+  const result = await Notification.requestPermission();
+  updateNotifStatus();
+  if (result === 'granted') {
+    toast('🔔 알림 허용됨 — 약 시간에 알려드려요');
+    // 즉시 한 번 체크
+    checkMedSchedule();
+  }
+}
+
+function startNotifCheck() {
+  // 기존 타이머 정리
+  if (notifTimer) clearInterval(notifTimer);
+  // 1분마다 약 시간 비교
+  notifTimer = setInterval(checkMedSchedule, 60 * 1000);
+  // 진입 즉시 한 번
+  checkMedSchedule();
+}
+
+/* ---------- PWA 설치 ---------- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallStatus();
+});
+function updateInstallStatus() {
+  const el = document.getElementById('installStatus');
+  if (!el) return;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone;
+  if (standalone) el.textContent = '✅ 추가됨';
+  else if (deferredInstallPrompt) el.textContent = '👉 누르세요';
+  else el.textContent = '안내 보기';
+}
+async function installPWA() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone;
+  if (standalone) {
+    toast('이미 홈 화면에 추가됐어요');
+    return;
+  }
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') toast('홈 화면에 추가됐어요 🎉');
+    deferredInstallPrompt = null;
+    updateInstallStatus();
+    return;
+  }
+  // iOS 또는 안내 모달
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  alert(isIOS
+    ? '📱 iPhone 추가 방법\n\n1) 하단 [공유] 버튼 누르기\n2) "홈 화면에 추가" 선택\n3) [추가] 누르기\n\n그러면 홈 화면 앱처럼 켤 수 있어요'
+    : '📱 안드로이드 추가 방법\n\n1) Chrome 상단 [⋮] 메뉴\n2) "홈 화면에 추가" 또는 "앱 설치"\n3) [추가] 누르기'
+  );
+}
+
+/* ---------- 서비스 워커 등록 + 자동 업데이트 ---------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+  let _reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_reloaded) return;
+    _reloaded = true;
+    window.location.reload();
+  });
+}
+
+/* ---------- init ---------- */
+function init(){
+  applyPrefs();
+  if(profile && profile.guardian_phone){ go('home'); }
+  else { go('onboard'); }
+  // 알림 상태 + 설치 상태 표시 업데이트
+  updateNotifStatus();
+  updateInstallStatus();
+  // 약 시간 알림 체크 시작
+  startNotifCheck();
+}
+init();
+
+// 페이지가 다시 보일 때마다 약 시간 즉시 체크 (백그라운드에서 돌아왔을 때 놓친 약 안내)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // 매번 최신 데이터로 갱신
+    meds = load(LS.meds, []);
+    log = load(LS.log, {});
+    checkMedSchedule();
+    updateNotifStatus();
+    updateInstallStatus();
+  }
+});
+</script>
+</body>
+</html>
