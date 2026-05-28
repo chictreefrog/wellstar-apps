@@ -547,6 +547,11 @@ body.light-theme .input-bar {
   <div id="scrollHint" style="position:absolute;right:0;top:0;bottom:1px;width:40px;background:linear-gradient(90deg,transparent,var(--bg-primary));pointer-events:none;transition:opacity .3s" aria-hidden="true"></div>
   </div>
 
+  <!-- 사용량 표시 -->
+  <div id="usageBar" style="display:none;padding:8px 16px;font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--border);background:rgba(255,107,53,0.06);text-align:center">
+    💬 오늘 사용 <b id="usageUsed" style="color:var(--accent)">0</b> / <span id="usageLimit">30</span>회 · 1회 = 메시지 1번
+  </div>
+
   <!-- Chat Area -->
   <div class="chat-area" id="chatArea">
     <div class="welcome-card" id="welcomeCard">
@@ -634,6 +639,58 @@ function init() {
   input.addEventListener('input', () => {
     document.getElementById('sendBtn').disabled = !input.value.trim();
   });
+
+  // 로그인 상태에서 오늘 사용량 미리 가져와 표시
+  initUsage();
+}
+
+function updateUsageBar(used, limit) {
+  const bar = document.getElementById('usageBar');
+  if (!bar) return;
+  bar.style.display = 'block';
+  document.getElementById('usageUsed').textContent = used;
+  document.getElementById('usageLimit').textContent = limit;
+  if (used >= limit) {
+    bar.style.background = 'rgba(255,69,58,0.15)';
+    document.getElementById('usageUsed').style.color = '#FF453A';
+  }
+}
+
+async function initUsage() {
+  try {
+    // dinoSupabase 준비 대기
+    if (!window.dinoSupabase) {
+      await new Promise(r => {
+        window.addEventListener('dino-supabase-ready', r, { once: true });
+        setTimeout(r, 3000);
+      });
+    }
+    if (!window.dinoSupabase) return;
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) return;
+
+    // role 가져오기
+    const { data: profile } = await window.dinoSupabase
+      .from('profiles').select('role').eq('id', session.user.id).single();
+    const role = profile?.role || 'partner';
+    const limit = role === 'guest' ? 5 : 30;
+
+    // KST 자정부터 챗봇 사용량
+    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+    kstNow.setUTCHours(0, 0, 0, 0);
+    const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+
+    const { count } = await window.dinoSupabase
+      .from('content_usage')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', session.user.id)
+      .eq('channel', 'chatbot')
+      .gte('created_at', kstMidnightUTC.toISOString());
+
+    updateUsageBar(count || 0, limit);
+  } catch (e) {
+    console.error('[chatbot] initUsage failed:', e);
+  }
 }
 
 function applyTheme() {
@@ -830,9 +887,21 @@ async function sendMessage() {
       content: m.content
     }));
 
+    // 인증 토큰 첨부 (일일 한도 체크용)
+    let accessToken = null;
+    try {
+      if (window.dinoSupabase) {
+        const { data: { session } } = await window.dinoSupabase.auth.getSession();
+        accessToken = session?.access_token || null;
+      }
+    } catch {}
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         message: text,
         scenario: currentScenario,
@@ -840,16 +909,27 @@ async function sendMessage() {
       })
     });
 
+    const data = await res.json().catch(() => ({}));
+
+    // 일일 한도 도달 (429)
+    if (res.status === 429) {
+      hideTyping();
+      addMessage('assistant', '⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'), false, []);
+      updateUsageBar(data.used || 0, data.limit || 30);
+      return;
+    }
+
     if (!res.ok) throw new Error(`API error: ${res.status}`);
 
-    const data = await res.json();
     hideTyping();
-
     addMessage('assistant', data.reply, false, data.citations);
 
     if (data.quickReplies && data.quickReplies.length > 0) {
       addQuickReplies(data.quickReplies);
     }
+
+    // 사용량 UI 갱신
+    if (data.usage) updateUsageBar(data.usage.used, data.usage.limit);
   } catch (err) {
     hideTyping();
     addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏', false, []);

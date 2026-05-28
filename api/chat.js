@@ -4,7 +4,7 @@ module.exports = async function handler(req, res) {
   // 인라인 명시적 CORS 헤더 (cors.js import 사용 안 함 — 기존 교훈)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -18,6 +18,76 @@ module.exports = async function handler(req, res) {
   const FILE_STORE = process.env.GEMINI_FILE_STORE; // e.g. "fileSearchStores/xxx"
   const SUPABASE_URL = process.env.DINO_SUPABASE_URL;
   const SUPABASE_KEY = process.env.DINO_SUPABASE_KEY;
+
+  // ══════════════════════════════
+  // 일일 한도 체크 (회원 30회 / 게스트 5회)
+  // 1 메시지 = 1회 카운트 (메인 응답 + 추천 + 피드백은 내부 처리)
+  // ══════════════════════════════
+  let userId = null;
+  let role = 'guest';
+  const authHeader = req.headers.authorization || '';
+  const accessToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+  if (accessToken && SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${accessToken}` }
+      });
+      if (userRes.ok) {
+        const u = await userRes.json();
+        userId = u?.id;
+        if (userId) {
+          const profileRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`,
+            { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+          );
+          if (profileRes.ok) {
+            const rows = await profileRes.json();
+            if (rows[0]?.role) role = rows[0].role;
+          }
+        }
+      }
+    } catch (e) { console.error('chat auth check failed:', e); }
+  }
+
+  const dailyQuota = role === 'guest' ? 5 : 30;
+
+  // 오늘 KST 자정부터 채팅 메시지 수 카운트 (channel='chatbot')
+  let todayUsed = 0;
+  if (userId && SUPABASE_URL && SUPABASE_KEY) {
+    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+    kstNow.setUTCHours(0, 0, 0, 0);
+    const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+    try {
+      const usageRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/content_usage?user_id=eq.${userId}&channel=eq.chatbot&created_at=gte.${encodeURIComponent(kstMidnightUTC.toISOString())}&select=id`,
+        {
+          method: 'HEAD',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: 'count=exact',
+            Range: '0-0'
+          }
+        }
+      );
+      const cr = usageRes.headers.get('content-range') || '';
+      const m = cr.match(/\/(\d+)$/);
+      if (m) todayUsed = parseInt(m[1], 10);
+    } catch (e) { console.error('chat usage count failed:', e); }
+
+    if (todayUsed >= dailyQuota) {
+      return res.status(429).json({
+        error: 'rate_limit',
+        used: todayUsed,
+        limit: dailyQuota,
+        role,
+        message: role === 'guest'
+          ? `오늘 무료 사용 한도(${dailyQuota}회)에 도달했어요. 팀 합류 시 하루 30회까지!`
+          : `오늘 챗봇 사용 한도(${dailyQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`
+      });
+    }
+  }
 
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const systemPrompt = buildSystemPrompt(scenario);
@@ -141,10 +211,31 @@ module.exports = async function handler(req, res) {
       .catch(() => {});
   }
 
+  // 챗봇 사용량 기록 (비동기) — channel='chatbot' 으로 1회 카운트
+  if (userId && SUPABASE_URL && SUPABASE_KEY) {
+    fetch(`${SUPABASE_URL}/rest/v1/content_usage`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        channel: 'chatbot',
+        type: scenario || 'free',
+        tone: null,
+        keyword: (message || '').slice(0, 50)
+      })
+    }).catch(() => {});
+  }
+
   return res.status(200).json({
     reply,
     citations,
-    quickReplies: getQuickReplies(scenario, message)
+    quickReplies: getQuickReplies(scenario, message),
+    usage: { used: todayUsed + 1, limit: dailyQuota, remaining: Math.max(0, dailyQuota - todayUsed - 1), role }
   });
 }
 
