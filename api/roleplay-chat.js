@@ -80,7 +80,8 @@ module.exports = async function handler(req, res) {
     const rows = await r.json();
     if (rows[0]?.role) role = rows[0].role;
   } catch {}
-  const dailyQuota = role === 'guest' ? 1 : 5;
+  // 무료 한도: 회원 3회/일 (1회 = 최대 10턴 = 사용자 답변 10번)
+  const dailyQuota = role === 'guest' ? 1 : 3;
 
   // 3. 새 세션이면 일일 한도 체크 + 생성
   let sessionId = session_id;
@@ -105,8 +106,8 @@ module.exports = async function handler(req, res) {
 
     if (todayCount >= dailyQuota) {
       const msg = role === 'guest'
-        ? `오늘 무료 사용 한도(${dailyQuota}회)에 도달했어요. 팀 합류 시 하루 5회까지 가능해요!`
-        : `오늘 사용 한도(${dailyQuota}회)에 도달했어요. 내일 다시 시도해주세요.`;
+        ? `오늘 무료 사용 한도(${dailyQuota}회)에 도달했어요. 팀 합류 시 하루 ${dailyQuota * 3}회 + 사용권 구매로 더 가능!`
+        : `오늘 사용 한도(${dailyQuota}회 · 1회 = 최대 10턴 대화)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
       return res.status(429).json({ error: 'rate_limit', used: todayCount, limit: dailyQuota, role, message: msg });
     }
 
@@ -194,15 +195,41 @@ ${levelGuide}
     contents.push({ role: 'user', parts: [{ text: message }] });
   }
 
+  // maxOutputTokens 400 → 800 (한국어 자연 답변 약 200~300자에 여유)
+  // finishReason 체크 + 1회 재시도 (다이어리/회고 패턴 적용)
   let reply = '';
-  try {
+  async function callGemini(maxTokens) {
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
       contents,
-      config: { systemInstruction: systemPrompt, temperature: 0.9, maxOutputTokens: 400 }
+      config: { systemInstruction: systemPrompt, temperature: 0.9, maxOutputTokens: maxTokens }
     });
-    reply = (response.text || '').trim();
-    if (!reply) throw new Error('empty');
+    const text = (response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+    const finishReason = response?.candidates?.[0]?.finishReason || 'UNKNOWN';
+    return { text, finishReason };
+  }
+
+  try {
+    let result = await callGemini(800);
+    console.log(`[roleplay-chat] turn ${turnCount} finishReason=${result.finishReason} len=${result.text.length}`);
+
+    // MAX_TOKENS로 잘렸으면 더 큰 토큰으로 1회 재시도
+    if (result.finishReason === 'MAX_TOKENS') {
+      console.warn('[roleplay-chat] MAX_TOKENS hit, retrying with 1500');
+      result = await callGemini(1500);
+    }
+
+    reply = result.text;
+    if (!reply) throw new Error('empty_response');
+
+    // 그래도 잘렸으면 에러 (사용자에게 명확히 알림)
+    if (result.finishReason === 'MAX_TOKENS') {
+      return res.status(503).json({
+        error: 'ai_truncated',
+        message: '답변이 너무 길어 끊겼어요. 다시 한 번 시도해주세요.',
+        partial: reply
+      });
+    }
   } catch (err) {
     console.error('roleplay gemini error:', err);
     return res.status(503).json({ error: 'ai_unavailable', message: 'AI 응답 실패. 잠시 후 다시 시도해주세요.' });

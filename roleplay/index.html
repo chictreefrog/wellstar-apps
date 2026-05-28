@@ -111,6 +111,7 @@ body.rp-chat-mode .dino-nav{display:none !important}
 .loading-block{text-align:center;padding:40px 20px;color:var(--text2)}
 .loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,0.7)}50%{box-shadow:0 0 0 10px rgba(255,107,53,0)}}
 
 /* Light theme */
 body.light-theme{--bg:#F5F5FA;--bg2:#FFFFFF;--card:#FFFFFF;--text:#1A1A2E;--text2:#555577;--text3:#8888AA;--border:rgba(0,0,0,0.08)}
@@ -142,7 +143,7 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
     </div>
 
     <!-- 오늘 사용 한도 표시 -->
-    <div id="usageBar" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+    <div id="usageBar" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:6px;display:flex;align-items:center;gap:12px">
       <div style="font-size:22px">📊</div>
       <div style="flex:1">
         <div style="font-size:11px;color:var(--text3);margin-bottom:2px">오늘 사용</div>
@@ -150,6 +151,7 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
       </div>
       <div id="usageLimit" style="font-size:11px;color:var(--text3);text-align:right;line-height:1.5"></div>
     </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:18px;padding:0 4px">💡 1회 = 최대 10턴 대화. 한도 초과 시 사용권 구매 가능</div>
 
     <div class="section">
       <div class="section-label">🎭 역할 선택</div>
@@ -614,6 +616,14 @@ async function sendMessage() {
       document.getElementById('sendBtn').disabled = false;
       return;
     }
+    // 잘림 — 사용자에게 명확한 안내 + 재시도 가능
+    if (data?.error === 'ai_truncated') {
+      addMeta('✂️ ' + (data.message || '답변이 끊겼어요') + ' (같은 메시지로 다시 시도)');
+      // 입력창에 사용자 메시지 복원 (재시도 편의)
+      document.getElementById('chatInput').value = msg;
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
     if (!res.ok || !data.reply) {
       addMeta('AI 응답 실패 — 잠시 후 다시 시도해주세요');
       document.getElementById('sendBtn').disabled = false;
@@ -627,16 +637,22 @@ async function sendMessage() {
     addBubble(data.reply, 'ai');
     updateTurnCount(data.turn_count);
 
-    // 10턴 도달 시 자동 종료 (한 번만 발동)
+    // 10턴 도달 시 자연스러운 마무리 안내 (강제 종료 X — 사용자가 명시적으로 '종료' 눌러야 함)
     if (data.turn_count >= MAX_TURNS && !currentSession.endTriggered) {
       currentSession.endTriggered = true;
       // 입력 잠금
       document.getElementById('chatInput').disabled = true;
       document.getElementById('sendBtn').disabled = true;
       document.getElementById('micBtn').disabled = true;
+      document.getElementById('chatInput').placeholder = '10턴 채웠어요. 우상단 "종료 + 회고 받기"를 눌러주세요';
       setTimeout(() => {
-        addMeta(MAX_TURNS + '턴 도달! 회고로 넘어갑니다.');
-        setTimeout(() => endSession(true), 1500); // skipConfirm
+        addMeta('💬 10턴 대화 완료! 충분히 잘 해냈어요. 우상단 "🎯 종료 + 회고 받기" 버튼을 눌러 AI 코칭을 받아보세요.');
+        // 종료 버튼에 강조 효과 (시각적 안내)
+        const endBtn = document.querySelector('.end-link');
+        if (endBtn) {
+          endBtn.style.animation = 'pulse 1.5s ease-in-out infinite';
+          endBtn.style.boxShadow = '0 0 0 0 rgba(255,107,53,0.7)';
+        }
       }, 600);
     }
   } catch (err) {
@@ -778,7 +794,8 @@ async function loadTodayUsage() {
     ]);
 
     const role = profileRes?.data?.role || 'guest';
-    const limit = role === 'guest' ? 1 : 5;
+    // 1회 = 최대 10턴 대화. 회원 3회/일, 게스트 1회/일
+    const limit = role === 'guest' ? 1 : 3;
     const used = count || 0;
     const remaining = Math.max(0, limit - used);
 
@@ -1010,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 서비스워커 — 강제 업데이트 + 자동 reload
-const BUILD_ID = 'v12-review-truncation';
+const BUILD_ID = 'v13-quota-3-no-truncation';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     // PWA가 다시 보일 때마다 SW 업데이트 체크

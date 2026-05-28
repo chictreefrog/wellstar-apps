@@ -41,6 +41,15 @@ module.exports = async function handler(req, res) {
 
   const sbHeaders = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
+  // role 확인 → 일일 회고 한도 (회원 3회/일)
+  let role = 'guest';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`, { headers: sbHeaders });
+    const rows = await r.json();
+    if (rows[0]?.role) role = rows[0].role;
+  } catch {}
+  const reviewQuota = role === 'guest' ? 1 : 3;
+
   // 세션 조회 (본인 세션인지 확인)
   const sessRes = await fetch(
     `${SUPABASE_URL}/rest/v1/roleplay_sessions?id=eq.${session_id}&user_id=eq.${userId}&select=*`,
@@ -49,6 +58,33 @@ module.exports = async function handler(req, res) {
   const sessions = await sessRes.json();
   if (!sessions || !sessions[0]) return res.status(404).json({ error: 'session_not_found' });
   const sess = sessions[0];
+
+  // 이 세션에 이미 회고가 있으면 한도 차감 없이 재반환 가능. 새 회고 생성이면 한도 체크.
+  const isNewReview = !sess.review || !sess.review.summary;
+  if (isNewReview) {
+    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+    kstNow.setUTCHours(0, 0, 0, 0);
+    const kstMidnight = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+    let todayReviews = 0;
+    try {
+      // 오늘 완성된 회고 수 = completed=true 또는 review 있는 세션
+      const cntRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&completed=eq.true&updated_at=gte.${encodeURIComponent(kstMidnight.toISOString())}&select=id`,
+        { method: 'HEAD', headers: { ...sbHeaders, Prefer: 'count=exact', Range: '0-0' } }
+      );
+      const cr = cntRes.headers.get('content-range') || '';
+      const m = cr.match(/\/(\d+)$/);
+      if (m) todayReviews = parseInt(m[1], 10);
+    } catch {}
+    if (todayReviews >= reviewQuota) {
+      return res.status(429).json({
+        error: 'rate_limit',
+        message: `오늘 회고 한도(${reviewQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`,
+        used: todayReviews,
+        limit: reviewQuota
+      });
+    }
+  }
 
   // 대화 텍스트 구성
   const messages = sess.messages || [];
