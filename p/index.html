@@ -87,7 +87,7 @@ a { color: inherit; text-decoration: none }
 
 /* ─── 히어로 ─── */
 .hero {
-  position: relative; width: 100%; aspect-ratio: 4/5;
+  position: relative; width: 100%; aspect-ratio: 16/9;
   background: var(--grad); background-size: cover; background-position: center;
   overflow: hidden;
 }
@@ -99,34 +99,36 @@ a { color: inherit; text-decoration: none }
 }
 .hero-overlay {
   position: absolute; inset: 0;
-  background: var(--grad-hero);
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.35));
 }
-.hero-content {
-  position: absolute; left: 0; right: 0; bottom: 32px;
-  padding: 0 28px; z-index: 2; text-align: left;
+
+/* 프로필 영역 (히어로 아래) — 카드처럼 */
+.profile-block {
+  padding: 0 24px; margin-top: -50px; position: relative; z-index: 2;
+  text-align: left;
 }
 .profile-circle {
-  width: 84px; height: 84px; border-radius: 50%;
+  width: 96px; height: 96px; border-radius: 50%;
   background-size: cover; background-position: center;
-  border: 3px solid rgba(255,255,255,0.95); margin-bottom: 16px;
+  border: 4px solid var(--bg); margin-bottom: 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.35);
   background-color: var(--bg-soft);
-  display: flex; align-items: center; justify-content: center; font-size: 36px;
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
 }
-.hero-name {
-  font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
-  margin-bottom: 6px; line-height: 1.1;
+.profile-name {
+  font-size: 30px; font-weight: 800; letter-spacing: -0.03em;
+  margin-bottom: 8px; line-height: 1.1; color: var(--text);
 }
-.hero-title {
-  font-size: 14px; color: rgba(255,255,255,0.85); font-weight: 500;
+.profile-title {
+  font-size: 14px; color: var(--accent); font-weight: 700;
   letter-spacing: 0.02em; margin-bottom: 14px;
-  display: inline-block; padding: 4px 12px;
-  background: rgba(255,255,255,0.18); backdrop-filter: blur(10px);
+  display: inline-block; padding: 5px 14px;
+  background: var(--card); border: 1px solid var(--border-strong);
   border-radius: 100px;
 }
-.hero-intro {
-  font-size: 16px; color: rgba(255,255,255,0.92); line-height: 1.55;
-  max-width: 320px;
+.profile-intro {
+  font-size: 16px; color: var(--text2); line-height: 1.6;
+  max-width: 380px;
 }
 
 /* ─── SNS 행 ─── */
@@ -332,6 +334,16 @@ function escAttr(s) {
   return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// 외부 URL 정규화 — DB에 저장된 옛 데이터가 http(s):// 없을 수 있음
+function normalizeExternalUrl(s) {
+  if (!s) return '';
+  const t = String(s).trim();
+  if (!t) return '';
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^(mailto:|tel:)/i.test(t)) return t;
+  return 'https://' + t.replace(/^\/+/, '');
+}
+
 async function waitSupabase(maxMs) {
   if (window.dinoSupabase) return true;
   await Promise.race([
@@ -386,13 +398,16 @@ function render(c) {
   const activities = Array.isArray(c.activity_urls) ? c.activity_urls.filter(Boolean) : [];
   const enabledMagnets = Array.isArray(c.enabled_magnets) ? c.enabled_magnets : ['saju','branding-coach','quiz','success-test','health-check'];
 
-  // SNS 버튼
+  // SNS 버튼 — URL 자동 정규화 (옛 데이터 호환)
   const snsButtons = [];
   if (c.phone) snsButtons.push(`<a class="sns-btn" href="tel:${escAttr(c.phone)}"><span class="ic">📞</span><span class="lb">전화</span></a>`);
   if (c.kakao_id) snsButtons.push(`<a class="sns-btn" href="https://open.kakao.com/o/${escAttr(c.kakao_id)}" target="_blank" rel="noopener"><span class="ic">💬</span><span class="lb">카톡</span></a>`);
-  if (c.instagram_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.instagram_url)}" target="_blank" rel="noopener"><span class="ic">📷</span><span class="lb">인스타</span></a>`);
-  if (c.blog_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.blog_url)}" target="_blank" rel="noopener"><span class="ic">📝</span><span class="lb">블로그</span></a>`);
-  if (c.youtube_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.youtube_url)}" target="_blank" rel="noopener"><span class="ic">▶️</span><span class="lb">유튜브</span></a>`);
+  const insta = normalizeExternalUrl(c.instagram_url);
+  if (insta) snsButtons.push(`<a class="sns-btn" href="${escAttr(insta)}" target="_blank" rel="noopener"><span class="ic">📷</span><span class="lb">인스타</span></a>`);
+  const blog = normalizeExternalUrl(c.blog_url);
+  if (blog) snsButtons.push(`<a class="sns-btn" href="${escAttr(blog)}" target="_blank" rel="noopener"><span class="ic">📝</span><span class="lb">블로그</span></a>`);
+  const youtube = normalizeExternalUrl(c.youtube_url);
+  if (youtube) snsButtons.push(`<a class="sns-btn" href="${escAttr(youtube)}" target="_blank" rel="noopener"><span class="ic">▶️</span><span class="lb">유튜브</span></a>`);
 
   const magnets = enabledMagnets.map(id => {
     const m = LEAD_MAGNETS.find(x => x.id === id);
@@ -427,13 +442,14 @@ function render(c) {
   document.getElementById('wrap').innerHTML = `
     <header class="hero ${c.hero_url ? '' : 'no-image'}" ${heroStyle}>
       <div class="hero-overlay"></div>
-      <div class="hero-content fade">
-        <div class="profile-circle" ${profileStyle}>${profileChar}</div>
-        <div class="hero-name serif">${escHtml(fullName)}</div>
-        ${c.title ? `<div class="hero-title">${escHtml(c.title)}</div>` : ''}
-        ${c.intro ? `<div class="hero-intro">${escHtml(c.intro)}</div>` : ''}
-      </div>
     </header>
+
+    <div class="profile-block fade">
+      <div class="profile-circle" ${profileStyle}>${profileChar}</div>
+      <div class="profile-name serif">${escHtml(fullName)}</div>
+      ${c.title ? `<div class="profile-title">${escHtml(c.title)}</div>` : ''}
+      ${c.intro ? `<div class="profile-intro">${escHtml(c.intro)}</div>` : ''}
+    </div>
 
     ${snsButtons.length ? `<div class="sns-strip fade d1">${snsButtons.join('')}</div>` : ''}
 
@@ -471,9 +487,15 @@ function render(c) {
   } catch {}
 
   window.sharePage = async function() {
-    const text = `${fullName}님 소개 페이지\n${pageUrl}`;
+    // navigator.share는 text와 url 둘 다 주면 카톡이 url을 두 번 표시 → text엔 안내만, url만 별도로
     if (navigator.share) {
-      try { await navigator.share({ title: fullName, text, url: pageUrl }); } catch {}
+      try {
+        await navigator.share({
+          title: `${fullName}님 소개 페이지`,
+          text: `${fullName}님 소개 페이지`,
+          url: pageUrl
+        });
+      } catch {}
     } else {
       await navigator.clipboard.writeText(pageUrl);
       alert('링크가 복사됐어요!');

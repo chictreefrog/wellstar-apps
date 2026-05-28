@@ -282,12 +282,15 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
 
     <!-- 내 소개 페이지 미리보기 (iframe) -->
     <div style="margin:0 16px 16px">
-      <div style="font-size:14px;color:var(--text);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;font-weight:700">
-        <span>📄 내 소개 페이지 미리보기</span>
-        <a id="card-open-fullscreen" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:700;font-size:13px">새 탭에서 열기 ↗</a>
+      <div style="font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700">
+        📄 내 소개 페이지 미리보기
       </div>
       <div style="position:relative;width:100%;aspect-ratio:9/16;max-height:580px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)">
         <iframe id="card-landing-iframe" src="about:blank" style="width:100%;height:100%;border:0;background:var(--card)" loading="lazy"></iframe>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;font-weight:500">
+        ⚠️ 미리보기는 작은 화면이라 일부 가려질 수 있어요<br>
+        실제 페이지는 아래 'URL 복사 → 카톡에 붙여넣기' 또는 'QR 스캔'으로 확인하세요
       </div>
     </div>
 
@@ -573,13 +576,26 @@ function readForm() {
   data.email = document.getElementById('f-email').value.trim();
   data.intro = document.getElementById('f-intro').value.trim();
   data.sns = {
-    insta: document.getElementById('f-insta').value.trim(),
-    kakao: document.getElementById('f-kakao').value.trim(),
-    youtube: document.getElementById('f-youtube').value.trim(),
-    blog: document.getElementById('f-blog').value.trim(),
+    insta: normalizeUrl(document.getElementById('f-insta').value.trim()),
+    kakao: document.getElementById('f-kakao').value.trim(),  // 카카오는 코드만
+    youtube: normalizeUrl(document.getElementById('f-youtube').value.trim()),
+    blog: normalizeUrl(document.getElementById('f-blog').value.trim()),
   };
   data.theme = selectedTheme;
   data.tools = { ...toolToggles };
+}
+
+// URL 정규화 — http(s):// 없으면 https:// 자동 추가 (사용자가 'naver.com/blog'처럼 입력해도 OK)
+function normalizeUrl(s) {
+  if (!s) return '';
+  const trimmed = s.trim();
+  if (!trimmed) return '';
+  // 이미 http/https로 시작하면 그대로
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // mailto, tel은 그대로
+  if (/^(mailto:|tel:)/i.test(trimmed)) return trimmed;
+  // 그 외엔 https:// 추가
+  return 'https://' + trimmed.replace(/^\/+/, '');
 }
 
 function updatePreview() {
@@ -975,7 +991,6 @@ async function loadCardPreview() {
 
   // 미리보기 iframe (공개여부 무관 — 본인은 본인 카드 볼 수 있음)
   document.getElementById('card-landing-iframe').src = landingUrl + '?_t=' + Date.now();
-  document.getElementById('card-open-fullscreen').href = landingUrl;
 
   // QR (랜딩 URL 인코딩)
   window.__currentLandingUrl = landingUrl;
@@ -1012,9 +1027,15 @@ function copyLandingUrl() {
 async function shareLandingUrl() {
   const url = window.__currentLandingUrl;
   if (!url) { showToast('아직 준비 안 됨'); return; }
-  const text = `옆집디노 회원 페이지\n${url}`;
+  // text와 url 둘 다 주면 카톡이 url을 두 번 표시 → url만 별도로
   if (navigator.share) {
-    try { await navigator.share({ title: '내 랜딩 페이지', text, url }); } catch {}
+    try {
+      await navigator.share({
+        title: '내 소개 페이지',
+        text: '제 소개 페이지예요',
+        url
+      });
+    } catch {}
   } else {
     await navigator.clipboard.writeText(url);
     showToast('URL 복사됨 📋');
@@ -1305,7 +1326,7 @@ function showToast(msg) {
 // ══════════════════════════════
 // 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
-const BUILD_ID = 'card-v12-readable';
+const BUILD_ID = 'card-v13-fix-share-url';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-v12-readable';
+const CACHE_NAME = 'card-v13-fix-share-url';
 const APP_PATH = '/card/';
 
 self.addEventListener('install', e => {
