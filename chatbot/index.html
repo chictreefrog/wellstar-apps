@@ -58,7 +58,10 @@ html, body {
 }
 
 .app {
+  /* 갤럭시 PWA에서 safe-area-inset-bottom=0인데 시스템 nav가 100dvh 안에 포함되어
+     마지막 요소(.input-bar)가 가려지는 문제. 100svh 폴백 + 최소 여백 강제 */
   height: 100dvh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   max-width: 480px;
@@ -346,7 +349,8 @@ body.light-theme .msg-citations { border-top-color: rgba(0,0,0,0.06); }
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 10px 16px calc(10px + var(--safe-bottom));
+  /* 갤럭시는 safe-bottom=0 → 시스템 nav가 입력 바 가림 → 최소 20px 강제 */
+  padding: 10px 16px max(20px, calc(10px + var(--safe-bottom)));
   border-top: 1px solid var(--border);
   background: rgba(10, 10, 20, 0.95);
   backdrop-filter: blur(20px);
