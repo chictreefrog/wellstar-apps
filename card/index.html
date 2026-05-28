@@ -1178,11 +1178,30 @@ function showToast(msg) {
 }
 
 // ══════════════════════════════
-// 서비스워커
+// 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
+const BUILD_ID = 'card-v8-landing-2026-05-29';
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+  let _reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_reloaded) return;
+    _reloaded = true;
+    window.location.reload();
+  });
 }
+
+// 우하단 작은 빌드 라벨 (사용자 확인용)
+document.addEventListener('DOMContentLoaded', () => {
+  const tag = document.createElement('div');
+  tag.style.cssText = 'position:fixed;bottom:70px;right:6px;font-size:9px;color:rgba(128,128,128,0.4);z-index:9999;pointer-events:none;font-family:monospace';
+  tag.textContent = BUILD_ID;
+  document.body.appendChild(tag);
+});
 
 init();
 </script>
