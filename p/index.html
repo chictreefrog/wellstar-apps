@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<title>로딩 중...</title>
+<meta property="og:type" content="profile">
+<meta property="og:title" id="ogTitle" content="옆집디노 사업자 페이지">
+<meta property="og:description" id="ogDesc" content="">
+<meta property="og:image" id="ogImage" content="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ═══ Themes ═══ */
+.theme-dark-orange { --bg:#0d0d18; --bg2:#1a1a2e; --card:#1e1e35; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#FF6B35; --accent2:#FF8F65; }
+.theme-deep-purple { --bg:#0f0a1f; --bg2:#1a1335; --card:#241b3f; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#BF5AF2; --accent2:#D896FF; }
+.theme-ocean-blue { --bg:#0a1a2a; --bg2:#13283f; --card:#1c3450; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#30B0FF; --accent2:#5FC4FF; }
+.theme-forest-green { --bg:#0a1a14; --bg2:#13281f; --card:#1c3429; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#30D158; --accent2:#5FE07A; }
+.theme-rose-gold { --bg:#1f1318; --bg2:#2f1d27; --card:#3d2733; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#FF6B9E; --accent2:#FF8FB6; }
+.theme-midnight { --bg:#000; --bg2:#0a0a14; --card:#13131f; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#7FE2FF; --accent2:#A5EDFF; }
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+html, body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', -apple-system, sans-serif; min-height: 100vh; }
+img { max-width: 100%; display: block }
+a { color: inherit; text-decoration: none }
+.wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg2) }
+
+/* 히어로 */
+.hero {
+  position: relative; width: 100%; aspect-ratio: 16/9;
+  background: linear-gradient(180deg, var(--accent2), var(--accent)); background-size: cover; background-position: center;
+}
+.hero.no-image { display: flex; align-items: center; justify-content: center; font-size: 64px; opacity: 0.4 }
+.hero-gradient {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6));
+}
+
+/* 프로필 */
+.profile {
+  text-align: center; padding: 0 24px 22px; margin-top: -50px; position: relative; z-index: 1;
+}
+.profile-img {
+  width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 12px;
+  background: var(--card); border: 4px solid var(--bg2);
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center; font-size: 42px;
+}
+.profile h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px }
+.profile .title { font-size: 13px; color: var(--text2); margin-bottom: 8px }
+.profile .intro { font-size: 14px; color: var(--text2); line-height: 1.6; padding: 0 6px }
+
+/* SNS 버튼 */
+.sns-row {
+  display: flex; gap: 8px; padding: 0 16px 18px; flex-wrap: wrap; justify-content: center;
+}
+.sns-btn {
+  flex: 1; min-width: 70px; padding: 12px 6px; border-radius: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  text-align: center; font-size: 11px; color: var(--text2); font-weight: 700;
+}
+.sns-btn .ic { display:block; font-size: 22px; margin-bottom: 4px }
+.sns-btn:active { transform: scale(0.96); background: var(--accent); color: #fff }
+
+/* 섹션 */
+.section { padding: 6px 18px 4px }
+.section-title {
+  font-size: 13px; font-weight: 800; color: var(--accent);
+  margin: 18px 0 12px; letter-spacing: 0.3px;
+}
+
+/* 사진 그리드 */
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+.grid-item {
+  aspect-ratio: 1; background: var(--card); background-size: cover; background-position: center;
+  border-radius: 6px; cursor: zoom-in;
+}
+
+/* 리드마그넷 */
+.magnet-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+  transition: transform 0.15s;
+}
+.magnet-card:active { transform: scale(0.98); background: rgba(255,107,53,0.08) }
+.magnet-icon {
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(255,107,53,0.15);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  flex-shrink: 0;
+}
+.magnet-info { flex: 1; min-width: 0 }
+.magnet-name { font-size: 14px; font-weight: 700; margin-bottom: 2px }
+.magnet-desc { font-size: 11px; color: var(--text3); line-height: 1.4 }
+.magnet-arrow { color: var(--accent); font-size: 16px; font-weight: 700 }
+
+/* QR */
+.qr-section {
+  text-align: center; padding: 24px 18px;
+  margin: 18px 16px 24px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+}
+.qr-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px }
+#qrCanvas { margin: 0 auto; display: block }
+.share-btn {
+  margin-top: 14px; padding: 10px 22px; border-radius: 100px;
+  background: var(--accent); color: #fff; border: none; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+/* Footer */
+.footer {
+  text-align: center; padding: 24px 18px 32px; font-size: 11px; color: var(--text3); line-height: 1.6;
+}
+.footer a { color: var(--accent); font-weight: 700 }
+
+/* 로딩 / 에러 */
+.center-msg {
+  display: flex; align-items: center; justify-content: center; min-height: 70vh;
+  text-align: center; padding: 24px; flex-direction: column; gap: 12px;
+}
+.center-msg .ic { font-size: 56px; opacity: 0.4 }
+.center-msg p { color: var(--text2); font-size: 14px; line-height: 1.6 }
+
+/* 이미지 lightbox */
+.lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999;
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.lightbox.open { display: flex }
+.lightbox img { max-width: 100%; max-height: 90vh; border-radius: 8px }
+.lightbox-close { position: absolute; top: 16px; right: 16px; color: #fff; font-size: 28px; cursor: pointer; background: rgba(255,255,255,0.15); border: none; width: 40px; height: 40px; border-radius: 50% }
+</style>
+</head>
+<body class="theme-dark-orange">
+
+<div class="wrap" id="wrap">
+  <div class="center-msg" id="loadingMsg">
+    <div class="ic">⏳</div>
+    <p>불러오는 중...</p>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightboxImg" alt="">
+</div>
+
+<script src="/shared/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
+<script>
+const LEAD_MAGNETS = [
+  { id: 'saju', icon: '🔮', name: '사주 성공 DNA 진단', desc: '내가 영업이 잘 안되는 이유, 사주로 알아보기', url: '/saju/' },
+  { id: 'branding-coach', icon: '✍️', name: '블로그 브랜딩 코치', desc: 'AI가 만들어주는 나만의 블로그 브랜드', url: '/branding-coach/' },
+  { id: 'quiz', icon: '🧬', name: '영업 스타일 진단', desc: '8가지 유형 중 나는 어떤 영업인?', url: '/quiz/' },
+  { id: 'success-test', icon: '🎯', name: 'NM 성공 확률 진단', desc: '시작 전 솔직 체크 + 맞춤 전략', url: '/success-test/' },
+  { id: 'health-check', icon: '🦕', name: '건강 밸런스 진단', desc: '몸이 보내는 영양 SOS 신호 체크', url: '/health-check/' }
+];
+
+function getSlug() {
+  // URL 패턴: /p/홍길동코드 또는 /p/index.html?slug=홍길동코드
+  const path = location.pathname.replace(/\/+$/, '');
+  const m = path.match(/\/p\/([^/]+)$/);
+  if (m) return decodeURIComponent(m[1]);
+  const sp = new URLSearchParams(location.search);
+  return sp.get('slug') || sp.get('p') || null;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escAttr(s) {
+  if (!s) return '';
+  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function waitSupabase(maxMs) {
+  if (window.dinoSupabase) return true;
+  await Promise.race([
+    new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true })),
+    new Promise(r => setTimeout(r, maxMs || 5000))
+  ]);
+  return !!window.dinoSupabase;
+}
+
+function showError(icon, msg) {
+  document.getElementById('wrap').innerHTML = `
+    <div class="center-msg">
+      <div class="ic">${icon}</div>
+      <p>${msg}</p>
+      <a href="/main/" style="margin-top:12px;color:var(--accent);font-weight:700;font-size:13px">옆집디노 홈으로 →</a>
+    </div>
+  `;
+}
+
+async function loadCard() {
+  const slug = getSlug();
+  if (!slug) { showError('❓', '잘못된 주소입니다'); return; }
+
+  const ok = await waitSupabase(5000);
+  if (!ok) { showError('⚠️', '연결 실패 — 새로고침해주세요'); return; }
+
+  const { data, error } = await window.dinoSupabase
+    .from('public_cards').select('*').eq('slug', slug).maybeSingle();
+
+  if (error || !data) { showError('🔍', '아직 이 페이지가 없거나 비공개입니다'); return; }
+  if (!data.is_public) { showError('🔒', '비공개 페이지입니다'); return; }
+
+  // view_count 증가 (응답 안 기다림)
+  window.dinoSupabase.rpc('increment_public_card_view', { card_slug: slug }).then(()=>{}).catch(()=>{});
+
+  render(data);
+}
+
+function render(c) {
+  // 테마 적용
+  document.body.className = 'theme-' + (c.theme || 'dark-orange');
+
+  // og + title
+  const fullName = c.display_name || '옆집디노 회원';
+  document.title = `${fullName} · 옆집디노`;
+  document.getElementById('ogTitle').content = `${fullName} — ${c.title || '옆집디노 사업자'}`;
+  document.getElementById('ogDesc').content = c.intro || '';
+  if (c.hero_url) document.getElementById('ogImage').content = c.hero_url;
+
+  const heroStyle = c.hero_url ? `style="background-image:url('${escAttr(c.hero_url)}')"` : '';
+  const profileStyle = c.profile_url ? `style="background-image:url('${escAttr(c.profile_url)}')"` : '';
+
+  const products = Array.isArray(c.product_urls) ? c.product_urls.filter(Boolean) : [];
+  const activities = Array.isArray(c.activity_urls) ? c.activity_urls.filter(Boolean) : [];
+  const enabledMagnets = Array.isArray(c.enabled_magnets) ? c.enabled_magnets : ['saju','branding-coach','quiz','success-test','health-check'];
+
+  // SNS 버튼
+  const snsButtons = [];
+  if (c.phone) snsButtons.push(`<a class="sns-btn" href="tel:${escAttr(c.phone)}"><span class="ic">📞</span>전화</a>`);
+  if (c.kakao_id) snsButtons.push(`<a class="sns-btn" href="https://open.kakao.com/o/${escAttr(c.kakao_id)}" target="_blank" rel="noopener"><span class="ic">💬</span>카톡</a>`);
+  if (c.instagram_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.instagram_url)}" target="_blank" rel="noopener"><span class="ic">📷</span>인스타</a>`);
+  if (c.blog_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.blog_url)}" target="_blank" rel="noopener"><span class="ic">📝</span>블로그</a>`);
+  if (c.youtube_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.youtube_url)}" target="_blank" rel="noopener"><span class="ic">▶️</span>유튜브</a>`);
+
+  // 리드마그넷 카드
+  const magnetCards = enabledMagnets.map(id => {
+    const m = LEAD_MAGNETS.find(x => x.id === id);
+    if (!m) return '';
+    const href = `${m.url}?ref=${encodeURIComponent(c.slug)}`;
+    return `<a class="magnet-card" href="${href}">
+      <div class="magnet-icon">${m.icon}</div>
+      <div class="magnet-info">
+        <div class="magnet-name">${m.name}</div>
+        <div class="magnet-desc">${m.desc}</div>
+      </div>
+      <div class="magnet-arrow">→</div>
+    </a>`;
+  }).join('');
+
+  const productGrid = products.length
+    ? `<div class="section"><div class="section-title">🌟 내 제품</div><div class="grid-3">${products.map(u => `<div class="grid-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div></div>`
+    : '';
+
+  const activityGrid = activities.length
+    ? `<div class="section"><div class="section-title">✨ 활동 모습</div><div class="grid-3">${activities.map(u => `<div class="grid-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div></div>`
+    : '';
+
+  const pageUrl = `https://app.wellstar.life/p/${encodeURIComponent(c.slug)}`;
+
+  document.getElementById('wrap').innerHTML = `
+    <div class="hero ${c.hero_url ? '' : 'no-image'}" ${heroStyle}>
+      ${c.hero_url ? '<div class="hero-gradient"></div>' : '🌿'}
+    </div>
+    <div class="profile">
+      <div class="profile-img" ${profileStyle}>${c.profile_url ? '' : (fullName[0] || '🦕')}</div>
+      <h1>${escHtml(fullName)}</h1>
+      ${c.title ? `<div class="title">${escHtml(c.title)}</div>` : ''}
+      ${c.intro ? `<div class="intro">${escHtml(c.intro)}</div>` : ''}
+    </div>
+    ${snsButtons.length ? `<div class="sns-row">${snsButtons.join('')}</div>` : ''}
+    ${productGrid}
+    ${activityGrid}
+    <div class="section">
+      <div class="section-title">🎁 무료 진단 받기</div>
+      ${magnetCards}
+    </div>
+    <div class="qr-section">
+      <h3>📱 명함 저장 · QR</h3>
+      <div id="qrCanvas"></div>
+      <button class="share-btn" onclick="sharePage()">🔗 페이지 공유</button>
+    </div>
+    <div class="footer">
+      🦕 옆집디노 AI 세일즈 시스템<br>
+      <a href="/main/">자세히 보기 →</a>
+    </div>
+  `;
+
+  // QR
+  try {
+    new QRCode(document.getElementById('qrCanvas'), {
+      text: pageUrl, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch {}
+
+  // 페이지 공유 핸들러
+  window.sharePage = async function() {
+    const text = `${fullName}님의 페이지 보러가기\n${pageUrl}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: fullName, text, url: pageUrl }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(pageUrl);
+      alert('링크가 복사됐어요!');
+    }
+  };
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(e) {
+  if (e && e.target.tagName === 'IMG') return;
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+loadCard();
+</script>
+</body>
+</html>

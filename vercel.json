@@ -21,7 +21,8 @@
     { "source": "/saju", "destination": "/saju/index.html" },
     { "source": "/branding-coach", "destination": "/branding-coach/index.html" },
     { "source": "/roleplay", "destination": "/roleplay/index.html" },
-    { "source": "/library", "destination": "/library/index.html" }
+    { "source": "/library", "destination": "/library/index.html" },
+    { "source": "/p/:slug", "destination": "/p/index.html" }
   ],
   "headers": [
     {

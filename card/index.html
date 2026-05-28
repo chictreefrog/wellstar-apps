@@ -125,6 +125,35 @@ textarea { resize: none; min-height: 72px; }
 
 /* 토스트 */
 .toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 300; opacity: 0; transition: opacity 0.3s, transform 0.3s; white-space: nowrap; border: 1px solid var(--border); }
+
+/* ─ 랜딩 페이지 편집 ─ */
+.lp-uploader {
+  width: 100%; aspect-ratio: 16/9; background: var(--card); border: 1.5px dashed var(--border);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; background-size: cover; background-position: center; position: relative; overflow: hidden;
+}
+.lp-uploader[data-slot="profile"] { aspect-ratio: 1; border-radius: 50%; }
+.lp-uploader.has-image { border-style: solid; border-color: var(--accent); }
+.lp-uploader .lp-empty { font-size: 12px; color: var(--text3); font-weight: 700; }
+.lp-uploader.has-image .lp-empty { display: none; }
+.lp-uploader .lp-remove {
+  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 12px; cursor: pointer;
+  display: none;
+}
+.lp-uploader.has-image .lp-remove { display: flex; align-items: center; justify-content: center; }
+.lp-grid-6, .lp-grid-9 {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.lp-grid-6 .lp-uploader, .lp-grid-9 .lp-uploader { aspect-ratio: 1; border-radius: 8px; }
+.magnet-toggle {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px;
+  cursor: pointer;
+}
+.magnet-toggle .ic { font-size: 20px }
+.magnet-toggle .name { flex: 1; font-size: 13px; font-weight: 600 }
+.magnet-toggle input { width: 18px; height: 18px; cursor: pointer }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ── 라이트 테마 보정 (theme-toggle.js의 light-theme 클래스에 반응) ── */
@@ -295,15 +324,93 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
+  <!-- ── 랜딩 페이지 편집 화면 ── -->
+  <div id="screen-landing" class="screen">
+    <header style="padding:24px 20px 12px">
+      <h1 style="font-size:24px;font-weight:900">🏠 내 랜딩 페이지</h1>
+      <div class="subtitle" style="margin-top:4px">고객에게 보낼 퍼널 페이지 — 사진·소개·5개 무료 진단</div>
+    </header>
+
+    <div style="padding:0 20px 24px">
+
+      <!-- 공개 토글 + URL -->
+      <div class="section-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:14px;font-weight:700">📣 공개</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px" id="lp-url-hint">편집 중엔 비공개로 두세요</div>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="lp-public" onchange="onPublicToggle()">
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+        <div id="lp-url-box" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:10px;font-size:12px;color:var(--accent);font-family:monospace;word-break:break-all" onclick="copyLpUrl()" title="탭해서 복사">
+          <span id="lp-url-text"></span>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">탭해서 복사 · 카톡 공유 가능</div>
+        </div>
+      </div>
+
+      <!-- 히어로 + 프로필 사진 -->
+      <div class="section-title">📸 대표 사진</div>
+      <div style="display:flex;gap:10px;margin-bottom:18px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">히어로 (16:9)</div>
+          <div class="lp-uploader" data-slot="hero" id="lp-slot-hero" onclick="pickPhoto('hero')">
+            <span class="lp-empty">+ 추가</span>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">프로필 (정사각)</div>
+          <div class="lp-uploader" data-slot="profile" id="lp-slot-profile" onclick="pickPhoto('profile')">
+            <span class="lp-empty">+ 추가</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 자기소개 -->
+      <div class="section-title">✍️ 소개</div>
+      <div class="form-row" style="margin-bottom:10px">
+        <label style="font-size:12px;color:var(--text3)">직함</label>
+        <input type="text" id="lp-title" placeholder="예: 웰런스 사업자" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit">
+      </div>
+      <div class="form-row" style="margin-bottom:18px">
+        <label style="font-size:12px;color:var(--text3)">한 줄 소개</label>
+        <textarea id="lp-intro" rows="2" placeholder="예: 건강한 삶을 안내해드려요 👋" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>
+      </div>
+
+      <!-- 제품 갤러리 (6장) -->
+      <div class="section-title">🌟 내 제품 (최대 6장)</div>
+      <div class="lp-grid-6" id="lp-grid-products" style="margin-bottom:18px"></div>
+
+      <!-- 활동 갤러리 (9장) -->
+      <div class="section-title">✨ 활동 모습 (최대 9장)</div>
+      <div class="lp-grid-9" id="lp-grid-activities" style="margin-bottom:18px"></div>
+
+      <!-- 노출할 무료 진단 -->
+      <div class="section-title">🎁 노출할 무료 진단</div>
+      <div id="lp-magnets" style="margin-bottom:18px"></div>
+
+      <button class="btn-primary" onclick="saveLandingPage()" style="width:100%">💾 저장</button>
+      <div id="lp-status" style="text-align:center;font-size:11px;color:var(--text3);margin-top:10px"></div>
+    </div>
+
+    <input type="file" id="lp-file-input" accept="image/*" style="display:none">
+  </div>
+
   <!-- 탭바 -->
   <nav class="tabbar">
     <button class="tab-btn active" onclick="switchTab('edit')" id="tab-edit">
       <span class="tab-icon">✏️</span>
-      <span class="tab-label">편집</span>
+      <span class="tab-label">명함</span>
     </button>
     <button class="tab-btn" onclick="switchTab('card')" id="tab-card">
       <span class="tab-icon">💳</span>
       <span class="tab-label">카드/QR</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('landing')" id="tab-landing">
+      <span class="tab-icon">🏠</span>
+      <span class="tab-label">랜딩</span>
     </button>
   </nav>
 </div>
@@ -780,8 +887,282 @@ function switchTab(name) {
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'card') { renderCard(); generateQR(); }
-  // 마지막 화면 기록 — 재진입 시 자동 복원
+  if (name === 'landing') { loadLandingPage(); }
   try { localStorage.setItem('namecard_last_screen', name); } catch {}
+}
+
+// ══════════════════════════════
+// 랜딩 페이지 (퍼널) 편집
+// ══════════════════════════════
+const LP_MAGNETS_LIST = [
+  { id: 'saju', icon: '🔮', name: '사주 성공 DNA 진단' },
+  { id: 'branding-coach', icon: '✍️', name: '블로그 브랜딩 코치' },
+  { id: 'quiz', icon: '🧬', name: '영업 스타일 진단' },
+  { id: 'success-test', icon: '🎯', name: 'NM 성공 확률 진단' },
+  { id: 'health-check', icon: '🦕', name: '건강 밸런스 진단' }
+];
+
+let lpState = {
+  loaded: false,
+  cardId: null,
+  slug: null,
+  is_public: false,
+  hero_url: null, profile_url: null,
+  product_urls: [], activity_urls: [],
+  enabled_magnets: ['saju','branding-coach','quiz','success-test','health-check'],
+  title: '', intro: '',
+  uploadingSlot: null  // 어느 슬롯에 업로드 중인지
+};
+
+async function waitSb(ms) {
+  if (window.dinoSupabase) return true;
+  await Promise.race([
+    new Promise(r => window.addEventListener('dino-supabase-ready', r, { once: true })),
+    new Promise(r => setTimeout(r, ms || 5000))
+  ]);
+  return !!window.dinoSupabase;
+}
+
+async function loadLandingPage() {
+  const ok = await waitSb(5000);
+  if (!ok) { document.getElementById('lp-status').textContent = '연결 실패'; return; }
+  const { data: { session } } = await window.dinoSupabase.auth.getSession();
+  if (!session) { document.getElementById('lp-status').textContent = '로그인 필요'; return; }
+
+  // 프로필 조회 → slug 결정
+  const { data: profile } = await window.dinoSupabase
+    .from('profiles').select('id, display_name, business_code, phone')
+    .eq('id', session.user.id).single();
+  const slug = profile?.business_code || profile?.id?.replace(/-/g,'').slice(0,8).toUpperCase();
+
+  // 기존 카드 조회
+  const { data: card } = await window.dinoSupabase
+    .from('public_cards').select('*').eq('user_id', session.user.id).maybeSingle();
+
+  lpState.slug = slug;
+  if (card) {
+    lpState.cardId = card.id;
+    lpState.is_public = card.is_public;
+    lpState.hero_url = card.hero_url || null;
+    lpState.profile_url = card.profile_url || null;
+    lpState.product_urls = (card.product_urls || []).slice(0, 6);
+    lpState.activity_urls = (card.activity_urls || []).slice(0, 9);
+    lpState.enabled_magnets = card.enabled_magnets || lpState.enabled_magnets;
+    document.getElementById('lp-title').value = card.title || '';
+    document.getElementById('lp-intro').value = card.intro || '';
+  } else {
+    // 명함 데이터에서 가져오기 (있으면)
+    try {
+      const nc = JSON.parse(localStorage.getItem('namecard_data') || '{}');
+      document.getElementById('lp-title').value = nc.title || '';
+      document.getElementById('lp-intro').value = nc.intro || '';
+      if (nc.photo && !lpState.profile_url) lpState.profile_url = nc.photo;
+    } catch {}
+  }
+
+  // UI 반영
+  document.getElementById('lp-public').checked = !!lpState.is_public;
+  updatePublicUrlBox();
+  renderSlot('hero', lpState.hero_url);
+  renderSlot('profile', lpState.profile_url);
+  renderGallery('products', lpState.product_urls, 6);
+  renderGallery('activities', lpState.activity_urls, 9);
+  renderMagnetToggles();
+
+  lpState.loaded = true;
+}
+
+function updatePublicUrlBox() {
+  const box = document.getElementById('lp-url-box');
+  const txt = document.getElementById('lp-url-text');
+  const hint = document.getElementById('lp-url-hint');
+  if (lpState.is_public && lpState.slug) {
+    box.style.display = 'block';
+    txt.textContent = `app.wellstar.life/p/${lpState.slug}`;
+    hint.textContent = '✅ 공개 중 — 누구나 볼 수 있어요';
+  } else {
+    box.style.display = 'none';
+    hint.textContent = '편집 중엔 비공개로 두세요';
+  }
+}
+
+function copyLpUrl() {
+  const url = `https://app.wellstar.life/p/${lpState.slug}`;
+  navigator.clipboard.writeText(url).then(() => showToast('링크 복사됨 📋'));
+}
+
+function renderSlot(slot, url) {
+  const el = document.getElementById('lp-slot-' + slot);
+  if (!el) return;
+  if (url) {
+    el.classList.add('has-image');
+    el.style.backgroundImage = `url('${url}')`;
+    el.innerHTML = `<button class="lp-remove" onclick="event.stopPropagation();removeSlot('${slot}')">×</button>`;
+  } else {
+    el.classList.remove('has-image');
+    el.style.backgroundImage = '';
+    el.innerHTML = '<span class="lp-empty">+ 추가</span>';
+  }
+}
+
+function renderGallery(type, urls, maxCount) {
+  const el = document.getElementById('lp-grid-' + type);
+  if (!el) return;
+  let html = '';
+  for (let i = 0; i < maxCount; i++) {
+    const url = urls[i];
+    const hasImage = !!url;
+    const style = hasImage ? `style="background-image:url('${url}')"` : '';
+    html += `<div class="lp-uploader ${hasImage ? 'has-image' : ''}" ${style} onclick="pickPhoto('${type}', ${i})">
+      ${hasImage ? `<button class="lp-remove" onclick="event.stopPropagation();removeGalleryItem('${type}', ${i})">×</button>` : '<span class="lp-empty">+</span>'}
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderMagnetToggles() {
+  const el = document.getElementById('lp-magnets');
+  el.innerHTML = LP_MAGNETS_LIST.map(m => {
+    const checked = lpState.enabled_magnets.includes(m.id) ? 'checked' : '';
+    return `<label class="magnet-toggle">
+      <span class="ic">${m.icon}</span>
+      <span class="name">${m.name}</span>
+      <input type="checkbox" data-id="${m.id}" ${checked} onchange="onMagnetToggle('${m.id}', this.checked)">
+    </label>`;
+  }).join('');
+}
+
+function onMagnetToggle(id, on) {
+  if (on && !lpState.enabled_magnets.includes(id)) lpState.enabled_magnets.push(id);
+  else if (!on) lpState.enabled_magnets = lpState.enabled_magnets.filter(x => x !== id);
+}
+
+function onPublicToggle() {
+  lpState.is_public = document.getElementById('lp-public').checked;
+  updatePublicUrlBox();
+}
+
+function pickPhoto(slot, index) {
+  lpState.uploadingSlot = { slot, index };
+  const inp = document.getElementById('lp-file-input');
+  inp.value = '';
+  inp.click();
+}
+
+document.getElementById('lp-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('5MB 이하 이미지만'); return; }
+  const slotInfo = lpState.uploadingSlot;
+  if (!slotInfo) return;
+
+  showToast('업로드 중...');
+  try {
+    const ok = await waitSb(5000);
+    if (!ok) throw new Error('연결 실패');
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) throw new Error('로그인 필요');
+
+    // 덮어쓰기 경로: {user_id}/{slot}_{index}.{ext}
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const slotKey = slotInfo.index !== undefined ? `${slotInfo.slot}_${slotInfo.index}` : slotInfo.slot;
+    const path = `${session.user.id}/${slotKey}.${ext}`;
+
+    const { error: upErr } = await window.dinoSupabase.storage
+      .from('profile-cards').upload(path, file, { upsert: true, cacheControl: '0' });
+    if (upErr) throw upErr;
+
+    const { data: { publicUrl } } = window.dinoSupabase.storage
+      .from('profile-cards').getPublicUrl(path);
+    const cacheBust = publicUrl + '?t=' + Date.now();
+
+    if (slotInfo.slot === 'hero') {
+      lpState.hero_url = cacheBust;
+      renderSlot('hero', cacheBust);
+    } else if (slotInfo.slot === 'profile') {
+      lpState.profile_url = cacheBust;
+      renderSlot('profile', cacheBust);
+    } else if (slotInfo.slot === 'products') {
+      lpState.product_urls[slotInfo.index] = cacheBust;
+      renderGallery('products', lpState.product_urls, 6);
+    } else if (slotInfo.slot === 'activities') {
+      lpState.activity_urls[slotInfo.index] = cacheBust;
+      renderGallery('activities', lpState.activity_urls, 9);
+    }
+    showToast('업로드 완료');
+  } catch (err) {
+    console.error('lp upload:', err);
+    showToast('업로드 실패 — ' + (err.message || ''));
+  }
+});
+
+function removeSlot(slot) {
+  if (slot === 'hero') lpState.hero_url = null;
+  if (slot === 'profile') lpState.profile_url = null;
+  renderSlot(slot, null);
+}
+
+function removeGalleryItem(type, index) {
+  if (type === 'products') {
+    lpState.product_urls.splice(index, 1);
+    renderGallery('products', lpState.product_urls, 6);
+  } else if (type === 'activities') {
+    lpState.activity_urls.splice(index, 1);
+    renderGallery('activities', lpState.activity_urls, 9);
+  }
+}
+
+async function saveLandingPage() {
+  const ok = await waitSb(5000);
+  if (!ok) { showToast('연결 실패'); return; }
+  const { data: { session } } = await window.dinoSupabase.auth.getSession();
+  if (!session) { showToast('로그인 필요'); return; }
+
+  // 명함에서 가져올 필드 (전화/SNS)
+  let phone = '', kakao_id = '', instagram_url = '', blog_url = '', youtube_url = '';
+  try {
+    const nc = JSON.parse(localStorage.getItem('namecard_data') || '{}');
+    phone = nc.phone || '';
+    if (nc.sns) {
+      kakao_id = nc.sns.kakao || '';
+      instagram_url = nc.sns.insta || '';
+      blog_url = nc.sns.blog || '';
+      youtube_url = nc.sns.youtube || '';
+    }
+  } catch {}
+
+  const { data: profile } = await window.dinoSupabase
+    .from('profiles').select('display_name, business_code, phone').eq('id', session.user.id).single();
+
+  const payload = {
+    user_id: session.user.id,
+    slug: lpState.slug,
+    display_name: profile?.display_name || null,
+    title: document.getElementById('lp-title').value.trim() || null,
+    intro: document.getElementById('lp-intro').value.trim() || null,
+    phone: phone || profile?.phone || null,
+    kakao_id: kakao_id || null,
+    instagram_url: instagram_url || null,
+    blog_url: blog_url || null,
+    youtube_url: youtube_url || null,
+    theme: localStorage.getItem('namecard_theme') || 'dark-orange',
+    hero_url: lpState.hero_url,
+    profile_url: lpState.profile_url,
+    product_urls: lpState.product_urls.filter(Boolean),
+    activity_urls: lpState.activity_urls.filter(Boolean),
+    enabled_magnets: lpState.enabled_magnets,
+    is_public: lpState.is_public
+  };
+
+  const { error } = await window.dinoSupabase
+    .from('public_cards').upsert(payload, { onConflict: 'user_id' });
+  if (error) {
+    console.error(error);
+    showToast('저장 실패: ' + (error.message || ''));
+    return;
+  }
+  showToast('저장 완료 ✅');
+  document.getElementById('lp-status').textContent = '마지막 저장: ' + new Date().toLocaleTimeString('ko-KR');
 }
 
 // ══════════════════════════════
