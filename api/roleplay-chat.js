@@ -80,35 +80,57 @@ module.exports = async function handler(req, res) {
     const rows = await r.json();
     if (rows[0]?.role) role = rows[0].role;
   } catch {}
-  // 무료 한도: 회원 3회/일 (1회 = 최대 10턴 = 사용자 답변 10번)
-  const dailyQuota = role === 'guest' ? 1 : 3;
+  // 한도 정책 (확정 2026-05-29)
+  // - 회원: 1일 1회 (1회 = 권장 15턴, 마무리 안 되면 더 이어가도 OK)
+  // - 게스트: 체험 7일 누적 3회 (가입일 이후 전체)
+  const isGuest = role === 'guest';
+  const quota = isGuest ? 3 : 1;
+  const quotaWindowLabel = isGuest ? '체험기간 7일' : '오늘';
 
-  // 3. 새 세션이면 일일 한도 체크 + 생성
+  // 3. 새 세션이면 한도 체크 + 생성
   let sessionId = session_id;
-  let turnCount = (history || []).length / 2; // user+model 페어
+  let turnCount = (history || []).length / 2;
 
   if (!sessionId) {
-    // KST 자정 이후 새로 시작한 세션 수
-    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
-    kstNow.setUTCHours(0, 0, 0, 0);
-    const kstMidnight = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+    // 카운트 윈도우 결정
+    // - 게스트: guest_started_at 이후 모든 세션 (없으면 7일 전부터)
+    // - 회원: KST 자정 이후 세션
+    let sinceISO;
+    if (isGuest) {
+      // 게스트 시작 시간 가져오기
+      try {
+        const r = await fetch(
+          `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=guest_started_at`,
+          { headers: sbHeaders }
+        );
+        const rows = await r.json();
+        const gs = rows[0]?.guest_started_at;
+        sinceISO = gs ? new Date(gs).toISOString() : new Date(Date.now() - 7 * 86400000).toISOString();
+      } catch {
+        sinceISO = new Date(Date.now() - 7 * 86400000).toISOString();
+      }
+    } else {
+      const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+      kstNow.setUTCHours(0, 0, 0, 0);
+      sinceISO = new Date(kstNow.getTime() - 9 * 3600 * 1000).toISOString();
+    }
 
-    let todayCount = 0;
+    let usedCount = 0;
     try {
       const cntRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&created_at=gte.${encodeURIComponent(kstMidnight.toISOString())}&select=id`,
+        `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&created_at=gte.${encodeURIComponent(sinceISO)}&select=id`,
         { method: 'HEAD', headers: { ...sbHeaders, Prefer: 'count=exact', Range: '0-0' } }
       );
       const cr = cntRes.headers.get('content-range') || '';
       const m = cr.match(/\/(\d+)$/);
-      if (m) todayCount = parseInt(m[1], 10);
+      if (m) usedCount = parseInt(m[1], 10);
     } catch {}
 
-    if (todayCount >= dailyQuota) {
-      const msg = role === 'guest'
-        ? `오늘 무료 사용 한도(${dailyQuota}회)에 도달했어요. 팀 합류 시 하루 ${dailyQuota * 3}회 + 사용권 구매로 더 가능!`
-        : `오늘 사용 한도(${dailyQuota}회 · 1회 = 최대 10턴 대화)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
-      return res.status(429).json({ error: 'rate_limit', used: todayCount, limit: dailyQuota, role, message: msg });
+    if (usedCount >= quota) {
+      const msg = isGuest
+        ? `체험기간 롤플레이 ${quota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
+        : `${quotaWindowLabel} 롤플레이 한도(${quota}회 · 1회 = 권장 15턴)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
+      return res.status(429).json({ error: 'rate_limit', used: usedCount, limit: quota, role, message: msg });
     }
 
     // 새 세션 생성
@@ -261,6 +283,6 @@ ${levelGuide}
     session_id: sessionId,
     turn_count: turnCount,
     role,
-    limit: dailyQuota
+    limit: quota
   });
 };

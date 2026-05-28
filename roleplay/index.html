@@ -151,7 +151,7 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
       </div>
       <div id="usageLimit" style="font-size:11px;color:var(--text3);text-align:right;line-height:1.5"></div>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:18px;padding:0 4px">💡 1회 = 권장 10턴 (대화 마무리 안 됐으면 더 이어가도 OK). 한도 초과 시 사용권 구매</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:18px;padding:0 4px">💡 1회 = 권장 15턴 · 마무리 안 됐으면 더 이어가도 OK · 한도 초과 시 사용권 구매</div>
 
     <div class="section">
       <div class="section-label">🎭 역할 선택</div>
@@ -211,7 +211,7 @@ body.light-theme .back-btn{background:rgba(0,0,0,0.05);color:#1A1A2E}
 <!-- ── 2. 채팅 ── -->
 <div class="screen" id="screenChat">
   <div class="chat-turn-info" id="chatTurnInfo">
-    <div class="turn-label"><span id="chatPersonaName"></span> · <span id="chatTurnLabel">0/10턴</span></div>
+    <div class="turn-label"><span id="chatPersonaName"></span> · <span id="chatTurnLabel">0/15턴</span></div>
     <button class="end-link" onclick="endSession()">🎯 종료 + 회고 받기</button>
   </div>
   <div class="chat-list" id="chatList"></div>
@@ -276,7 +276,7 @@ const PERSONAS = [
   { id:'health_curious', icon:'💪', name:'건강 관심층', desc:'"왜 굳이 너희 거?"' },
   { id:'ex_nm', icon:'🧑‍💼', name:'NM 경험자', desc:'"예전에 해봤는데 망함"' }
 ];
-const MAX_TURNS = 10;
+const MAX_TURNS = 15;  // 1회 = 권장 15턴, 마무리 안 됐으면 더 이어가도 OK
 
 let selectedPersona = null;
 let selectedLevel = 'normal';
@@ -793,8 +793,9 @@ async function loadTodayUsage() {
     ]);
 
     const role = profileRes?.data?.role || 'guest';
-    // 1회 = 최대 10턴 대화. 회원 3회/일, 게스트 1회/일
-    const limit = role === 'guest' ? 1 : 3;
+    // 회원 1일 1회 (1회 = 권장 15턴, 더 이어가도 OK)
+    // 게스트는 체험기간 누적 3회 — 일일 카운트 대신 누적이라 별도 처리 필요시 추후
+    const limit = role === 'guest' ? 3 : 1;
     const used = count || 0;
     const remaining = Math.max(0, limit - used);
 
@@ -1032,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 서비스워커 — 강제 업데이트 + 자동 reload
-const BUILD_ID = 'v15-history-modal-fix';
+const BUILD_ID = 'v16-quota-final-15turns';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     // PWA가 다시 보일 때마다 SW 업데이트 체크

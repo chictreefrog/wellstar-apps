@@ -25,6 +25,7 @@ module.exports = async function handler(req, res) {
   // ══════════════════════════════
   let userId = null;
   let role = 'guest';
+  let guestStartedAt = null;
   const authHeader = req.headers.authorization || '';
   const accessToken = authHeader.replace(/^Bearer\s+/i, '').trim();
 
@@ -38,29 +39,44 @@ module.exports = async function handler(req, res) {
         userId = u?.id;
         if (userId) {
           const profileRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`,
+            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role,guest_started_at`,
             { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
           );
           if (profileRes.ok) {
             const rows = await profileRes.json();
             if (rows[0]?.role) role = rows[0].role;
+            if (rows[0]?.guest_started_at) guestStartedAt = rows[0].guest_started_at;
           }
         }
       }
     } catch (e) { console.error('chat auth check failed:', e); }
   }
 
-  const dailyQuota = role === 'guest' ? 5 : 30;
+  // 챗봇 한도 (확정 2026-05-29)
+  // - 회원: 월 150회 자유 (KST 매월 1일 자정 리셋)
+  // - 게스트: 체험기간 7일 누적 30회 (가입일 이후)
+  const isGuest = role === 'guest';
+  const quota = isGuest ? 30 : 150;
+  const quotaUnit = isGuest ? '체험기간' : '이번 달';
 
-  // 오늘 KST 자정부터 채팅 메시지 수 카운트 (channel='chatbot')
-  let todayUsed = 0;
-  if (userId && SUPABASE_URL && SUPABASE_KEY) {
+  // 카운트 윈도우 설정
+  let sinceISO;
+  if (isGuest) {
+    sinceISO = guestStartedAt
+      ? new Date(guestStartedAt).toISOString()
+      : new Date(Date.now() - 7 * 86400000).toISOString();
+  } else {
+    // KST 매월 1일 자정
     const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
-    kstNow.setUTCHours(0, 0, 0, 0);
-    const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+    const kstMonthStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1));
+    sinceISO = new Date(kstMonthStart.getTime() - 9 * 3600 * 1000).toISOString();
+  }
+
+  let usedCount = 0;
+  if (userId && SUPABASE_URL && SUPABASE_KEY) {
     try {
       const usageRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/content_usage?user_id=eq.${userId}&channel=eq.chatbot&created_at=gte.${encodeURIComponent(kstMidnightUTC.toISOString())}&select=id`,
+        `${SUPABASE_URL}/rest/v1/content_usage?user_id=eq.${userId}&channel=eq.chatbot&created_at=gte.${encodeURIComponent(sinceISO)}&select=id`,
         {
           method: 'HEAD',
           headers: {
@@ -73,21 +89,26 @@ module.exports = async function handler(req, res) {
       );
       const cr = usageRes.headers.get('content-range') || '';
       const m = cr.match(/\/(\d+)$/);
-      if (m) todayUsed = parseInt(m[1], 10);
+      if (m) usedCount = parseInt(m[1], 10);
     } catch (e) { console.error('chat usage count failed:', e); }
 
-    if (todayUsed >= dailyQuota) {
+    if (usedCount >= quota) {
       return res.status(429).json({
         error: 'rate_limit',
-        used: todayUsed,
-        limit: dailyQuota,
+        used: usedCount,
+        limit: quota,
         role,
-        message: role === 'guest'
-          ? `오늘 무료 사용 한도(${dailyQuota}회)에 도달했어요. 팀 합류 시 하루 30회까지!`
-          : `오늘 챗봇 사용 한도(${dailyQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`
+        window: quotaUnit,
+        message: isGuest
+          ? `체험기간 챗봇 ${quota}회를 모두 사용했어요. 팀에 합류하면 월 150회까지!`
+          : `${quotaUnit} 챗봇 사용 한도(${quota}회)에 도달했어요. 사용권을 구매하거나 다음 달을 기다려주세요.`
       });
     }
   }
+
+  // 하위 호환 변수
+  const todayUsed = usedCount;
+  const dailyQuota = quota;
 
   const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const systemPrompt = buildSystemPrompt(scenario);
@@ -235,7 +256,7 @@ module.exports = async function handler(req, res) {
     reply,
     citations,
     quickReplies: getQuickReplies(scenario, message),
-    usage: { used: todayUsed + 1, limit: dailyQuota, remaining: Math.max(0, dailyQuota - todayUsed - 1), role }
+    usage: { used: usedCount + 1, limit: quota, remaining: Math.max(0, quota - usedCount - 1), role, window: quotaUnit }
   });
 }
 

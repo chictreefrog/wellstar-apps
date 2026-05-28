@@ -549,7 +549,7 @@ body.light-theme .input-bar {
 
   <!-- 사용량 표시 -->
   <div id="usageBar" style="display:none;padding:8px 16px;font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--border);background:rgba(255,107,53,0.06);text-align:center">
-    💬 오늘 사용 <b id="usageUsed" style="color:var(--accent)">0</b> / <span id="usageLimit">30</span>회 · 1회 = 메시지 1번
+    💬 <span id="usageWindow">이번 달</span> 사용 <b id="usageUsed" style="color:var(--accent)">0</b> / <span id="usageLimit">150</span>회
   </div>
 
   <!-- Chat Area -->
@@ -644,12 +644,13 @@ function init() {
   initUsage();
 }
 
-function updateUsageBar(used, limit) {
+function updateUsageBar(used, limit, windowLabel) {
   const bar = document.getElementById('usageBar');
   if (!bar) return;
   bar.style.display = 'block';
   document.getElementById('usageUsed').textContent = used;
   document.getElementById('usageLimit').textContent = limit;
+  if (windowLabel) document.getElementById('usageWindow').textContent = windowLabel;
   if (used >= limit) {
     bar.style.background = 'rgba(255,69,58,0.15)';
     document.getElementById('usageUsed').style.color = '#FF453A';
@@ -658,7 +659,6 @@ function updateUsageBar(used, limit) {
 
 async function initUsage() {
   try {
-    // dinoSupabase 준비 대기
     if (!window.dinoSupabase) {
       await new Promise(r => {
         window.addEventListener('dino-supabase-ready', r, { once: true });
@@ -669,25 +669,34 @@ async function initUsage() {
     const { data: { session } } = await window.dinoSupabase.auth.getSession();
     if (!session) return;
 
-    // role 가져오기
     const { data: profile } = await window.dinoSupabase
-      .from('profiles').select('role').eq('id', session.user.id).single();
+      .from('profiles').select('role, guest_started_at').eq('id', session.user.id).single();
     const role = profile?.role || 'partner';
-    const limit = role === 'guest' ? 5 : 30;
+    const isGuest = role === 'guest';
+    const limit = isGuest ? 30 : 150;
+    const windowLabel = isGuest ? '체험기간' : '이번 달';
 
-    // KST 자정부터 챗봇 사용량
-    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
-    kstNow.setUTCHours(0, 0, 0, 0);
-    const kstMidnightUTC = new Date(kstNow.getTime() - 9 * 3600 * 1000);
+    // 카운트 윈도우
+    let sinceISO;
+    if (isGuest) {
+      sinceISO = profile?.guest_started_at
+        ? new Date(profile.guest_started_at).toISOString()
+        : new Date(Date.now() - 7 * 86400000).toISOString();
+    } else {
+      // KST 매월 1일 자정
+      const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+      const kstMonthStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1));
+      sinceISO = new Date(kstMonthStart.getTime() - 9 * 3600 * 1000).toISOString();
+    }
 
     const { count } = await window.dinoSupabase
       .from('content_usage')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', session.user.id)
       .eq('channel', 'chatbot')
-      .gte('created_at', kstMidnightUTC.toISOString());
+      .gte('created_at', sinceISO);
 
-    updateUsageBar(count || 0, limit);
+    updateUsageBar(count || 0, limit, windowLabel);
   } catch (e) {
     console.error('[chatbot] initUsage failed:', e);
   }
@@ -911,11 +920,11 @@ async function sendMessage() {
 
     const data = await res.json().catch(() => ({}));
 
-    // 일일 한도 도달 (429)
+    // 한도 도달 (429)
     if (res.status === 429) {
       hideTyping();
-      addMessage('assistant', '⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'), false, []);
-      updateUsageBar(data.used || 0, data.limit || 30);
+      addMessage('assistant', '⏰ ' + (data.message || '사용 한도에 도달했어요'), false, []);
+      updateUsageBar(data.used || 0, data.limit || 150, data.window || '이번 달');
       return;
     }
 
@@ -928,8 +937,7 @@ async function sendMessage() {
       addQuickReplies(data.quickReplies);
     }
 
-    // 사용량 UI 갱신
-    if (data.usage) updateUsageBar(data.usage.used, data.usage.limit);
+    if (data.usage) updateUsageBar(data.usage.used, data.usage.limit, data.usage.window);
   } catch (err) {
     hideTyping();
     addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏', false, []);

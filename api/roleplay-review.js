@@ -41,14 +41,20 @@ module.exports = async function handler(req, res) {
 
   const sbHeaders = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-  // role 확인 → 일일 회고 한도 (회원 3회/일)
+  // 회고 한도 (확정 2026-05-29)
+  // - 회원: 1일 1회
+  // - 게스트: 체험기간 7일 누적 3회
   let role = 'guest';
+  let guestStartedAt = null;
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`, { headers: sbHeaders });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role,guest_started_at`, { headers: sbHeaders });
     const rows = await r.json();
     if (rows[0]?.role) role = rows[0].role;
+    if (rows[0]?.guest_started_at) guestStartedAt = rows[0].guest_started_at;
   } catch {}
-  const reviewQuota = role === 'guest' ? 1 : 3;
+  const isGuest = role === 'guest';
+  const reviewQuota = isGuest ? 3 : 1;
+  const quotaWindowLabel = isGuest ? '체험기간' : '오늘';
 
   // 세션 조회 (본인 세션인지 확인)
   const sessRes = await fetch(
@@ -62,25 +68,35 @@ module.exports = async function handler(req, res) {
   // 이 세션에 이미 회고가 있으면 한도 차감 없이 재반환 가능. 새 회고 생성이면 한도 체크.
   const isNewReview = !sess.review || !sess.review.summary;
   if (isNewReview) {
-    const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
-    kstNow.setUTCHours(0, 0, 0, 0);
-    const kstMidnight = new Date(kstNow.getTime() - 9 * 3600 * 1000);
-    let todayReviews = 0;
+    // 카운트 윈도우: 게스트는 가입일 이후, 회원은 KST 자정 이후
+    let sinceISO;
+    if (isGuest) {
+      sinceISO = guestStartedAt
+        ? new Date(guestStartedAt).toISOString()
+        : new Date(Date.now() - 7 * 86400000).toISOString();
+    } else {
+      const kstNow = new Date(Date.now() + 9 * 3600 * 1000);
+      kstNow.setUTCHours(0, 0, 0, 0);
+      sinceISO = new Date(kstNow.getTime() - 9 * 3600 * 1000).toISOString();
+    }
+    let usedReviews = 0;
     try {
-      // 오늘 완성된 회고 수 = completed=true 또는 review 있는 세션
       const cntRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&completed=eq.true&updated_at=gte.${encodeURIComponent(kstMidnight.toISOString())}&select=id`,
+        `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&completed=eq.true&updated_at=gte.${encodeURIComponent(sinceISO)}&select=id`,
         { method: 'HEAD', headers: { ...sbHeaders, Prefer: 'count=exact', Range: '0-0' } }
       );
       const cr = cntRes.headers.get('content-range') || '';
       const m = cr.match(/\/(\d+)$/);
-      if (m) todayReviews = parseInt(m[1], 10);
+      if (m) usedReviews = parseInt(m[1], 10);
     } catch {}
-    if (todayReviews >= reviewQuota) {
+    if (usedReviews >= reviewQuota) {
+      const msg = isGuest
+        ? `체험기간 회고 ${reviewQuota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
+        : `${quotaWindowLabel} 회고 한도(${reviewQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
       return res.status(429).json({
         error: 'rate_limit',
-        message: `오늘 회고 한도(${reviewQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`,
-        used: todayReviews,
+        message: msg,
+        used: usedReviews,
         limit: reviewQuota
       });
     }
