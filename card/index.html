@@ -262,10 +262,10 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
-  <!-- ── 공유/QR 화면 — 풀 랜딩 미리보기 + QR + 액션 ── -->
+  <!-- ── 공유/QR 화면 — 내 소개 페이지 미리보기 + QR + 액션 ── -->
   <div id="screen-card" class="screen">
     <div class="page-header">
-      <h1>내 페이지 공유하기</h1>
+      <h1>내 소개 페이지 공유</h1>
       <div class="subtitle">고객에게 보낼 링크 · QR · 미리보기</div>
     </div>
 
@@ -277,13 +277,13 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     </div>
 
     <div id="card-not-public-bar" style="margin:0 16px 12px;padding:12px 14px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.25);border-radius:12px;font-size:12px;color:#FF9F0A;display:none">
-      ⚠️ 아직 비공개 상태입니다 — <a onclick="switchTab('landing')" style="color:var(--accent);cursor:pointer;text-decoration:underline">🏠 랜딩 탭</a>에서 공개 토글을 켜주세요
+      ⚠️ 아직 비공개 상태입니다 — <a onclick="switchTab('landing')" style="color:var(--accent);cursor:pointer;text-decoration:underline">🏠 소개 편집 탭</a>에서 공개 토글을 켜주세요
     </div>
 
     <!-- 랜딩 페이지 미리보기 (iframe) -->
     <div style="margin:0 16px 12px">
       <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
-        <span>📄 내 랜딩 미리보기</span>
+        <span>📄 내 소개 페이지 미리보기</span>
         <a id="card-open-fullscreen" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:700">새 탭에서 열기 ↗</a>
       </div>
       <div style="position:relative;width:100%;aspect-ratio:9/16;max-height:580px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)">
@@ -295,7 +295,7 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div class="qr-section">
       <div class="qr-section-title">📱 QR 코드</div>
       <div id="qr-wrap"></div>
-      <div class="qr-sub">스캔하면 내 랜딩 페이지로 바로 이동해요<br>명함처럼 보여주거나 인쇄해도 OK</div>
+      <div class="qr-sub">스캔하면 내 소개 페이지로 바로 이동해요<br>명함처럼 보여주거나 인쇄해도 OK</div>
       <div style="margin-bottom:14px;text-align:center">
         <button onclick="toggleQrFormat()" style="font-size:11px;color:var(--text2);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">
           🔄 스캔 안 되나요? 다른 형식 시도
@@ -308,7 +308,7 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     </div>
 
     <div style="padding:0 16px 8px">
-      <button class="btn-secondary" onclick="switchTab('landing')">🏠 랜딩 편집</button>
+      <button class="btn-secondary" onclick="switchTab('landing')">🏠 소개 페이지 편집</button>
     </div>
 
     <!-- 브랜딩 -->
@@ -325,10 +325,10 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
-  <!-- ── 랜딩 페이지 편집 화면 ── -->
+  <!-- ── 내 소개 페이지 편집 화면 ── -->
   <div id="screen-landing" class="screen">
     <header style="padding:24px 20px 12px">
-      <h1 style="font-size:24px;font-weight:900">🏠 내 페이지 꾸미기</h1>
+      <h1 style="font-size:24px;font-weight:900">🏠 내 소개 페이지</h1>
       <div class="subtitle" style="margin-top:4px">사진과 추천 무료 진단으로 풍성하게 — 이름·연락처는 '명함' 탭에서 입력</div>
     </header>
 
@@ -412,7 +412,7 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     </button>
     <button class="tab-btn" onclick="switchTab('landing')" id="tab-landing">
       <span class="tab-icon">🏠</span>
-      <span class="tab-label">랜딩 편집</span>
+      <span class="tab-label">소개 편집</span>
     </button>
     <button class="tab-btn" onclick="switchTab('card')" id="tab-card">
       <span class="tab-icon">📤</span>
@@ -1304,7 +1304,7 @@ function showToast(msg) {
 // ══════════════════════════════
 // 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
-const BUILD_ID = 'card-v10-auto-sync';
+const BUILD_ID = 'card-v11-pretty';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {

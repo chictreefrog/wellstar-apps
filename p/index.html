@@ -9,131 +9,291 @@
 <meta property="og:title" id="ogTitle" content="옆집디노 사업자 페이지">
 <meta property="og:description" id="ogDesc" content="">
 <meta property="og:image" id="ogImage" content="">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 <style>
-/* ═══ Themes ═══ */
-.theme-dark-orange { --bg:#0d0d18; --bg2:#1a1a2e; --card:#1e1e35; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#FF6B35; --accent2:#FF8F65; }
-.theme-deep-purple { --bg:#0f0a1f; --bg2:#1a1335; --card:#241b3f; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#BF5AF2; --accent2:#D896FF; }
-.theme-ocean-blue { --bg:#0a1a2a; --bg2:#13283f; --card:#1c3450; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#30B0FF; --accent2:#5FC4FF; }
-.theme-forest-green { --bg:#0a1a14; --bg2:#13281f; --card:#1c3429; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#30D158; --accent2:#5FE07A; }
-.theme-rose-gold { --bg:#1f1318; --bg2:#2f1d27; --card:#3d2733; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#FF6B9E; --accent2:#FF8FB6; }
-.theme-midnight { --bg:#000; --bg2:#0a0a14; --card:#13131f; --border:rgba(255,255,255,0.08); --text:#F5F5F7; --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45); --accent:#7FE2FF; --accent2:#A5EDFF; }
+/* ═══ Themes — 더 깊은 색상 + 그라데이션 ═══ */
+.theme-dark-orange {
+  --bg: #0d0d18; --bg-soft: #15151f;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #FF7B3D; --accent2: #FFA66B;
+  --grad: linear-gradient(135deg, #FF7B3D 0%, #FFA66B 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(13,13,24,0.4) 70%, rgba(13,13,24,0.95) 100%);
+}
+.theme-deep-purple {
+  --bg: #0f0a1f; --bg-soft: #1a1335;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #C470FF; --accent2: #E29BFF;
+  --grad: linear-gradient(135deg, #C470FF 0%, #E29BFF 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(15,10,31,0.4) 70%, rgba(15,10,31,0.95) 100%);
+}
+.theme-ocean-blue {
+  --bg: #061525; --bg-soft: #0f2742;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #4EBDFF; --accent2: #7AD0FF;
+  --grad: linear-gradient(135deg, #4EBDFF 0%, #7AD0FF 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(6,21,37,0.4) 70%, rgba(6,21,37,0.95) 100%);
+}
+.theme-forest-green {
+  --bg: #061a14; --bg-soft: #0f2a22;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #4FE082; --accent2: #7FEDA0;
+  --grad: linear-gradient(135deg, #4FE082 0%, #7FEDA0 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(6,26,20,0.4) 70%, rgba(6,26,20,0.95) 100%);
+}
+.theme-rose-gold {
+  --bg: #1a0d14; --bg-soft: #2a1722;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #FF7BAB; --accent2: #FFA8C8;
+  --grad: linear-gradient(135deg, #FF7BAB 0%, #FFA8C8 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(26,13,20,0.4) 70%, rgba(26,13,20,0.95) 100%);
+}
+.theme-midnight {
+  --bg: #000; --bg-soft: #0a0a14;
+  --card: rgba(255,255,255,0.06); --card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.15);
+  --text: #FFFFFF; --text2: rgba(255,255,255,0.75); --text3: rgba(255,255,255,0.45);
+  --accent: #8DEAFF; --accent2: #B3F0FF;
+  --grad: linear-gradient(135deg, #8DEAFF 0%, #B3F0FF 100%);
+  --grad-hero: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.95) 100%);
+}
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent }
-html, body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', -apple-system, sans-serif; min-height: 100vh; }
+html, body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  min-height: 100vh; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
 img { max-width: 100%; display: block }
 a { color: inherit; text-decoration: none }
-.wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg2) }
+.serif { font-family: 'Playfair Display', 'Pretendard', serif; }
 
-/* 히어로 */
+.wrap {
+  max-width: 480px; margin: 0 auto;
+  background: var(--bg); min-height: 100vh;
+  position: relative; overflow: hidden;
+}
+
+/* ─── 히어로 ─── */
 .hero {
-  position: relative; width: 100%; aspect-ratio: 16/9;
-  background: linear-gradient(180deg, var(--accent2), var(--accent)); background-size: cover; background-position: center;
+  position: relative; width: 100%; aspect-ratio: 4/5;
+  background: var(--grad); background-size: cover; background-position: center;
+  overflow: hidden;
 }
-.hero.no-image { display: flex; align-items: center; justify-content: center; font-size: 64px; opacity: 0.4 }
-.hero-gradient {
+.hero.no-image::before {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.10), transparent 50%);
+}
+.hero-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.6));
+  background: var(--grad-hero);
 }
-
-/* 프로필 */
-.profile {
-  text-align: center; padding: 0 24px 22px; margin-top: -50px; position: relative; z-index: 1;
+.hero-content {
+  position: absolute; left: 0; right: 0; bottom: 32px;
+  padding: 0 28px; z-index: 2; text-align: left;
 }
-.profile-img {
-  width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 12px;
-  background: var(--card); border: 4px solid var(--bg2);
+.profile-circle {
+  width: 84px; height: 84px; border-radius: 50%;
   background-size: cover; background-position: center;
-  display: flex; align-items: center; justify-content: center; font-size: 42px;
+  border: 3px solid rgba(255,255,255,0.95); margin-bottom: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  background-color: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center; font-size: 36px;
 }
-.profile h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px }
-.profile .title { font-size: 13px; color: var(--text2); margin-bottom: 8px }
-.profile .intro { font-size: 14px; color: var(--text2); line-height: 1.6; padding: 0 6px }
+.hero-name {
+  font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
+  margin-bottom: 6px; line-height: 1.1;
+}
+.hero-title {
+  font-size: 14px; color: rgba(255,255,255,0.85); font-weight: 500;
+  letter-spacing: 0.02em; margin-bottom: 14px;
+  display: inline-block; padding: 4px 12px;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(10px);
+  border-radius: 100px;
+}
+.hero-intro {
+  font-size: 16px; color: rgba(255,255,255,0.92); line-height: 1.55;
+  max-width: 320px;
+}
 
-/* SNS 버튼 */
-.sns-row {
-  display: flex; gap: 8px; padding: 0 16px 18px; flex-wrap: wrap; justify-content: center;
+/* ─── SNS 행 ─── */
+.sns-strip {
+  display: flex; gap: 10px; padding: 24px 24px 8px;
+  flex-wrap: wrap; justify-content: center;
 }
 .sns-btn {
-  flex: 1; min-width: 70px; padding: 12px 6px; border-radius: 14px;
-  background: var(--card); border: 1px solid var(--border);
-  text-align: center; font-size: 11px; color: var(--text2); font-weight: 700;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 14px; border-radius: 16px; background: var(--card);
+  border: 1px solid var(--border); transition: transform .2s, background .2s;
+  min-width: 64px;
 }
-.sns-btn .ic { display:block; font-size: 22px; margin-bottom: 4px }
-.sns-btn:active { transform: scale(0.96); background: var(--accent); color: #fff }
+.sns-btn:active { transform: scale(0.94) }
+.sns-btn .ic { font-size: 20px }
+.sns-btn .lb { font-size: 10px; color: var(--text2); font-weight: 600 }
 
-/* 섹션 */
-.section { padding: 6px 18px 4px }
-.section-title {
-  font-size: 13px; font-weight: 800; color: var(--accent);
-  margin: 18px 0 12px; letter-spacing: 0.3px;
+/* ─── 섹션 공통 ─── */
+.section { padding: 24px }
+.section-eyebrow {
+  display: inline-block; font-size: 10px; letter-spacing: 0.18em;
+  color: var(--accent); font-weight: 700; text-transform: uppercase;
+  padding: 4px 10px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 100px; margin-bottom: 10px;
+}
+.section-h {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+  margin-bottom: 16px; line-height: 1.2;
 }
 
-/* 사진 그리드 */
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-.grid-item {
+/* ─── 갤러리 ─── */
+.gallery {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+}
+.gallery-item {
   aspect-ratio: 1; background: var(--card); background-size: cover; background-position: center;
-  border-radius: 6px; cursor: zoom-in;
+  border-radius: 10px; cursor: zoom-in; transition: transform .25s;
+  position: relative; overflow: hidden;
 }
+.gallery-item:active { transform: scale(0.97) }
+.gallery-item::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.15));
+  opacity: 0; transition: opacity .25s;
+}
+.gallery-item:hover::after { opacity: 1 }
 
-/* 리드마그넷 */
-.magnet-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-  padding: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
-  transition: transform 0.15s;
+/* ─── 리드마그넷 (CTA 카드) ─── */
+.magnets { display: flex; flex-direction: column; gap: 10px }
+.magnet {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  padding: 18px 18px 18px 16px; border-radius: 16px;
+  background: var(--card); border: 1px solid var(--border);
+  transition: background .2s, transform .2s, border-color .2s;
+  overflow: hidden;
 }
-.magnet-card:active { transform: scale(0.98); background: rgba(255,107,53,0.08) }
+.magnet::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--grad); opacity: 0.85;
+}
+.magnet:active {
+  transform: scale(0.98);
+  background: var(--card-hover);
+  border-color: var(--border-strong);
+}
 .magnet-icon {
-  width: 44px; height: 44px; border-radius: 50%; background: rgba(255,107,53,0.15);
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
-  flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 14px;
+  background: var(--grad); display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 .magnet-info { flex: 1; min-width: 0 }
-.magnet-name { font-size: 14px; font-weight: 700; margin-bottom: 2px }
-.magnet-desc { font-size: 11px; color: var(--text3); line-height: 1.4 }
-.magnet-arrow { color: var(--accent); font-size: 16px; font-weight: 700 }
+.magnet-name {
+  font-size: 15px; font-weight: 800; margin-bottom: 3px; letter-spacing: -0.01em;
+}
+.magnet-desc {
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+}
+.magnet-arrow {
+  font-size: 16px; color: var(--accent); font-weight: 800;
+  margin-left: 6px; opacity: 0.7;
+}
 
-/* QR */
+/* ─── QR 섹션 ─── */
 .qr-section {
-  text-align: center; padding: 24px 18px;
-  margin: 18px 16px 24px; border-radius: 16px; background: var(--card); border: 1px solid var(--border);
+  margin: 24px;
+  padding: 28px 22px; border-radius: 22px;
+  background: var(--card); border: 1px solid var(--border);
+  text-align: center;
 }
-.qr-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px }
-#qrCanvas { margin: 0 auto; display: block }
-.share-btn {
-  margin-top: 14px; padding: 10px 22px; border-radius: 100px;
-  background: var(--accent); color: #fff; border: none; font-size: 13px; font-weight: 700;
-  cursor: pointer; font-family: inherit;
+.qr-section h3 {
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  margin-bottom: 16px; letter-spacing: 0.05em;
 }
+#qrCanvas {
+  margin: 0 auto; display: block; padding: 12px;
+  background: #fff; border-radius: 12px; width: fit-content;
+}
+.qr-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: center }
+.qr-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 100px; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: transform .15s;
+}
+.qr-btn:active { transform: scale(0.96) }
+.qr-btn.primary { background: var(--grad); color: #fff }
+.qr-btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--border) }
 
-/* Footer */
+/* ─── 푸터 ─── */
 .footer {
-  text-align: center; padding: 24px 18px 32px; font-size: 11px; color: var(--text3); line-height: 1.6;
+  text-align: center; padding: 28px 24px 36px;
+  font-size: 11px; color: var(--text3);
 }
-.footer a { color: var(--accent); font-weight: 700 }
+.footer-brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 100px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 700; color: var(--text2);
+  margin-bottom: 8px;
+}
+.footer-brand .dino { font-size: 18px }
 
-/* 로딩 / 에러 */
+/* ─── 로딩/에러 ─── */
 .center-msg {
-  display: flex; align-items: center; justify-content: center; min-height: 70vh;
-  text-align: center; padding: 24px; flex-direction: column; gap: 12px;
+  display: flex; align-items: center; justify-content: center; min-height: 80vh;
+  text-align: center; padding: 24px; flex-direction: column; gap: 14px;
 }
-.center-msg .ic { font-size: 56px; opacity: 0.4 }
-.center-msg p { color: var(--text2); font-size: 14px; line-height: 1.6 }
+.center-msg .ic { font-size: 64px; opacity: 0.5 }
+.center-msg p { color: var(--text2); font-size: 14px }
+.center-msg a {
+  margin-top: 6px; color: var(--accent); font-weight: 700; font-size: 13px;
+}
 
-/* 이미지 lightbox */
+/* ─── Lightbox ─── */
 .lightbox {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999;
-  display: none; align-items: center; justify-content: center; padding: 16px;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9999;
+  display: none; align-items: center; justify-content: center; padding: 20px;
 }
 .lightbox.open { display: flex }
-.lightbox img { max-width: 100%; max-height: 90vh; border-radius: 8px }
-.lightbox-close { position: absolute; top: 16px; right: 16px; color: #fff; font-size: 28px; cursor: pointer; background: rgba(255,255,255,0.15); border: none; width: 40px; height: 40px; border-radius: 50% }
+.lightbox img {
+  max-width: 100%; max-height: 90vh; border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+  position: absolute; top: 20px; right: 20px;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(12px);
+  border: none; color: #fff; font-size: 22px; cursor: pointer;
+}
+
+/* ─── Fade-in 애니메이션 ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px) }
+  to { opacity: 1; transform: translateY(0) }
+}
+.fade { animation: fadeUp 0.5s ease both }
+.fade.d1 { animation-delay: 0.05s }
+.fade.d2 { animation-delay: 0.1s }
+.fade.d3 { animation-delay: 0.15s }
+.fade.d4 { animation-delay: 0.2s }
 </style>
 </head>
 <body class="theme-dark-orange">
 
 <div class="wrap" id="wrap">
-  <div class="center-msg" id="loadingMsg">
+  <div class="center-msg">
     <div class="ic">⏳</div>
     <p>불러오는 중...</p>
   </div>
@@ -148,15 +308,14 @@ a { color: inherit; text-decoration: none }
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
 <script>
 const LEAD_MAGNETS = [
-  { id: 'saju', icon: '🔮', name: '사주 성공 DNA 진단', desc: '내가 영업이 잘 안되는 이유, 사주로 알아보기', url: '/saju/' },
-  { id: 'branding-coach', icon: '✍️', name: '블로그 브랜딩 코치', desc: 'AI가 만들어주는 나만의 블로그 브랜드', url: '/branding-coach/' },
+  { id: 'saju', icon: '🔮', name: '사주 성공 DNA', desc: '내 사주로 알아보는 영업 성향 + 행운 전략', url: '/saju/' },
+  { id: 'branding-coach', icon: '✍️', name: '블로그 브랜딩 코치', desc: 'AI가 만들어주는 나만의 블로그 정체성', url: '/branding-coach/' },
   { id: 'quiz', icon: '🧬', name: '영업 스타일 진단', desc: '8가지 유형 중 나는 어떤 영업인?', url: '/quiz/' },
   { id: 'success-test', icon: '🎯', name: 'NM 성공 확률 진단', desc: '시작 전 솔직 체크 + 맞춤 전략', url: '/success-test/' },
-  { id: 'health-check', icon: '🦕', name: '건강 밸런스 진단', desc: '몸이 보내는 영양 SOS 신호 체크', url: '/health-check/' }
+  { id: 'health-check', icon: '🦕', name: '건강 밸런스 진단', desc: '몸이 보내는 영양 신호 한눈에 체크', url: '/health-check/' }
 ];
 
 function getSlug() {
-  // URL 패턴: /p/홍길동코드 또는 /p/index.html?slug=홍길동코드
   const path = location.pathname.replace(/\/+$/, '');
   const m = path.match(/\/p\/([^/]+)$/);
   if (m) return decodeURIComponent(m[1]);
@@ -187,7 +346,7 @@ function showError(icon, msg) {
     <div class="center-msg">
       <div class="ic">${icon}</div>
       <p>${msg}</p>
-      <a href="/main/" style="margin-top:12px;color:var(--accent);font-weight:700;font-size:13px">옆집디노 홈으로 →</a>
+      <a href="/main/">옆집디노 홈으로 →</a>
     </div>
   `;
 }
@@ -197,33 +356,31 @@ async function loadCard() {
   if (!slug) { showError('❓', '잘못된 주소입니다'); return; }
 
   const ok = await waitSupabase(5000);
-  if (!ok) { showError('⚠️', '연결 실패 — 새로고침해주세요'); return; }
+  if (!ok) { showError('⚠️', '연결 실패<br>잠시 후 새로고침해주세요'); return; }
 
   const { data, error } = await window.dinoSupabase
     .from('public_cards').select('*').eq('slug', slug).maybeSingle();
 
-  if (error || !data) { showError('🔍', '아직 이 페이지가 없거나 비공개입니다'); return; }
+  if (error || !data) { showError('🔍', '아직 이 페이지가 없거나<br>비공개입니다'); return; }
   if (!data.is_public) { showError('🔒', '비공개 페이지입니다'); return; }
 
-  // view_count 증가 (응답 안 기다림)
   window.dinoSupabase.rpc('increment_public_card_view', { card_slug: slug }).then(()=>{}).catch(()=>{});
 
   render(data);
 }
 
 function render(c) {
-  // 테마 적용
   document.body.className = 'theme-' + (c.theme || 'dark-orange');
 
-  // og + title
   const fullName = c.display_name || '옆집디노 회원';
-  document.title = `${fullName} · 옆집디노`;
-  document.getElementById('ogTitle').content = `${fullName} — ${c.title || '옆집디노 사업자'}`;
+  document.title = `${fullName} · ${c.title || '내 소개 페이지'}`;
+  document.getElementById('ogTitle').content = `${fullName} — ${c.title || '내 소개 페이지'}`;
   document.getElementById('ogDesc').content = c.intro || '';
   if (c.hero_url) document.getElementById('ogImage').content = c.hero_url;
 
   const heroStyle = c.hero_url ? `style="background-image:url('${escAttr(c.hero_url)}')"` : '';
   const profileStyle = c.profile_url ? `style="background-image:url('${escAttr(c.profile_url)}')"` : '';
+  const profileChar = c.profile_url ? '' : (fullName[0] || '🦕');
 
   const products = Array.isArray(c.product_urls) ? c.product_urls.filter(Boolean) : [];
   const activities = Array.isArray(c.activity_urls) ? c.activity_urls.filter(Boolean) : [];
@@ -231,18 +388,17 @@ function render(c) {
 
   // SNS 버튼
   const snsButtons = [];
-  if (c.phone) snsButtons.push(`<a class="sns-btn" href="tel:${escAttr(c.phone)}"><span class="ic">📞</span>전화</a>`);
-  if (c.kakao_id) snsButtons.push(`<a class="sns-btn" href="https://open.kakao.com/o/${escAttr(c.kakao_id)}" target="_blank" rel="noopener"><span class="ic">💬</span>카톡</a>`);
-  if (c.instagram_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.instagram_url)}" target="_blank" rel="noopener"><span class="ic">📷</span>인스타</a>`);
-  if (c.blog_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.blog_url)}" target="_blank" rel="noopener"><span class="ic">📝</span>블로그</a>`);
-  if (c.youtube_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.youtube_url)}" target="_blank" rel="noopener"><span class="ic">▶️</span>유튜브</a>`);
+  if (c.phone) snsButtons.push(`<a class="sns-btn" href="tel:${escAttr(c.phone)}"><span class="ic">📞</span><span class="lb">전화</span></a>`);
+  if (c.kakao_id) snsButtons.push(`<a class="sns-btn" href="https://open.kakao.com/o/${escAttr(c.kakao_id)}" target="_blank" rel="noopener"><span class="ic">💬</span><span class="lb">카톡</span></a>`);
+  if (c.instagram_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.instagram_url)}" target="_blank" rel="noopener"><span class="ic">📷</span><span class="lb">인스타</span></a>`);
+  if (c.blog_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.blog_url)}" target="_blank" rel="noopener"><span class="ic">📝</span><span class="lb">블로그</span></a>`);
+  if (c.youtube_url) snsButtons.push(`<a class="sns-btn" href="${escAttr(c.youtube_url)}" target="_blank" rel="noopener"><span class="ic">▶️</span><span class="lb">유튜브</span></a>`);
 
-  // 리드마그넷 카드
-  const magnetCards = enabledMagnets.map(id => {
+  const magnets = enabledMagnets.map(id => {
     const m = LEAD_MAGNETS.find(x => x.id === id);
     if (!m) return '';
     const href = `${m.url}?ref=${encodeURIComponent(c.slug)}`;
-    return `<a class="magnet-card" href="${href}">
+    return `<a class="magnet" href="${href}">
       <div class="magnet-icon">${m.icon}</div>
       <div class="magnet-info">
         <div class="magnet-name">${m.name}</div>
@@ -252,54 +408,70 @@ function render(c) {
     </a>`;
   }).join('');
 
-  const productGrid = products.length
-    ? `<div class="section"><div class="section-title">🌟 내 제품</div><div class="grid-3">${products.map(u => `<div class="grid-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div></div>`
-    : '';
+  const productGrid = products.length ? `
+    <section class="section fade d1">
+      <div class="section-eyebrow">PORTFOLIO</div>
+      <h2 class="section-h">내 제품</h2>
+      <div class="gallery">${products.map(u => `<div class="gallery-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div>
+    </section>` : '';
 
-  const activityGrid = activities.length
-    ? `<div class="section"><div class="section-title">✨ 활동 모습</div><div class="grid-3">${activities.map(u => `<div class="grid-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div></div>`
-    : '';
+  const activityGrid = activities.length ? `
+    <section class="section fade d2">
+      <div class="section-eyebrow">MOMENTS</div>
+      <h2 class="section-h">활동 모습</h2>
+      <div class="gallery">${activities.map(u => `<div class="gallery-item" style="background-image:url('${escAttr(u)}')" onclick="openLightbox('${escAttr(u)}')"></div>`).join('')}</div>
+    </section>` : '';
 
   const pageUrl = `https://app.wellstar.life/p/${encodeURIComponent(c.slug)}`;
 
   document.getElementById('wrap').innerHTML = `
-    <div class="hero ${c.hero_url ? '' : 'no-image'}" ${heroStyle}>
-      ${c.hero_url ? '<div class="hero-gradient"></div>' : '🌿'}
-    </div>
-    <div class="profile">
-      <div class="profile-img" ${profileStyle}>${c.profile_url ? '' : (fullName[0] || '🦕')}</div>
-      <h1>${escHtml(fullName)}</h1>
-      ${c.title ? `<div class="title">${escHtml(c.title)}</div>` : ''}
-      ${c.intro ? `<div class="intro">${escHtml(c.intro)}</div>` : ''}
-    </div>
-    ${snsButtons.length ? `<div class="sns-row">${snsButtons.join('')}</div>` : ''}
+    <header class="hero ${c.hero_url ? '' : 'no-image'}" ${heroStyle}>
+      <div class="hero-overlay"></div>
+      <div class="hero-content fade">
+        <div class="profile-circle" ${profileStyle}>${profileChar}</div>
+        <div class="hero-name serif">${escHtml(fullName)}</div>
+        ${c.title ? `<div class="hero-title">${escHtml(c.title)}</div>` : ''}
+        ${c.intro ? `<div class="hero-intro">${escHtml(c.intro)}</div>` : ''}
+      </div>
+    </header>
+
+    ${snsButtons.length ? `<div class="sns-strip fade d1">${snsButtons.join('')}</div>` : ''}
+
     ${productGrid}
     ${activityGrid}
-    <div class="section">
-      <div class="section-title">🎁 무료 진단 받기</div>
-      ${magnetCards}
-    </div>
-    <div class="qr-section">
-      <h3>📱 명함 저장 · QR</h3>
+
+    <section class="section fade d3">
+      <div class="section-eyebrow">FREE</div>
+      <h2 class="section-h">무료 진단 받기</h2>
+      <div class="magnets">${magnets}</div>
+    </section>
+
+    <div class="qr-section fade d4">
+      <h3>📱 QR로 페이지 저장하기</h3>
       <div id="qrCanvas"></div>
-      <button class="share-btn" onclick="sharePage()">🔗 페이지 공유</button>
+      <div class="qr-actions">
+        <button class="qr-btn primary" onclick="sharePage()">🔗 링크 공유</button>
+      </div>
     </div>
+
     <div class="footer">
-      🦕 옆집디노 AI 세일즈 시스템<br>
-      <a href="/main/">자세히 보기 →</a>
+      <div class="footer-brand">
+        <span class="dino">🦕</span>
+        옆집디노 AI 세일즈 시스템
+      </div>
+      <div><a href="/main/" style="color:var(--accent);font-weight:700">자세히 보기 →</a></div>
     </div>
   `;
 
   // QR
   try {
     new QRCode(document.getElementById('qrCanvas'), {
-      text: pageUrl, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M
+      text: pageUrl, width: 130, height: 130, correctLevel: QRCode.CorrectLevel.M
     });
   } catch {}
 
-  // 페이지 공유 핸들러
   window.sharePage = async function() {
-    const text = `${fullName}님의 페이지 보러가기\n${pageUrl}`;
+    const text = `${fullName}님 소개 페이지\n${pageUrl}`;
     if (navigator.share) {
       try { await navigator.share({ title: fullName, text, url: pageUrl }); } catch {}
     } else {

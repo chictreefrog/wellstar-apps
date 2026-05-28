@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-v10-auto-sync';
+const CACHE_NAME = 'card-v11-pretty';
 const APP_PATH = '/card/';
 
 self.addEventListener('install', e => {
