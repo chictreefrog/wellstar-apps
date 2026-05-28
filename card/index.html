@@ -262,11 +262,11 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
-  <!-- ── 카드/QR 화면 — 풀 랜딩 미리보기 + QR + 액션 ── -->
+  <!-- ── 공유/QR 화면 — 풀 랜딩 미리보기 + QR + 액션 ── -->
   <div id="screen-card" class="screen">
     <div class="page-header">
-      <h1>내 랜딩 페이지</h1>
-      <div class="subtitle">QR 또는 링크로 공유하세요 — 클릭 가능한 진짜 페이지</div>
+      <h1>내 페이지 공유하기</h1>
+      <div class="subtitle">고객에게 보낼 링크 · QR · 미리보기</div>
     </div>
 
     <!-- 공개 상태 안내 -->
@@ -328,11 +328,16 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
   <!-- ── 랜딩 페이지 편집 화면 ── -->
   <div id="screen-landing" class="screen">
     <header style="padding:24px 20px 12px">
-      <h1 style="font-size:24px;font-weight:900">🏠 내 랜딩 페이지</h1>
-      <div class="subtitle" style="margin-top:4px">고객에게 보낼 퍼널 페이지 — 사진·소개·5개 무료 진단</div>
+      <h1 style="font-size:24px;font-weight:900">🏠 내 페이지 꾸미기</h1>
+      <div class="subtitle" style="margin-top:4px">사진과 추천 무료 진단으로 풍성하게 — 이름·연락처는 '명함' 탭에서 입력</div>
     </header>
 
     <div style="padding:0 20px 24px">
+
+      <!-- 명함 데이터 안내 -->
+      <div style="background:rgba(64,156,255,0.08);border:1px solid rgba(64,156,255,0.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#5BB3FF;line-height:1.6">
+        💡 <b>이름 · 직함 · 한 줄 소개 · 전화 · SNS</b>는 '✏️ 명함' 탭에서 한 번만 입력하면 자동 반영돼요
+      </div>
 
       <!-- 공개 토글 + URL -->
       <div class="section-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">
@@ -369,15 +374,15 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
         </div>
       </div>
 
-      <!-- 자기소개 -->
-      <div class="section-title">✍️ 소개</div>
+      <!-- 직함 + 소개 (선택) -->
+      <div class="section-title">✍️ 페이지 표시 (선택)</div>
       <div class="form-row" style="margin-bottom:10px">
-        <label style="font-size:12px;color:var(--text3)">직함</label>
-        <input type="text" id="lp-title" placeholder="예: 웰런스 사업자" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit">
+        <label style="font-size:12px;color:var(--text3)">직함 <span style="font-size:10px;color:var(--text3)">(명함 직함과 다르게 표시하고 싶을 때)</span></label>
+        <input type="text" id="lp-title" placeholder="비워두면 명함 직함이 표시돼요" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit">
       </div>
       <div class="form-row" style="margin-bottom:18px">
-        <label style="font-size:12px;color:var(--text3)">한 줄 소개</label>
-        <textarea id="lp-intro" rows="2" placeholder="예: 건강한 삶을 안내해드려요 👋" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>
+        <label style="font-size:12px;color:var(--text3)">한 줄 소개 <span style="font-size:10px;color:var(--text3)">(명함과 다르게 쓰고 싶을 때)</span></label>
+        <textarea id="lp-intro" rows="2" placeholder="비워두면 명함 소개가 표시돼요" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>
       </div>
 
       <!-- 제품 갤러리 (6장) -->
@@ -734,14 +739,54 @@ function generateQR() {
 // ══════════════════════════════
 // 저장 / 공유
 // ══════════════════════════════
-function saveAndPreview() {
+async function saveAndPreview() {
   readForm();
   if (!data.name) { showToast('이름을 입력하세요'); return; }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  renderCard();
-  generateQR();
-  switchTab('card');
+  // 명함 데이터를 public_cards로 sync (이름/직함/소개/SNS/전화 자동 반영)
+  await syncToPublicCard();
   showToast('저장됐어요! 🎉');
+  switchTab('card');  // 공유/QR 탭으로 자동 이동
+}
+
+// 명함 → public_cards 자동 sync (랜딩 페이지가 항상 최신 정보 유지)
+async function syncToPublicCard() {
+  try {
+    const ok = await waitSb(3000);
+    if (!ok) return;
+    const { data: { session } } = await window.dinoSupabase.auth.getSession();
+    if (!session) return;
+    const { data: profile } = await window.dinoSupabase
+      .from('profiles').select('display_name, business_code').eq('id', session.user.id).single();
+    const slug = profile?.business_code || profile?.id?.replace(/-/g,'').slice(0,8).toUpperCase();
+
+    // 기존 카드 조회 (사진/공개여부 유지)
+    const { data: existing } = await window.dinoSupabase
+      .from('public_cards').select('hero_url, profile_url, product_urls, activity_urls, enabled_magnets, is_public')
+      .eq('user_id', session.user.id).maybeSingle();
+
+    const payload = {
+      user_id: session.user.id,
+      slug,
+      display_name: data.name || profile?.display_name || null,
+      title: data.title || null,
+      intro: data.intro || null,
+      phone: data.phone || null,
+      kakao_id: data.sns?.kakao || null,
+      instagram_url: data.sns?.insta || null,
+      blog_url: data.sns?.blog || null,
+      youtube_url: data.sns?.youtube || null,
+      theme: data.theme || 'dark-orange',
+      // 프로필 사진: 명함에 사진 있으면 base64라 사용 X — 랜딩 편집의 profile_url만 사용
+      hero_url: existing?.hero_url || null,
+      profile_url: existing?.profile_url || null,
+      product_urls: existing?.product_urls || [],
+      activity_urls: existing?.activity_urls || [],
+      enabled_magnets: existing?.enabled_magnets || ['saju','branding-coach','quiz','success-test','health-check'],
+      is_public: existing?.is_public ?? false
+    };
+    await window.dinoSupabase.from('public_cards').upsert(payload, { onConflict: 'user_id' });
+  } catch (e) { console.error('syncToPublicCard:', e); }
 }
 
 // QR 이미지(GIF)를 PNG Blob으로 변환 (iOS에서 .png.gif 같은 이상한 파일명 방지)
@@ -1202,34 +1247,27 @@ async function saveLandingPage() {
   const { data: { session } } = await window.dinoSupabase.auth.getSession();
   if (!session) { showToast('로그인 필요'); return; }
 
-  // 명함에서 가져올 필드 (전화/SNS)
-  let phone = '', kakao_id = '', instagram_url = '', blog_url = '', youtube_url = '';
-  try {
-    const nc = JSON.parse(localStorage.getItem('namecard_data') || '{}');
-    phone = nc.phone || '';
-    if (nc.sns) {
-      kakao_id = nc.sns.kakao || '';
-      instagram_url = nc.sns.insta || '';
-      blog_url = nc.sns.blog || '';
-      youtube_url = nc.sns.youtube || '';
-    }
-  } catch {}
-
+  // 명함 정보 가져오기 (이름/직함/소개/전화/SNS)
+  let nc = {};
+  try { nc = JSON.parse(localStorage.getItem('namecard_data') || '{}'); } catch {}
   const { data: profile } = await window.dinoSupabase
     .from('profiles').select('display_name, business_code, phone').eq('id', session.user.id).single();
+
+  const lpTitle = document.getElementById('lp-title').value.trim();
+  const lpIntro = document.getElementById('lp-intro').value.trim();
 
   const payload = {
     user_id: session.user.id,
     slug: lpState.slug,
-    display_name: profile?.display_name || null,
-    title: document.getElementById('lp-title').value.trim() || null,
-    intro: document.getElementById('lp-intro').value.trim() || null,
-    phone: phone || profile?.phone || null,
-    kakao_id: kakao_id || null,
-    instagram_url: instagram_url || null,
-    blog_url: blog_url || null,
-    youtube_url: youtube_url || null,
-    theme: localStorage.getItem('namecard_theme') || 'dark-orange',
+    display_name: nc.name || profile?.display_name || null,
+    title: lpTitle || nc.title || null,  // 랜딩에 적으면 우선, 아니면 명함 직함
+    intro: lpIntro || nc.intro || null,  // 랜딩에 적으면 우선, 아니면 명함 소개
+    phone: nc.phone || profile?.phone || null,
+    kakao_id: nc.sns?.kakao || null,
+    instagram_url: nc.sns?.insta || null,
+    blog_url: nc.sns?.blog || null,
+    youtube_url: nc.sns?.youtube || null,
+    theme: nc.theme || 'dark-orange',
     hero_url: lpState.hero_url,
     profile_url: lpState.profile_url,
     product_urls: lpState.product_urls.filter(Boolean),
@@ -1247,6 +1285,8 @@ async function saveLandingPage() {
   }
   showToast('저장 완료 ✅');
   document.getElementById('lp-status').textContent = '마지막 저장: ' + new Date().toLocaleTimeString('ko-KR');
+  // 저장 후 공유 탭으로 자동 이동
+  setTimeout(() => switchTab('card'), 800);
 }
 
 // ══════════════════════════════
@@ -1264,7 +1304,7 @@ function showToast(msg) {
 // ══════════════════════════════
 // 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
-const BUILD_ID = 'card-v9-landing-unified';
+const BUILD_ID = 'card-v10-auto-sync';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {
