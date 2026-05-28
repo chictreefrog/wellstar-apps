@@ -28,11 +28,11 @@
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; overflow-x: hidden; }
 
 #app { height: 100%; display: flex; flex-direction: column; }
-.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px); display: none; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(var(--tab-h) + 64px + var(--safe-bottom) + 16px); display: none; }
 .screen.active { display: block; }
 
 /* 탭바 */
-.tabbar { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--tab-h) + var(--safe-bottom)); background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: var(--safe-bottom); }
+.tabbar { position: fixed; bottom: calc(64px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: var(--tab-h); background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; }
 .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text3); border: none; background: none; font-family: 'Noto Sans KR', sans-serif; transition: color 0.2s; }
 .tab-btn.active { color: var(--accent); }
 .tab-btn .tab-icon { font-size: 22px; }
@@ -262,31 +262,32 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
-  <!-- ── 카드/QR 화면 ── -->
+  <!-- ── 카드/QR 화면 — 풀 랜딩 미리보기 + QR + 액션 ── -->
   <div id="screen-card" class="screen">
     <div class="page-header">
-      <h1>내 명함 카드</h1>
-      <div class="subtitle">QR을 저장해서 공유하세요</div>
+      <h1>내 랜딩 페이지</h1>
+      <div class="subtitle">QR 또는 링크로 공유하세요 — 클릭 가능한 진짜 페이지</div>
     </div>
 
-    <div class="card-preview-wrap">
-      <div class="business-card" id="business-card">
-        <div class="card-bg-deco" id="card-bg-deco"></div>
-        <div class="card-content">
-          <div class="card-profile">
-            <div class="card-avatar" id="card-avatar"><span>😊</span></div>
-            <div>
-              <div class="card-name" id="card-display-name">이름</div>
-              <div class="card-title" id="card-display-title"></div>
-            </div>
-          </div>
-          <div class="card-intro" id="card-display-intro"></div>
-          <div class="card-divider"></div>
-          <div class="card-contacts" id="card-display-contacts"></div>
-          <div class="card-sns" id="card-display-sns"></div>
-          <div class="card-tools" id="card-display-tools"></div>
-        </div>
-        <div class="card-brand">🦕 옆집디노</div>
+    <!-- 공개 상태 안내 -->
+    <div id="card-public-bar" style="margin:0 16px 12px;padding:12px 14px;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:12px;font-size:12px;color:var(--accent);display:none">
+      <div style="font-weight:700;margin-bottom:4px">🌐 공개 중</div>
+      <div id="card-public-url" style="font-family:monospace;word-break:break-all;cursor:pointer" onclick="copyLandingUrl()">app.wellstar.life/p/...</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">탭해서 URL 복사 · 카톡에 붙여넣고 보내기</div>
+    </div>
+
+    <div id="card-not-public-bar" style="margin:0 16px 12px;padding:12px 14px;background:rgba(255,159,10,0.08);border:1px solid rgba(255,159,10,0.25);border-radius:12px;font-size:12px;color:#FF9F0A;display:none">
+      ⚠️ 아직 비공개 상태입니다 — <a onclick="switchTab('landing')" style="color:var(--accent);cursor:pointer;text-decoration:underline">🏠 랜딩 탭</a>에서 공개 토글을 켜주세요
+    </div>
+
+    <!-- 랜딩 페이지 미리보기 (iframe) -->
+    <div style="margin:0 16px 12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+        <span>📄 내 랜딩 미리보기</span>
+        <a id="card-open-fullscreen" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:700">새 탭에서 열기 ↗</a>
+      </div>
+      <div style="position:relative;width:100%;aspect-ratio:9/16;max-height:580px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)">
+        <iframe id="card-landing-iframe" src="about:blank" style="width:100%;height:100%;border:0;background:var(--card)" loading="lazy"></iframe>
       </div>
     </div>
 
@@ -294,7 +295,7 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div class="qr-section">
       <div class="qr-section-title">📱 QR 코드</div>
       <div id="qr-wrap"></div>
-      <div class="qr-sub">QR을 스캔하면 내 명함 정보가 바로 보여요<br>캡처해서 카카오톡, 인스타에 공유해보세요</div>
+      <div class="qr-sub">스캔하면 내 랜딩 페이지로 바로 이동해요<br>명함처럼 보여주거나 인쇄해도 OK</div>
       <div style="margin-bottom:14px;text-align:center">
         <button onclick="toggleQrFormat()" style="font-size:11px;color:var(--text2);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">
           🔄 스캔 안 되나요? 다른 형식 시도
@@ -302,12 +303,12 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
       </div>
       <div class="save-btns">
         <button class="btn-secondary" onclick="saveQR()" style="flex:1">📱 QR 저장</button>
-        <button class="btn-primary" onclick="shareCard()" style="flex:1">📤 공유하기</button>
+        <button class="btn-primary" onclick="shareLandingUrl()" style="flex:1">📤 링크 공유</button>
       </div>
     </div>
 
     <div style="padding:0 16px 8px">
-      <button class="btn-secondary" onclick="switchTab('edit')">✏️ 명함 편집하기</button>
+      <button class="btn-secondary" onclick="switchTab('landing')">🏠 랜딩 편집</button>
     </div>
 
     <!-- 브랜딩 -->
@@ -404,13 +405,13 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
       <span class="tab-icon">✏️</span>
       <span class="tab-label">명함</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('card')" id="tab-card">
-      <span class="tab-icon">💳</span>
-      <span class="tab-label">카드/QR</span>
-    </button>
     <button class="tab-btn" onclick="switchTab('landing')" id="tab-landing">
       <span class="tab-icon">🏠</span>
-      <span class="tab-label">랜딩</span>
+      <span class="tab-label">랜딩 편집</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('card')" id="tab-card">
+      <span class="tab-icon">📤</span>
+      <span class="tab-label">공유/QR</span>
     </button>
   </nav>
 </div>
@@ -886,9 +887,92 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'card') { renderCard(); generateQR(); }
+  if (name === 'card') { loadCardPreview(); }
   if (name === 'landing') { loadLandingPage(); }
   try { localStorage.setItem('namecard_last_screen', name); } catch {}
+}
+
+// 카드/QR 탭 = 풀 랜딩 미리보기 + 공개 상태 + QR
+async function loadCardPreview() {
+  const ok = await waitSb(5000);
+  if (!ok) {
+    document.getElementById('card-not-public-bar').style.display = 'block';
+    document.getElementById('card-not-public-bar').innerHTML = '⚠️ 연결 실패 — 새로고침해주세요';
+    return;
+  }
+  const { data: { session } } = await window.dinoSupabase.auth.getSession();
+  if (!session) {
+    document.getElementById('card-not-public-bar').style.display = 'block';
+    document.getElementById('card-not-public-bar').innerHTML = '🔒 로그인이 필요해요';
+    return;
+  }
+
+  const { data: profile } = await window.dinoSupabase
+    .from('profiles').select('id, business_code').eq('id', session.user.id).single();
+  const slug = profile?.business_code || profile?.id?.replace(/-/g,'').slice(0,8).toUpperCase();
+  const landingUrl = `https://app.wellstar.life/p/${encodeURIComponent(slug)}`;
+
+  // 공개 여부 조회
+  const { data: card } = await window.dinoSupabase
+    .from('public_cards').select('is_public').eq('user_id', session.user.id).maybeSingle();
+  const isPublic = !!card?.is_public;
+
+  // UI 갱신
+  if (isPublic) {
+    document.getElementById('card-public-bar').style.display = 'block';
+    document.getElementById('card-not-public-bar').style.display = 'none';
+    document.getElementById('card-public-url').textContent = `app.wellstar.life/p/${slug}`;
+  } else {
+    document.getElementById('card-public-bar').style.display = 'none';
+    document.getElementById('card-not-public-bar').style.display = 'block';
+  }
+
+  // 미리보기 iframe (공개여부 무관 — 본인은 본인 카드 볼 수 있음)
+  document.getElementById('card-landing-iframe').src = landingUrl + '?_t=' + Date.now();
+  document.getElementById('card-open-fullscreen').href = landingUrl;
+
+  // QR (랜딩 URL 인코딩)
+  window.__currentLandingUrl = landingUrl;
+  generateLandingQR(landingUrl);
+}
+
+function generateLandingQR(url) {
+  const wrap = document.getElementById('qr-wrap');
+  if (!wrap) return;
+  if (typeof qrcode === 'undefined') return;
+  wrap.innerHTML = '';
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    wrap.innerHTML = qr.createImgTag(6, 24);
+    const img = wrap.querySelector('img');
+    if (img) {
+      img.style.borderRadius = '12px';
+      img.style.display = 'block';
+      img.style.margin = '0 auto';
+      img.style.maxWidth = '100%';
+      img.style.background = '#fff';
+    }
+  } catch (e) { console.error('Landing QR error', e); }
+}
+
+function copyLandingUrl() {
+  const url = window.__currentLandingUrl;
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => showToast('URL 복사됨 📋'));
+}
+
+async function shareLandingUrl() {
+  const url = window.__currentLandingUrl;
+  if (!url) { showToast('아직 준비 안 됨'); return; }
+  const text = `옆집디노 회원 페이지\n${url}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: '내 랜딩 페이지', text, url }); } catch {}
+  } else {
+    await navigator.clipboard.writeText(url);
+    showToast('URL 복사됨 📋');
+  }
 }
 
 // ══════════════════════════════
@@ -1180,7 +1264,7 @@ function showToast(msg) {
 // ══════════════════════════════
 // 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
-const BUILD_ID = 'card-v8-landing-2026-05-29';
+const BUILD_ID = 'card-v9-landing-unified';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {
