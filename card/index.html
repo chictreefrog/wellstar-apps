@@ -262,56 +262,47 @@ body.light-theme .page-header { background: #FFFFFF !important; border-bottom-co
     <div style="height:8px"></div>
   </div>
 
-  <!-- ── 공유/QR 화면 — 내 소개 페이지 미리보기 + QR + 액션 ── -->
+  <!-- ── 공유/QR 화면 — 내 페이지 풀뷰 + 액션 바 ── -->
   <div id="screen-card" class="screen">
-    <div class="page-header">
-      <h1>내 소개 페이지 공유</h1>
-      <div class="subtitle">고객에게 보낼 링크 · QR · 미리보기</div>
+    <!-- 비공개 안내 (공개 X일 때만) -->
+    <div id="card-not-public-bar" style="margin:14px 16px;padding:14px 16px;background:rgba(255,159,10,0.15);border:1px solid rgba(255,159,10,0.45);border-radius:12px;font-size:14px;color:#92400E;display:none;font-weight:700;line-height:1.5">
+      ⚠️ 아직 비공개입니다 — <a onclick="switchTab('landing')" style="color:var(--accent);cursor:pointer;text-decoration:underline">소개 편집</a>에서 공개를 켜주세요
     </div>
 
-    <!-- 공개 상태 안내 -->
-    <div id="card-public-bar" style="margin:0 16px 14px;padding:14px 16px;background:rgba(255,107,53,0.10);border:1px solid rgba(255,107,53,0.35);border-radius:12px;color:var(--accent);display:none">
-      <div style="font-weight:800;margin-bottom:6px;font-size:14px">🌐 공개 중</div>
-      <div id="card-public-url" style="font-family:'Courier New',monospace;word-break:break-all;cursor:pointer;font-size:14px;font-weight:700" onclick="copyLandingUrl()">app.wellstar.life/p/...</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:6px;font-weight:500">탭해서 URL 복사 · 카톡에 붙여넣고 보내기</div>
-    </div>
-
-    <div id="card-not-public-bar" style="margin:0 16px 14px;padding:14px 16px;background:rgba(255,159,10,0.12);border:1px solid rgba(255,159,10,0.40);border-radius:12px;font-size:14px;color:#D97706;display:none;font-weight:600;line-height:1.5">
-      ⚠️ 아직 비공개 상태입니다 — <a onclick="switchTab('landing')" style="color:var(--accent);cursor:pointer;text-decoration:underline;font-weight:800">🏠 소개 편집 탭</a>에서 공개 토글을 켜주세요
-    </div>
-
-    <!-- 내 소개 페이지 미리보기 (iframe) -->
-    <div style="margin:0 16px 16px">
-      <div style="font-size:14px;color:var(--text);margin-bottom:8px;font-weight:700">
-        📄 내 소개 페이지 미리보기
+    <!-- 액션 바: URL · QR · 공유 -->
+    <div id="card-public-bar" style="margin:14px 16px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:800;color:var(--text)">🌐 공개 중</div>
       </div>
-      <div style="position:relative;width:100%;aspect-ratio:9/16;max-height:580px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)">
+      <div id="card-public-url" style="font-family:'Courier New',monospace;word-break:break-all;cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:10px 12px;background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:10px;margin-bottom:10px" onclick="copyLandingUrl()">app.wellstar.life/p/...</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-primary" onclick="shareLandingUrl()" style="flex:2;padding:14px;font-size:15px;font-weight:800">📤 카톡으로 공유</button>
+        <button class="btn-secondary" onclick="copyLandingUrl()" style="flex:1;padding:14px;font-size:13px;font-weight:700">📋 복사</button>
+        <button class="btn-secondary" onclick="openQrModal()" style="flex:1;padding:14px;font-size:13px;font-weight:700">📱 QR</button>
+      </div>
+    </div>
+
+    <!-- 내 페이지 풀뷰 -->
+    <div id="card-fullview-wrap" style="margin:0 16px 16px;display:none">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600;text-align:center">
+        💡 아래가 고객이 보는 실제 페이지예요
+      </div>
+      <div style="position:relative;width:100%;aspect-ratio:9/16;max-height:75vh;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 8px 32px rgba(0,0,0,0.15)">
         <iframe id="card-landing-iframe" src="about:blank" style="width:100%;height:100%;border:0;background:var(--card)" loading="lazy"></iframe>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-top:8px;text-align:center;font-weight:500">
-        ⚠️ 미리보기는 작은 화면이라 일부 가려질 수 있어요<br>
-        실제 페이지는 아래 'URL 복사 → 카톡에 붙여넣기' 또는 'QR 스캔'으로 확인하세요
-      </div>
     </div>
 
-    <!-- QR 코드 -->
-    <div class="qr-section">
-      <div class="qr-section-title">📱 QR 코드</div>
-      <div id="qr-wrap"></div>
-      <div class="qr-sub">스캔하면 내 소개 페이지로 바로 이동해요<br>명함처럼 보여주거나 인쇄해도 OK</div>
-      <div style="margin-bottom:14px;text-align:center">
-        <button onclick="toggleQrFormat()" style="font-size:11px;color:var(--text2);background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;cursor:pointer;font-family:inherit">
-          🔄 스캔 안 되나요? 다른 형식 시도
-        </button>
+    <!-- QR 모달 (탭에서 호출) -->
+    <div id="qrModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px" onclick="closeQrModal(event)">
+      <div style="background:#fff;padding:24px;border-radius:20px;max-width:340px;width:100%;text-align:center" onclick="event.stopPropagation()">
+        <h2 style="color:#1a1a2e;font-size:18px;font-weight:800;margin-bottom:6px">📱 QR 코드</h2>
+        <div style="color:#555;font-size:13px;margin-bottom:16px">스캔하면 내 페이지로 이동</div>
+        <div id="qr-wrap" style="display:flex;justify-content:center;margin-bottom:14px"></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="saveQR()" style="flex:1;padding:12px;border-radius:10px;border:1px solid #ddd;background:#fff;color:#333;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💾 저장</button>
+          <button onclick="closeQrModal()" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">닫기</button>
+        </div>
       </div>
-      <div class="save-btns">
-        <button class="btn-secondary" onclick="saveQR()" style="flex:1">📱 QR 저장</button>
-        <button class="btn-primary" onclick="shareLandingUrl()" style="flex:1">📤 링크 공유</button>
-      </div>
-    </div>
-
-    <div style="padding:0 16px 8px">
-      <button class="btn-secondary" onclick="switchTab('landing')">🏠 소개 페이지 편집</button>
     </div>
 
     <!-- 브랜딩 -->
@@ -980,21 +971,34 @@ async function loadCardPreview() {
   const isPublic = !!card?.is_public;
 
   // UI 갱신
+  const fullviewWrap = document.getElementById('card-fullview-wrap');
   if (isPublic) {
     document.getElementById('card-public-bar').style.display = 'block';
     document.getElementById('card-not-public-bar').style.display = 'none';
+    if (fullviewWrap) fullviewWrap.style.display = 'block';
     document.getElementById('card-public-url').textContent = `app.wellstar.life/p/${slug}`;
   } else {
     document.getElementById('card-public-bar').style.display = 'none';
     document.getElementById('card-not-public-bar').style.display = 'block';
+    if (fullviewWrap) fullviewWrap.style.display = 'block';  // 비공개여도 본인은 미리보기 가능
   }
 
-  // 미리보기 iframe (공개여부 무관 — 본인은 본인 카드 볼 수 있음)
+  // 풀뷰 iframe (본인은 비공개여도 볼 수 있음)
   document.getElementById('card-landing-iframe').src = landingUrl + '?_t=' + Date.now();
 
-  // QR (랜딩 URL 인코딩)
+  // QR (랜딩 URL 인코딩 — 모달용)
   window.__currentLandingUrl = landingUrl;
   generateLandingQR(landingUrl);
+}
+
+function openQrModal() {
+  const m = document.getElementById('qrModal');
+  if (m) m.style.display = 'flex';
+}
+function closeQrModal(e) {
+  if (e && e.target.id !== 'qrModal') return;
+  const m = document.getElementById('qrModal');
+  if (m) m.style.display = 'none';
 }
 
 function generateLandingQR(url) {
@@ -1020,25 +1024,53 @@ function generateLandingQR(url) {
 
 function copyLandingUrl() {
   const url = window.__currentLandingUrl;
-  if (!url) return;
-  navigator.clipboard.writeText(url).then(() => showToast('URL 복사됨 📋'));
+  if (!url) { showToast('URL 준비 중...'); return; }
+  // PWA 클립보드 권한 거부 대비 — 실패 시 textarea fallback
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('✅ URL 복사됨 — 카톡에 붙여넣기'))
+      .catch(() => fallbackCopy(url));
+  } else {
+    fallbackCopy(url);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    const ok = document.execCommand('copy');
+    showToast(ok ? '✅ URL 복사됨 — 카톡에 붙여넣기' : '❌ 복사 실패 — 길게 눌러서 복사하세요');
+  } catch (e) {
+    showToast('❌ 복사 실패 — 길게 눌러서 복사하세요');
+  }
+  document.body.removeChild(ta);
 }
 
 async function shareLandingUrl() {
   const url = window.__currentLandingUrl;
   if (!url) { showToast('아직 준비 안 됨'); return; }
-  // text와 url 둘 다 주면 카톡이 url을 두 번 표시 → url만 별도로
+  // 본인 이름 가져오기 (명함 localStorage → display name)
+  let myName = '';
+  try {
+    const nc = JSON.parse(localStorage.getItem('namecard_data') || '{}');
+    myName = nc.name || '';
+  } catch {}
+  const title = myName ? `${myName}님 소개 페이지` : '저를 소개합니다';
+  const text = myName ? `${myName}입니다. 제 소개 페이지예요 🦕` : '저를 소개합니다 🦕';
   if (navigator.share) {
-    try {
-      await navigator.share({
-        title: '내 소개 페이지',
-        text: '제 소개 페이지예요',
-        url
-      });
-    } catch {}
+    try { await navigator.share({ title, text, url }); } catch {}
   } else {
-    await navigator.clipboard.writeText(url);
-    showToast('URL 복사됨 📋');
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => showToast('✅ URL 복사됨'));
+    } else {
+      fallbackCopy(url);
+    }
   }
 }
 
@@ -1327,7 +1359,7 @@ function showToast(msg) {
 // ══════════════════════════════
 // 서비스워커 + 자동 업데이트 + 빌드 라벨
 // ══════════════════════════════
-const BUILD_ID = 'card-v13-fix-share-url';
+const BUILD_ID = 'card-v14-fullview-share';
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-v13-fix-share-url';
+const CACHE_NAME = 'card-v14-fullview-share';
 const APP_PATH = '/card/';
 
 self.addEventListener('install', e => {
