@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="언니들의 살롱">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F39B6D"/>
+      <stop offset="1" stop-color="#E8638A"/>
+    </linearGradient>
+    <radialGradient id="petal" cx="0.5" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFE9F0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <!-- blossom: 5 petals around a center -->
+  <g transform="translate(256 246)" fill="url(#petal)">
+    <g>
+      <ellipse cx="0" cy="-84" rx="46" ry="62"/>
+      <ellipse cx="0" cy="-84" rx="46" ry="62" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-84" rx="46" ry="62" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-84" rx="46" ry="62" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-84" rx="46" ry="62" transform="rotate(288)"/>
+    </g>
+    <circle cx="0" cy="0" r="34" fill="#F0A94C"/>
+  </g>
+  <!-- small sparkle -->
+  <g fill="#FFFFFF" opacity="0.92">
+    <path d="M388 150 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10 z"/>
+  </g>
+  <text x="256" y="430" text-anchor="middle" font-family="Pretendard, -apple-system, sans-serif" font-size="58" font-weight="800" fill="#FFFFFF" opacity="0.96">살롱</text>
+</svg>

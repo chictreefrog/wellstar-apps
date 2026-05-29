@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light" data-fontscale="md">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#E8638A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="언니들의 살롱">
+<meta name="description" content="오늘도 애쓴 나를 위한 1분. 디노 언니와 함께하는 따뜻한 셀프케어.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>언니들의 살롱 · 옆집디노</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --bg:#FFF7F3; --surface:#FFFFFF; --surface-2:#FDEDE8;
+    --ink:#3B2D30; --ink-soft:#8C757B; --line:#F4E0D9;
+    --rose:#E8638A; --rose-soft:#FCE4EC; --rose-ink:#C8456A;
+    --lav:#9B7EDE; --lav-soft:#F0EAFB; --lav-ink:#7E5FC9;
+    --peach:#F39B6D; --peach-soft:#FDEBD9;
+    --amber:#F0A94C; --amber-soft:#FCEFD6;
+    --mint:#56C2A0; --mint-soft:#DEF4ED;
+    --danger:#D9594A;
+    --shadow:0 6px 22px rgba(108,60,72,.08);
+    --shadow-lg:0 16px 44px rgba(108,60,72,.16);
+    --r:22px;
+    --fs:1;
+  }
+  html[data-theme="dark"]{
+    --bg:#1E1A1B; --surface:#2A2426; --surface-2:#352B2E;
+    --ink:#F6ECEE; --ink-soft:#B7A2A8; --line:#403236;
+    --rose:#F284A6; --rose-soft:#3A2530; --rose-ink:#F9A8C2;
+    --lav:#B79CEF; --lav-soft:#2E2640; --lav-ink:#CBB6F6;
+    --peach:#F4A878; --peach-soft:#3A2A20;
+    --amber:#F2BB6A; --amber-soft:#3A2D17;
+    --mint:#6FD0B2; --mint-soft:#1F3A33;
+    --danger:#E5715C;
+    --shadow:0 6px 22px rgba(0,0,0,.32);
+    --shadow-lg:0 18px 48px rgba(0,0,0,.5);
+  }
+  html[data-fontscale="sm"]{--fs:.92}
+  html[data-fontscale="md"]{--fs:1}
+  html[data-fontscale="lg"]{--fs:1.12}
+
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif;
+    background:var(--bg); color:var(--ink);
+    font-size:calc(16px * var(--fs)); line-height:1.55; letter-spacing:-.01em;
+    transition:background .3s,color .3s; -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:480px; margin:0 auto; min-height:100dvh; position:relative;}
+  .view{padding:0 18px calc(96px + env(safe-area-inset-bottom)); min-height:100dvh;}
+  .hidden{display:none !important}
+
+  /* ---------- header ---------- */
+  header{
+    padding:calc(20px + env(safe-area-inset-top)) 2px 6px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:1.02em}
+  .brand .dino{font-size:1.5em;line-height:1}
+  .brand small{font-weight:600;color:var(--ink-soft);font-size:.62em;display:block;letter-spacing:0}
+  .icon-btn{
+    width:44px;height:44px;border:none;border-radius:14px;
+    background:var(--surface);box-shadow:var(--shadow);color:var(--ink);
+    font-size:1.2em;cursor:pointer;display:grid;place-items:center;transition:transform .15s;
+  }
+  .icon-btn:active{transform:scale(.92)}
+
+  /* ---------- greeting ---------- */
+  .greet{margin:18px 2px 6px}
+  .greet h1{font-size:1.5em;font-weight:800;line-height:1.32}
+  .greet p{color:var(--ink-soft);margin-top:3px;font-size:.9em}
+
+  /* ---------- 오늘의 한마디 ---------- */
+  .quote{
+    margin-top:16px;border-radius:var(--r);padding:22px 22px;
+    background:linear-gradient(135deg,var(--rose-soft),var(--lav-soft));
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .quote .mark{font-size:2.2em;line-height:.6;opacity:.5}
+  .quote p{font-weight:700;font-size:1.08em;line-height:1.5;margin-top:8px}
+  .quote .by{margin-top:10px;color:var(--rose-ink);font-weight:700;font-size:.82em}
+
+  /* ---------- section title ---------- */
+  .sec{display:flex;align-items:baseline;justify-content:space-between;margin:28px 4px 12px}
+  .sec h2{font-size:1.14em;font-weight:800}
+  .sec .more{color:var(--rose-ink);font-weight:700;font-size:.85em;cursor:pointer;background:none;border:none;font-family:inherit}
+
+  /* ---------- card ---------- */
+  .card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+  .card+.card{margin-top:14px}
+  .card .q{font-weight:800;font-size:1.02em;margin-bottom:12px}
+  .card .q small{display:block;font-weight:600;color:var(--ink-soft);font-size:.78em;margin-top:2px}
+
+  /* mood faces */
+  .moods{display:flex;gap:7px}
+  .mood{
+    flex:1;background:var(--surface-2);border:2px solid transparent;border-radius:16px;
+    padding:12px 2px;cursor:pointer;font-family:inherit;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:5px;transition:.18s;
+  }
+  .mood .e{font-size:1.55em;line-height:1}
+  .mood .l{font-size:.66em;font-weight:700;color:var(--ink-soft)}
+  .mood.on{background:var(--rose-soft);border-color:var(--rose)}
+  .mood.on .l{color:var(--rose-ink)}
+  .mood:active{transform:scale(.94)}
+
+  /* segmented */
+  .seg{display:flex;gap:8px}
+  .seg button{
+    flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+    font-family:inherit;font-weight:700;border-radius:13px;padding:13px 4px;cursor:pointer;font-size:.92em;transition:.18s
+  }
+  .seg button.active{background:var(--rose);color:#fff;border-color:var(--rose)}
+
+  /* chips */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    font-family:inherit;font-weight:600;font-size:.88em;border-radius:30px;padding:9px 14px;cursor:pointer;transition:.16s
+  }
+  .chip.on{background:var(--lav-soft);border-color:var(--lav);color:var(--lav-ink);font-weight:700}
+  .chip.care.on{background:var(--mint-soft);border-color:var(--mint);color:var(--mint)}
+  .chip:active{transform:scale(.95)}
+
+  /* praise input */
+  textarea,input{
+    width:100%;font-family:inherit;font-size:1em;color:var(--ink);
+    background:var(--surface-2);border:1.5px solid transparent;border-radius:14px;
+    padding:14px 15px;outline:none;transition:.2s;resize:none;
+  }
+  textarea:focus,input:focus{border-color:var(--rose);background:var(--surface)}
+
+  /* buttons */
+  .btn{
+    width:100%;border:none;cursor:pointer;font-family:inherit;font-weight:800;
+    border-radius:16px;padding:16px;font-size:1.02em;background:var(--rose);color:#fff;
+    box-shadow:0 6px 16px rgba(232,99,138,.32);transition:transform .12s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+  .btn.lav{background:var(--lav);box-shadow:0 6px 16px rgba(155,126,222,.3)}
+  .btn.sm{width:auto;padding:12px 18px;font-size:.92em;border-radius:13px}
+  .btn.danger{background:transparent;color:var(--danger);box-shadow:none;font-weight:700}
+
+  /* ---------- 안심케어 교차추천 ---------- */
+  .cross{
+    margin-top:14px;border-radius:var(--r);padding:18px 20px;
+    background:linear-gradient(135deg,var(--mint-soft),var(--surface));
+    border:1.5px solid var(--mint);display:flex;align-items:center;gap:14px;cursor:pointer;
+    text-decoration:none;color:inherit;
+  }
+  .cross .e{font-size:1.9em;line-height:1}
+  .cross .t{font-weight:800;font-size:1em}
+  .cross .s{color:var(--ink-soft);font-size:.82em;margin-top:2px}
+  .cross .arr{margin-left:auto;color:var(--mint);font-weight:800}
+
+  /* ---------- 디노 언니 채팅 ---------- */
+  #chat{display:flex;flex-direction:column;height:100dvh;padding-bottom:0}
+  .chat-head{
+    padding:calc(16px + env(safe-area-inset-top)) 18px 12px;
+    display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
+    background:var(--bg);position:sticky;top:0;z-index:5;
+  }
+  .chat-head .av{
+    width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:1.5em;
+    background:linear-gradient(135deg,var(--rose),var(--peach));box-shadow:var(--shadow);
+  }
+  .chat-head .nm{font-weight:800;font-size:1.05em}
+  .chat-head .st{color:var(--mint);font-size:.78em;font-weight:700;display:flex;align-items:center;gap:5px}
+  .chat-head .st::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mint)}
+  .chat-scroll{flex:1;overflow-y:auto;padding:18px 16px 12px;display:flex;flex-direction:column;gap:12px}
+  .bub{max-width:82%;padding:13px 16px;border-radius:20px;line-height:1.55;font-size:.97em;white-space:pre-wrap;word-break:break-word}
+  .bub.s{align-self:flex-start;background:var(--surface);box-shadow:var(--shadow);border-bottom-left-radius:6px}
+  .bub.u{align-self:flex-end;background:var(--rose);color:#fff;border-bottom-right-radius:6px}
+  .typing{align-self:flex-start;background:var(--surface);box-shadow:var(--shadow);border-radius:20px;border-bottom-left-radius:6px;padding:15px 18px;display:flex;gap:5px}
+  .typing span{width:8px;height:8px;border-radius:50%;background:var(--ink-soft);opacity:.5;animation:bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+  .chat-sugg{display:flex;gap:8px;overflow-x:auto;padding:4px 16px 10px;scrollbar-width:none}
+  .chat-sugg::-webkit-scrollbar{display:none}
+  .chat-sugg button{
+    white-space:nowrap;border:1.5px solid var(--rose);background:var(--rose-soft);color:var(--rose-ink);
+    font-family:inherit;font-weight:700;font-size:.86em;border-radius:30px;padding:9px 15px;cursor:pointer;flex:none
+  }
+  .chat-input{
+    display:flex;gap:10px;align-items:flex-end;padding:10px 14px calc(14px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:var(--bg);
+  }
+  .chat-input textarea{flex:1;max-height:120px;border-radius:22px;background:var(--surface-2)}
+  .chat-input .send{
+    width:48px;height:48px;flex:none;border:none;border-radius:50%;background:var(--rose);color:#fff;
+    font-size:1.2em;cursor:pointer;display:grid;place-items:center;box-shadow:0 4px 12px rgba(232,99,138,.35)
+  }
+  .chat-input .send:disabled{opacity:.4}
+  .chat-disc{text-align:center;font-size:.72em;color:var(--ink-soft);padding:2px 16px 8px}
+
+  /* ---------- 콘텐츠 ---------- */
+  .cat-tabs{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 4px;scrollbar-width:none;margin:6px -2px 0}
+  .cat-tabs::-webkit-scrollbar{display:none}
+  .cat-tab{
+    white-space:nowrap;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);
+    font-family:inherit;font-weight:700;font-size:.9em;border-radius:30px;padding:10px 15px;cursor:pointer;flex:none;transition:.16s
+  }
+  .cat-tab.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .art{
+    background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:18px 18px;margin-top:14px;cursor:pointer;
+    display:flex;gap:14px;align-items:flex-start;transition:transform .12s
+  }
+  .art:active{transform:scale(.98)}
+  .art .ico{width:48px;height:48px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:1.5em;background:var(--surface-2)}
+  .art .tag{font-size:.72em;font-weight:800;color:var(--rose-ink);letter-spacing:.02em}
+  .art .ti{font-weight:800;font-size:1.04em;margin-top:3px;line-height:1.35}
+  .art .su{color:var(--ink-soft);font-size:.86em;margin-top:4px;line-height:1.45}
+
+  /* ---------- 카드뉴스 리더 ---------- */
+  #reader{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column}
+  #reader.show{display:flex}
+  .rd-top{display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 18px 6px}
+  .rd-top .x{width:42px;height:42px;border:none;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);font-size:1.1em;cursor:pointer;color:var(--ink)}
+  .rd-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:8px 18px 4px}
+  .rd-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:.2s}
+  .rd-dot.on{background:var(--rose);width:20px;border-radius:4px}
+  .rd-stage{flex:1;overflow:hidden;position:relative;padding:8px 18px calc(18px + env(safe-area-inset-bottom))}
+  .rd-card{
+    position:absolute;inset:8px 18px calc(18px + env(safe-area-inset-bottom));
+    background:linear-gradient(160deg,var(--surface),var(--surface-2));
+    border-radius:26px;box-shadow:var(--shadow-lg);padding:32px 28px;
+    display:flex;flex-direction:column;justify-content:center;
+    opacity:0;transform:translateX(40px);transition:opacity .28s,transform .28s;pointer-events:none;
+  }
+  .rd-card.cur{opacity:1;transform:translateX(0);pointer-events:auto}
+  .rd-card.cover{background:linear-gradient(160deg,var(--rose),var(--peach));color:#fff;text-align:center}
+  .rd-card.cover .tag{font-weight:800;font-size:.86em;opacity:.9;letter-spacing:.04em}
+  .rd-card.cover .ti{font-weight:800;font-size:1.8em;line-height:1.3;margin-top:14px}
+  .rd-card.cover .su{margin-top:14px;font-size:1em;opacity:.92;line-height:1.5}
+  .rd-card .num{color:var(--rose-ink);font-weight:800;font-size:.9em;margin-bottom:14px}
+  .rd-card .tx{font-size:1.3em;font-weight:700;line-height:1.55}
+  .rd-card.end{background:linear-gradient(160deg,var(--lav),var(--rose));color:#fff;text-align:center}
+  .rd-card.end .big{font-size:2.6em}
+  .rd-card.end .tx{font-size:1.18em;margin-top:14px}
+  .rd-card.end .sub{margin-top:10px;opacity:.9;font-size:.92em}
+  .rd-nav{position:absolute;inset:8px 18px calc(18px + env(safe-area-inset-bottom));display:flex;z-index:2}
+  .rd-nav button{flex:1;background:none;border:none;cursor:pointer}
+
+  /* ---------- 나 ---------- */
+  .stat-row{display:flex;gap:12px;margin-top:14px}
+  .stat{flex:1;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);padding:18px 12px;text-align:center}
+  .stat .n{font-size:1.7em;font-weight:800;color:var(--rose-ink);line-height:1}
+  .stat .l{color:var(--ink-soft);font-size:.78em;margin-top:6px;font-weight:600}
+  .flow{display:flex;gap:7px;align-items:flex-end;height:84px;margin-top:6px}
+  .flow .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%}
+  .flow .fill{width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(var(--rose),var(--peach));min-height:5px;transition:height .4s}
+  .flow .fill.empty{background:var(--line)}
+  .flow .d{font-size:.66em;color:var(--ink-soft);font-weight:700}
+  .insight{margin-top:14px;border-radius:var(--r);padding:18px 20px;background:var(--lav-soft);border-left:4px solid var(--lav)}
+  .insight .t{font-weight:800;color:var(--lav-ink);font-size:.84em;margin-bottom:6px}
+  .insight p{line-height:1.55;font-size:.96em}
+  .row-link{display:flex;align-items:center;justify-content:space-between;padding:15px 2px;cursor:pointer;font-weight:700}
+  .row-link .v{color:var(--ink-soft);font-weight:600;font-size:.88em}
+  .divider{height:1px;background:var(--line);margin:0}
+  label{display:block;font-weight:700;font-size:.9em;margin:16px 2px 8px}
+
+  /* ---------- 온보딩 ---------- */
+  #onboard{padding:0 22px calc(40px + env(safe-area-inset-bottom))}
+  .ob-hero{text-align:center;padding:calc(40px + env(safe-area-inset-top)) 0 8px}
+  .ob-hero .dino{font-size:3.4em}
+  .ob-hero h1{font-size:1.7em;font-weight:800;margin-top:10px;line-height:1.32}
+  .ob-hero p{color:var(--ink-soft);margin-top:8px;line-height:1.5}
+  .ob-suffix{display:flex;align-items:center;gap:0;margin-top:8px}
+  .ob-suffix input{border-radius:14px 0 0 14px;text-align:right}
+  .ob-suffix .sfx{flex:none;background:var(--rose-soft);color:var(--rose-ink);font-weight:800;padding:14px 16px;border-radius:0 14px 14px 0;border:1.5px solid var(--rose-soft);border-left:none}
+
+  /* ---------- bottom nav ---------- */
+  .nav{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;z-index:40;
+    display:flex;background:var(--surface);border-top:1px solid var(--line);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(108,60,72,.07);
+  }
+  .nav button{
+    flex:1;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--ink-soft);
+    display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;transition:.15s;position:relative;
+  }
+  .nav .e{font-size:1.35em;line-height:1}
+  .nav .l{font-size:.68em;font-weight:700}
+  .nav button.on{color:var(--rose-ink)}
+  .nav button.on .e{transform:translateY(-1px)}
+  .nav .dot{position:absolute;top:2px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--rose)}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);padding:13px 22px;border-radius:30px;font-weight:700;font-size:.92em;
+    box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.3s;z-index:80;max-width:88%;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ 온보딩 ============ -->
+  <div id="onboard" class="view hidden">
+    <div class="ob-hero">
+      <div class="dino">🦕</div>
+      <h1>언니들의 살롱에<br>오신 걸 환영해요</h1>
+      <p>오늘도 애쓴 나를 위한 1분.<br>여기선 언니 혼자가 아니에요.</p>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <div class="q">뭐라고 불러드릴까요?</div>
+      <div class="ob-suffix">
+        <input id="obName" placeholder="예: 지은, 보라" autocomplete="off" maxlength="12">
+        <span class="sfx">언니</span>
+      </div>
+
+      <div class="q" style="margin-top:22px">나이대를 살짝 알려주세요</div>
+      <div class="q"><small>또래에게 더 맞는 글을 보여드릴게요</small></div>
+      <div class="seg" id="obAge">
+        <button data-a="30">30대</button>
+        <button data-a="40" class="active">40대</button>
+        <button data-a="50">50대+</button>
+      </div>
+
+      <div class="q" style="margin-top:22px">요즘 관심 있는 건 뭐예요?</div>
+      <div class="q"><small>여러 개 골라도 좋아요</small></div>
+      <div class="chips" id="obInterests"></div>
+    </div>
+
+    <button class="btn" style="margin-top:20px" onclick="finishOnboard()">살롱 들어가기 🌿</button>
+  </div>
+
+  <!-- ============ 홈 (오늘의 나) ============ -->
+  <div id="home" class="view hidden">
+    <header>
+      <div class="brand">
+        <span class="dino">🦕</span>
+        <div>언니들의 살롱<small>옆집디노</small></div>
+      </div>
+      <button class="icon-btn" onclick="setTab('me')" aria-label="나">🙂</button>
+    </header>
+
+    <div class="greet">
+      <h1 id="greetTitle">안녕하세요 👋</h1>
+      <p id="greetDate"></p>
+    </div>
+
+    <div class="quote">
+      <div class="mark">"</div>
+      <p id="quoteText">오늘 하루도, 애쓰는 당신이 참 멋져요.</p>
+      <div class="by">— 디노 언니가</div>
+    </div>
+
+    <div class="sec"><h2>오늘의 나 · 1분 체크</h2></div>
+
+    <div class="card">
+      <div class="q">지금 기분은 어때요?</div>
+      <div class="moods" id="moodRow"></div>
+    </div>
+
+    <div class="card">
+      <div class="q">몸은 좀 어때요?</div>
+      <div class="seg" id="energyRow">
+        <button data-v="light">가벼워요 🌤</button>
+        <button data-v="ok">보통이에요 🙂</button>
+        <button data-v="heavy">무거워요 😮‍💨</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q">몸이 보내는 신호 있어요?<small>가볍게 체크만 — 캐묻지 않아요</small></div>
+      <div class="chips" id="signalRow"></div>
+    </div>
+
+    <div class="card">
+      <div class="q">오늘 나를 위해 한 건?<small>아주 작은 것도 충분해요</small></div>
+      <div class="chips" id="careRow"></div>
+    </div>
+
+    <div class="card">
+      <div class="q">오늘의 칭찬일기 🌸<small>오늘의 나에게 한마디 건넨다면</small></div>
+      <textarea id="praiseInput" rows="2" placeholder="예: 힘든데도 끝까지 해낸 내가 대견해" oninput="savePraise()"></textarea>
+    </div>
+
+    <div class="sec"><h2>오늘의 추천</h2></div>
+    <div id="homeRec"></div>
+
+    <a class="cross" href="/care/" target="_blank" rel="noopener">
+      <span class="e">💚</span>
+      <div>
+        <div class="t">부모님은 잘 챙기고 계세요?</div>
+        <div class="s">옆집디노 안심케어 — 매일 안부 한 번</div>
+      </div>
+      <span class="arr">→</span>
+    </a>
+
+    <div style="text-align:center;color:var(--ink-soft);font-size:.78em;margin-top:30px;line-height:1.7">
+      🦕 옆집디노가 언니 곁에 있어요
+    </div>
+  </div>
+
+  <!-- ============ 디노 언니 (AI 채팅) ============ -->
+  <div id="chat" class="view hidden">
+    <div class="chat-head">
+      <div class="av">🦕</div>
+      <div style="flex:1">
+        <div class="nm">디노 언니</div>
+        <div class="st">늘 여기 있어요</div>
+      </div>
+      <button class="icon-btn" onclick="clearChat()" aria-label="대화 비우기">🧹</button>
+    </div>
+    <div class="chat-scroll" id="chatScroll"></div>
+    <div class="chat-sugg" id="chatSugg"></div>
+    <div class="chat-input">
+      <textarea id="chatText" rows="1" placeholder="편하게 이야기해요…" oninput="autoGrow(this)" onkeydown="chatKey(event)"></textarea>
+      <button class="send" id="chatSend" onclick="sendChat()" aria-label="보내기">↑</button>
+    </div>
+    <div class="chat-disc">디노 언니는 의사·상담사가 아니에요. 마음이 많이 힘들 땐 전문가와도 이야기해요.</div>
+  </div>
+
+  <!-- ============ 콘텐츠 ============ -->
+  <div id="content" class="view hidden">
+    <header>
+      <div class="brand"><span class="dino">📖</span><div>콘텐츠<small>언니를 위한 이야기</small></div></div>
+    </header>
+    <div class="cat-tabs" id="catTabs"></div>
+    <div id="artList"></div>
+    <div style="height:8px"></div>
+  </div>
+
+  <!-- ============ 나 ============ -->
+  <div id="me" class="view hidden">
+    <header>
+      <div class="brand"><span class="dino">🙂</span><div>나<small id="meName">언니</small></div></div>
+      <button class="icon-btn" onclick="cycleTheme()" aria-label="테마">🌗</button>
+    </header>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n" id="statStreak">0</div><div class="l">연속 챙김</div></div>
+      <div class="stat"><div class="n" id="statTotal">0</div><div class="l">함께한 날</div></div>
+      <div class="stat"><div class="n" id="statPraise">0</div><div class="l">칭찬일기</div></div>
+    </div>
+
+    <div class="sec"><h2>이번 주 마음 흐름</h2></div>
+    <div class="card">
+      <div class="flow" id="flowChart"></div>
+    </div>
+
+    <div id="meInsight"></div>
+
+    <div class="sec"><h2>살롱 커뮤니티</h2></div>
+    <div class="card" id="waitlistCard">
+      <div class="q">곧 열려요 — 언니들의 익명 살롱 💬<small>비슷한 하루를 보내는 언니들과, 부담 없이</small></div>
+      <input id="waitInput" type="text" inputmode="email" placeholder="이메일 또는 휴대폰 (오픈 때 알려드릴게요)" autocomplete="off">
+      <button class="btn lav sm" style="margin-top:12px;width:100%" onclick="joinWaitlist()">열리면 가장 먼저 알려주세요</button>
+    </div>
+
+    <div class="sec"><h2>설정</h2></div>
+    <div class="card">
+      <label style="margin-top:0">관심사</label>
+      <div class="chips" id="setInterests"></div>
+      <label>나이대</label>
+      <div class="seg" id="setAge">
+        <button data-a="30">30대</button>
+        <button data-a="40">40대</button>
+        <button data-a="50">50대+</button>
+      </div>
+      <label>글자 크기</label>
+      <div class="seg" id="setFont">
+        <button data-f="sm">보통</button>
+        <button data-f="md">크게</button>
+        <button data-f="lg">아주 크게</button>
+      </div>
+      <label>화면 테마</label>
+      <div class="seg" id="setTheme">
+        <button data-t="light">밝게 ☀️</button>
+        <button data-t="dark">어둡게 🌙</button>
+      </div>
+      <button class="btn ghost sm" style="width:100%;margin-top:18px" onclick="installPWA()" id="installBtn">📲 홈 화면에 추가하기</button>
+    </div>
+
+    <button class="btn danger" style="margin-top:8px" onclick="resetAll()">전체 초기화</button>
+    <div style="text-align:center;color:var(--ink-soft);font-size:.78em;margin-top:8px">🦕 언니들의 살롱 · v1</div>
+  </div>
+
+  <!-- ============ 카드뉴스 리더 ============ -->
+  <div id="reader">
+    <div class="rd-top">
+      <div style="font-weight:800;font-size:.9em;color:var(--ink-soft)" id="rdCat"></div>
+      <button class="x" onclick="closeReader()">✕</button>
+    </div>
+    <div class="rd-dots" id="rdDots"></div>
+    <div class="rd-stage" id="rdStage">
+      <div class="rd-nav">
+        <button onclick="rdPrev()" aria-label="이전"></button>
+        <button onclick="rdNext()" aria-label="다음"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ bottom nav ============ -->
+  <nav class="nav" id="bottomNav">
+    <button data-tab="home" onclick="setTab('home')"><span class="e">🏠</span><span class="l">홈</span></button>
+    <button data-tab="chat" onclick="setTab('chat')"><span class="e">🦕</span><span class="l">디노 언니</span></button>
+    <button data-tab="content" onclick="setTab('content')"><span class="e">📖</span><span class="l">콘텐츠</span></button>
+    <button data-tab="me" onclick="setTab('me')"><span class="e">🙂</span><span class="l">나</span></button>
+  </nav>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================================================
+   언니들의 살롱 (옆집디노) v1
+   - 바닐라 HTML 단일 파일 / Pretendard / 하단 네비
+   - localStorage 키 = 향후 Supabase 컬럼명과 일치하게 설계
+   - 디노 언니 AI = /api/sister-chat (같은 레포 api/, 같은 오리진)
+   ========================================================= */
+
+const LS = {
+  profile:'salon_profile',   // {owner_name, age_band, interests[], theme, font_scale}
+  daily:'salon_daily',       // { 'YYYY-MM-DD': {mood, energy, signals[], cares[], praise} }
+  chat:'salon_chat',         // { messages:[{role:'user'|'sister', text}] }
+  waitlist:'salon_waitlist'  // { contact, at }
+};
+
+const $  = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const todayKey = () => new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD (local)
+const load = (k,d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch(e){ return d } };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+const esc  = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let profile = load(LS.profile, null);
+let daily   = load(LS.daily, {});
+let chat    = load(LS.chat, { messages:[] });
+
+/* ---------- 데이터 정의 ---------- */
+const INTERESTS = [
+  {k:'skin',  l:'피부·뷰티'},
+  {k:'home',  l:'살림·레시피'},
+  {k:'money', l:'경제적 자립'},
+  {k:'health',l:'여성건강'},
+  {k:'meno',  l:'갱년기 준비'},
+  {k:'mind',  l:'마음·관계'},
+];
+const CATS = [
+  {k:'all',   l:'전체',     e:'✨'},
+  {k:'mind',  l:'마음·관계', e:'💗'},
+  {k:'health',l:'여성건강',  e:'🌿'},
+  {k:'skin',  l:'피부·뷰티', e:'💄'},
+  {k:'home',  l:'살림·레시피',e:'🍳'},
+  {k:'money', l:'경제적 자립',e:'💰'},
+  {k:'meno',  l:'갱년기 준비',e:'🌸'},
+];
+const CAT_LABEL = Object.fromEntries(CATS.map(c=>[c.k,c.l]));
+
+const MOODS = [
+  {k:'good', e:'😊', l:'좋아요'},
+  {k:'soso', e:'🙂', l:'그냥요'},
+  {k:'tired',e:'😮‍💨', l:'지쳤어요'},
+  {k:'sad',  e:'🥲', l:'속상해요'},
+  {k:'blank',e:'😶', l:'모르겠어요'},
+];
+const SIGNALS = ['피로감','수면 부족','어깨·목 결림','두통','소화 불편','손발 차가움','붓기','갑작스런 열감','마음이 답답'];
+const CARES   = ['물 충분히','잠깐 산책','스트레칭','좋아하는 음식','푹 쉬기','수다 떨기','책·드라마','햇볕 쬐기','나만의 시간'];
+
+const QUOTES = [
+  '오늘 하루도, 애쓰는 당신이 참 멋져요.',
+  '잘 해내지 못한 날도, 버텨낸 것만으로 충분해요.',
+  '당신만 그런 게 아니에요. 우리 다 비슷해요.',
+  '오늘은 나를 조금 더 다정하게 대해줘요.',
+  '작은 한 걸음도, 분명히 앞으로 가는 거예요.',
+  '남을 챙기느라 미뤄둔 나, 오늘은 챙겨봐요.',
+  '괜찮아요. 천천히 가도 돼요.',
+  '당신의 하루엔 분명 잘한 순간이 있었어요.',
+];
+
+const ARTICLES = [
+  // ── 마음·관계 ──
+  { id:'m1', cat:'mind', ages:[30,40,50], tag:'마음', title:'나만 뒤처진 것 같을 때', sub:'비교가 마음을 갉아먹을 때 꺼내보는 이야기',
+    body:[
+      '문득 SNS를 보다 \'나만 제자리인가\' 싶을 때가 있어요.',
+      '그런데 우리는 남의 \'하이라이트\'를 내 \'일상\'과 비교하고 있어요.',
+      '남의 무대 뒤편은 보이지 않으니까요.',
+      '오늘 비교할 대상은 어제의 나 하나면 충분해요.',
+      '어제보다 1mm라도 나아졌다면, 그걸로 잘 가고 있는 거예요.',
+    ]},
+  { id:'m2', cat:'mind', ages:[30,40], tag:'관계', title:'\'좋은 사람\' 그만두기',
+    sub:'모두에게 맞추다 지친 언니에게',
+    body:[
+      '거절을 못 해서 늘 내가 손해 보는 기분, 익숙하죠.',
+      '모두에게 좋은 사람이 되려다 정작 나에겐 나쁜 사람이 돼요.',
+      '거절은 관계를 끊는 게 아니라, 나를 지키는 선을 긋는 거예요.',
+      '\'미안하지만 이번엔 어려워요\' 한마디면 충분해요.',
+      '나를 존중하는 사람은 그 선을 오히려 더 좋아해요.',
+    ]},
+  { id:'m3', cat:'mind', ages:[40,50], tag:'마음', title:'빈 둥지가 허전한 날',
+    sub:'아이가, 일이, 떠나간 자리가 클 때',
+    body:[
+      '한참을 누군가를 위해 살다 보면, 그 자리가 비었을 때 휑해요.',
+      '허전함은 당신이 그만큼 깊이 사랑했다는 증거예요.',
+      '이제 그 사랑을, 미뤄뒀던 나에게 조금 돌려줄 시간이에요.',
+      '오래전 좋아했던 것, 작게 다시 시작해봐요.',
+      '비어 보이는 그곳은, 사실 새로 채울 수 있는 공간이에요.',
+    ]},
+
+  // ── 여성건강 ──
+  { id:'h1', cat:'health', ages:[30,40,50], tag:'건강', title:'늘 피곤한 데는 이유가 있어요',
+    sub:'잠을 자도 개운하지 않다면',
+    body:[
+      '자도 자도 피곤하다면, 몸이 보내는 신호일 수 있어요.',
+      '여성은 철분·수면·호르몬 변화에 특히 민감해요.',
+      '커피보다 먼저, 햇볕 10분과 물 한 잔이 더 도움이 돼요.',
+      '잠들기 한 시간 전 휴대폰을 내려놓는 것만으로도 달라져요.',
+      '오래 이어진다면, 한 번쯤 건강검진으로 점검해보는 것도 좋아요.',
+    ]},
+  { id:'h2', cat:'health', ages:[30,40,50], tag:'건강', title:'어깨와 목이 늘 뭉쳐 있다면',
+    sub:'집안일·스마트폰에 굳어버린 몸',
+    body:[
+      '온종일 고개 숙여 일하다 보면 목과 어깨가 돌처럼 굳어요.',
+      '한 시간에 한 번, 딱 30초만 일어나 기지개를 켜봐요.',
+      '귀와 어깨를 멀리 떨어뜨린다는 느낌으로 어깨를 내려요.',
+      '따뜻한 물수건을 목 뒤에 잠깐 올려두는 것도 좋아요.',
+      '몸이 풀리면 마음도 신기하게 같이 풀려요.',
+    ]},
+
+  // ── 피부·뷰티 ──
+  { id:'s1', cat:'skin', ages:[30,40,50], tag:'뷰티', title:'바쁜 날의 1분 피부 루틴',
+    sub:'손이 많이 안 가도 괜찮아요',
+    body:[
+      '화장품을 많이 바른다고 피부가 좋아지는 건 아니에요.',
+      '아침엔 세안 후 보습 한 번, 그리고 자외선 차단 하나면 충분해요.',
+      '자외선 차단은 가장 확실한 \'노화 늦추기\' 한 가지예요.',
+      '밤엔 잘 지우고, 충분히 자는 게 어떤 크림보다 효과가 좋아요.',
+      '피부도 결국, 잘 쉰 마음에서 와요.',
+    ]},
+  { id:'s2', cat:'skin', ages:[40,50], tag:'뷰티', title:'나이 들수록 빛나는 사람들의 비밀',
+    sub:'가꿈은 사치가 아니라 다정함',
+    body:[
+      '잘 가꾼 사람에겐 \'나를 아끼는 사람\'의 분위기가 있어요.',
+      '비싼 게 아니라, 꾸준한 다정함의 차이예요.',
+      '거울 보며 \'오늘도 수고했어\' 한마디 건네는 것부터요.',
+      '좋아하는 립 색 하나면 기분이 환하게 바뀌어요.',
+      '나를 가꾸는 시간은, 나에게 주는 가장 작은 선물이에요.',
+    ]},
+
+  // ── 살림·레시피 ──
+  { id:'c1', cat:'home', ages:[30,40,50], tag:'레시피', title:'10분이면 되는 나를 위한 한 끼',
+    sub:'가족 말고, 오늘은 내 입맛',
+    body:[
+      '가족 밥은 차려도 내 끼니는 대충 때우곤 하죠.',
+      '오늘은 딱 10분, 나를 위한 따뜻한 한 그릇 어때요.',
+      '계란 한 개, 좋아하는 채소, 밥 한 술이면 충분해요.',
+      '잘 차린 한 끼는 \'나도 소중하다\'는 작은 선언이에요.',
+      '맛있게 먹는 그 시간만큼은, 온전히 내 거예요.',
+    ]},
+  { id:'c2', cat:'home', ages:[30,40,50], tag:'살림', title:'집안일에 잡아먹히지 않는 법',
+    sub:'완벽 대신 \'적당히\'의 기술',
+    body:[
+      '집안일은 끝이 없어요. 끝내려 하면 내가 먼저 지쳐요.',
+      '\'오늘은 이것만\' 딱 하나만 정해봐요.',
+      '눈에 보이는 한 곳만 정리해도 마음이 가벼워져요.',
+      '완벽한 집보다, 웃을 여유가 있는 집이 더 좋아요.',
+      '남은 일은 내일의 나에게 살짝 맡겨도 괜찮아요.',
+    ]},
+
+  // ── 경제적 자립 ──
+  { id:'b1', cat:'money', ages:[30,40,50], tag:'머니', title:'새는 돈부터 막아요',
+    sub:'재테크보다 먼저, 구멍 점검',
+    body:[
+      '돈은 크게 버는 것보다 새는 걸 막는 게 먼저예요.',
+      '안 쓰는 구독, 자동결제부터 한 번 들여다봐요.',
+      '한 달에 만 원짜리 셋이면, 일 년이면 적지 않은 돈이에요.',
+      '가계부보다 쉬운 건, 결제 알림을 켜두는 거예요.',
+      '내 돈의 흐름을 아는 것, 그게 자립의 첫걸음이에요. (정보 제공일 뿐, 투자 권유가 아니에요)',
+    ]},
+  { id:'b2', cat:'money', ages:[30,40,50], tag:'머니', title:'보험, 호구 되지 않는 법',
+    sub:'아는 만큼 덜 손해 봐요',
+    body:[
+      '보험은 \'필요한 만큼\'이지 \'많을수록 좋은\' 게 아니에요.',
+      '내가 어떤 보장에 가입돼 있는지부터 한 번 정리해봐요.',
+      '겹치는 보장, 안 쓰는 특약이 의외로 많아요.',
+      '권유받을 때 \'생각해볼게요\' 한마디는 언제나 정당해요.',
+      '잘 아는 것만으로도 새는 돈을 막을 수 있어요. (특정 상품 추천이 아니에요)',
+    ]},
+
+  // ── 갱년기 준비 ──
+  { id:'p1', cat:'meno', ages:[40,50], tag:'갱년기', title:'갑자기 \'욱\'하는 게 내 탓일까',
+    sub:'미리 알면 덜 당황해요',
+    body:[
+      '별것 아닌 일에 울컥하거나 욱할 때, 자책부터 하게 돼요.',
+      '하지만 그건 의지가 약해서가 아니라, 호르몬의 변화일 수 있어요.',
+      '\'내가 이상한 게 아니구나\' 아는 것만으로 한결 편해져요.',
+      '잘 자고, 가볍게 걷고, 따뜻한 차 한 잔이 생각보다 큰 힘이에요.',
+      '힘들 땐 참지 말고, 전문가와 이야기해보는 것도 좋아요.',
+    ]},
+  { id:'p2', cat:'meno', ages:[40,50], tag:'갱년기', title:'잠이 얕아진 밤을 위한 작은 준비',
+    sub:'다시 깊이 자는 연습',
+    body:[
+      '새벽에 자꾸 깨고, 다시 잠들기 어려운 밤이 늘어나요.',
+      '저녁엔 카페인을 줄이고, 방을 조금 시원하게 해봐요.',
+      '잠들기 전 따뜻한 물로 손발을 덥히면 도움이 돼요.',
+      '잠이 안 오면 억지로 누워 있기보다, 잠깐 일어나 책을 펴봐요.',
+      '오늘 못 잤어도 괜찮아요. 몸은 결국 리듬을 다시 찾아요.',
+    ]},
+];
+
+const CHAT_SUGG = [
+  '오늘 좀 지쳤어요',
+  '나 요즘 왜 이럴까요',
+  '칭찬 한마디 해줘요',
+  '갱년기인 것 같아 불안해요',
+  '아무것도 하기 싫어요',
+];
+
+/* ---------- 탭 라우팅 ---------- */
+const TABS = ['home','chat','content','me'];
+let curTab = 'home';
+function setTab(name){
+  curTab = name;
+  ['onboard','home','chat','content','me'].forEach(s => $('#'+s).classList.toggle('hidden', s!==name));
+  $('#bottomNav').classList.toggle('hidden', name==='onboard');
+  $$('#bottomNav button').forEach(b => b.classList.toggle('on', b.dataset.tab===name));
+  if(name!=='chat') window.scrollTo(0,0);
+  if(name==='home')    renderHome();
+  if(name==='chat')    renderChat();
+  if(name==='content') renderContent();
+  if(name==='me')      renderMe();
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---------- 호칭 ---------- */
+function sisterName(){
+  const n=(profile?.owner_name||'').trim();
+  if(!n) return '언니';
+  return /언니$/.test(n) ? n : n+' 언니';
+}
+
+/* ---------- prefs ---------- */
+function applyPrefs(){
+  document.documentElement.dataset.theme = profile?.theme || 'light';
+  document.documentElement.dataset.fontscale = profile?.font_scale || 'md';
+}
+
+/* ---------- ?ref= 영업인 추적 ---------- */
+(function captureRef(){
+  try{
+    const ref = new URLSearchParams(location.search).get('ref');
+    if(ref && !localStorage.getItem('salon_ref')){
+      localStorage.setItem('salon_ref', ref.trim().toUpperCase());
+      localStorage.setItem('salon_ref_at', new Date().toISOString());
+    }
+  }catch(e){}
+})();
+
+/* =========================================================
+   온보딩
+   ========================================================= */
+let obAge = 40;
+let obInterests = new Set();
+function renderOnboard(){
+  $$('#obAge button').forEach(b=>{
+    b.classList.toggle('active', +b.dataset.a===obAge);
+    b.onclick=()=>{ obAge=+b.dataset.a; renderOnboard(); };
+  });
+  const box=$('#obInterests'); box.innerHTML='';
+  INTERESTS.forEach(it=>{
+    const c=document.createElement('button');
+    c.className='chip'+(obInterests.has(it.k)?' on':'');
+    c.textContent=it.l;
+    c.onclick=()=>{ obInterests.has(it.k)?obInterests.delete(it.k):obInterests.add(it.k); renderOnboard(); };
+    box.appendChild(c);
+  });
+}
+function finishOnboard(){
+  const name=$('#obName').value.trim();
+  profile = {
+    owner_name: name,
+    age_band: obAge,
+    interests: [...obInterests],
+    theme: profile?.theme || 'light',
+    font_scale: profile?.font_scale || 'md',
+  };
+  save(LS.profile, profile);
+  applyPrefs();
+  toast(`${sisterName()}, 반가워요 🌿`);
+  setTab('home');
+}
+
+/* =========================================================
+   홈 — 오늘의 나
+   ========================================================= */
+function greetByHour(){
+  const h=new Date().getHours();
+  if(h<11) return '좋은 아침이에요 ☀️';
+  if(h<17) return '오늘도 잘 지내고 있어요? 🌿';
+  if(h<21) return '저녁이에요, 좀 쉬었어요? 🌆';
+  return '편안한 밤 보내요 🌙';
+}
+function fmtKDate(){
+  const d=new Date(), days=['일','월','화','수','목','금','토'];
+  return `${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+}
+function todayEntry(){
+  const k=todayKey();
+  if(!daily[k]) daily[k]={mood:null,energy:null,signals:[],cares:[],praise:''};
+  return daily[k];
+}
+function renderHome(){
+  const nm=sisterName();
+  $('#greetTitle').textContent = (profile?.owner_name? nm+', ':'') + greetByHour();
+  $('#greetDate').textContent = fmtKDate();
+
+  // 오늘의 한마디 (날짜 기반 고정)
+  const seed = new Date().getDate() + new Date().getMonth()*31;
+  $('#quoteText').textContent = QUOTES[seed % QUOTES.length];
+
+  const e = todayEntry();
+
+  // mood
+  const mr=$('#moodRow'); mr.innerHTML='';
+  MOODS.forEach(m=>{
+    const b=document.createElement('button');
+    b.className='mood'+(e.mood===m.k?' on':'');
+    b.innerHTML=`<span class="e">${m.e}</span><span class="l">${m.l}</span>`;
+    b.onclick=()=>{ e.mood = e.mood===m.k? null : m.k; persistDaily(); renderHome(); };
+    mr.appendChild(b);
+  });
+
+  // energy
+  $$('#energyRow button').forEach(b=>{
+    b.classList.toggle('active', e.energy===b.dataset.v);
+    b.onclick=()=>{ e.energy = e.energy===b.dataset.v? null : b.dataset.v; persistDaily(); renderHome(); };
+  });
+
+  // signals
+  renderChipGroup('#signalRow', SIGNALS, e.signals, false);
+  // cares
+  renderChipGroup('#careRow', CARES, e.cares, true);
+
+  // praise
+  $('#praiseInput').value = e.praise || '';
+
+  // 추천 (관심사·연령 기반 상위 2개)
+  const recs = rankArticles().slice(0,2);
+  const rc=$('#homeRec'); rc.innerHTML='';
+  recs.forEach(a=>rc.appendChild(articleEl(a)));
+}
+function renderChipGroup(sel, items, arr, isCare){
+  const box=$(sel); box.innerHTML='';
+  items.forEach(label=>{
+    const on=arr.includes(label);
+    const c=document.createElement('button');
+    c.className='chip'+(isCare?' care':'')+(on?' on':'');
+    c.textContent=label;
+    c.onclick=()=>{
+      const i=arr.indexOf(label);
+      if(i>=0) arr.splice(i,1); else arr.push(label);
+      persistDaily(); c.classList.toggle('on');
+    };
+    box.appendChild(c);
+  });
+}
+function savePraise(){ todayEntry().praise = $('#praiseInput').value; persistDaily(); }
+function persistDaily(){ daily[todayKey()]=todayEntry(); save(LS.daily, daily); }
+
+/* =========================================================
+   디노 언니 — AI 채팅
+   ========================================================= */
+let chatBusy=false;
+function renderChat(){
+  const sc=$('#chatScroll'); sc.innerHTML='';
+  if(!chat.messages || chat.messages.length===0){
+    chat.messages = [{ role:'sister', text:`안녕하세요, ${sisterName()} 🌿 저는 디노 언니예요.\n오늘 하루 어땠어요? 좋았던 일도, 속상했던 일도 편하게 들려줘요.` }];
+    save(LS.chat, chat);
+  }
+  chat.messages.forEach(m=>sc.appendChild(bubble(m.role, m.text)));
+  renderSugg();
+  scrollChat();
+}
+function bubble(role, text){
+  const d=document.createElement('div');
+  d.className='bub '+(role==='user'?'u':'s');
+  d.textContent=text;
+  return d;
+}
+function renderSugg(){
+  const box=$('#chatSugg'); box.innerHTML='';
+  // 대화가 길어지면 제안 숨김
+  if(chat.messages.filter(m=>m.role==='user').length>=2){ box.style.display='none'; return; }
+  box.style.display='';
+  CHAT_SUGG.forEach(s=>{
+    const b=document.createElement('button');
+    b.textContent=s;
+    b.onclick=()=>{ $('#chatText').value=s; sendChat(); };
+    box.appendChild(b);
+  });
+}
+function scrollChat(){ const sc=$('#chatScroll'); sc.scrollTop=sc.scrollHeight; }
+function autoGrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px'; }
+function chatKey(e){
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+}
+async function sendChat(){
+  if(chatBusy) return;
+  const t=$('#chatText'); const msg=t.value.trim();
+  if(!msg) return;
+  t.value=''; autoGrow(t);
+
+  chat.messages.push({ role:'user', text:msg });
+  save(LS.chat, chat);
+  const sc=$('#chatScroll'); sc.appendChild(bubble('user', msg));
+  renderSugg(); scrollChat();
+
+  // typing
+  chatBusy=true; $('#chatSend').disabled=true;
+  const typing=document.createElement('div');
+  typing.className='typing'; typing.innerHTML='<span></span><span></span><span></span>';
+  sc.appendChild(typing); scrollChat();
+
+  let reply='';
+  try{
+    const r = await fetch('/api/sister-chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        message: msg,
+        history: chat.messages.slice(-16).map(m=>({ role:m.role==='user'?'user':'sister', text:m.text })),
+        name: (profile?.owner_name||'').trim() || undefined,
+        ageBand: profile?.age_band || undefined,
+      })
+    });
+    const data = await r.json().catch(()=>({}));
+    reply = (data && data.reply) ? data.reply : '';
+  }catch(e){ reply=''; }
+
+  typing.remove();
+  if(!reply){
+    reply = '지금 잠깐 답을 못 찾고 있어요. 조금 있다 다시 이야기해줄래요? 🌿';
+  }
+  chat.messages.push({ role:'sister', text:reply });
+  save(LS.chat, chat);
+  sc.appendChild(bubble('sister', reply));
+  chatBusy=false; $('#chatSend').disabled=false;
+  scrollChat();
+}
+function clearChat(){
+  if(!confirm('디노 언니와의 대화를 비울까요?')) return;
+  chat={ messages:[] }; save(LS.chat, chat); renderChat();
+}
+
+/* =========================================================
+   콘텐츠 — 카드뉴스
+   ========================================================= */
+let curCat='all';
+function rankArticles(){
+  const interests = profile?.interests || [];
+  const age = profile?.age_band;
+  return [...ARTICLES].map(a=>{
+    let score=0;
+    if(interests.includes(a.cat)) score+=3;
+    if(age && a.ages.includes(age)) score+=2;
+    return {a, score};
+  }).sort((x,y)=>y.score-x.score).map(o=>o.a);
+}
+function renderContent(){
+  const tabs=$('#catTabs'); tabs.innerHTML='';
+  CATS.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='cat-tab'+(curCat===c.k?' on':'');
+    b.textContent=`${c.e} ${c.l}`;
+    b.onclick=()=>{ curCat=c.k; renderContent(); };
+    tabs.appendChild(b);
+  });
+  const list=$('#artList'); list.innerHTML='';
+  let arts = curCat==='all' ? rankArticles() : ARTICLES.filter(a=>a.cat===curCat);
+  // 연령 맞춤: 같은 카테고리 내에서도 또래 글 먼저
+  if(curCat!=='all' && profile?.age_band){
+    arts=[...arts].sort((x,y)=>(y.ages.includes(profile.age_band)?1:0)-(x.ages.includes(profile.age_band)?1:0));
+  }
+  arts.forEach(a=>list.appendChild(articleEl(a)));
+}
+function articleEl(a){
+  const cat=CATS.find(c=>c.k===a.cat)||{e:'📖'};
+  const el=document.createElement('div');
+  el.className='art';
+  el.innerHTML=`<div class="ico">${cat.e}</div>
+    <div style="flex:1;min-width:0">
+      <div class="tag">${esc(a.tag)}</div>
+      <div class="ti">${esc(a.title)}</div>
+      <div class="su">${esc(a.sub||'')}</div>
+    </div>`;
+  el.onclick=()=>openReader(a);
+  return el;
+}
+
+/* ---------- 카드뉴스 리더 ---------- */
+let rdCards=[], rdIdx=0;
+function openReader(a){
+  const cat=CAT_LABEL[a.cat]||'';
+  $('#rdCat').textContent=cat;
+  // 카드 구성: 표지 + 본문들 + 엔딩
+  rdCards=[];
+  rdCards.push({type:'cover', tag:a.tag, ti:a.title, su:a.sub});
+  a.body.forEach((line,i)=>rdCards.push({type:'body', num:`${i+1} / ${a.body.length}`, tx:line}));
+  rdCards.push({type:'end', tx:'오늘도 여기까지 와줘서 고마워요', sub:'— 디노 언니가 🦕'});
+
+  const stage=$('#rdStage');
+  // 기존 카드 제거(네비 버튼은 유지)
+  stage.querySelectorAll('.rd-card').forEach(n=>n.remove());
+  rdCards.forEach((c)=>{
+    const card=document.createElement('div');
+    if(c.type==='cover'){
+      card.className='rd-card cover';
+      card.innerHTML=`<div class="tag">${esc(c.tag)}</div><div class="ti">${esc(c.ti)}</div><div class="su">${esc(c.su||'')}</div>
+        <div style="margin-top:22px;font-size:.86em;opacity:.85">탭해서 넘겨요 →</div>`;
+    }else if(c.type==='end'){
+      card.className='rd-card end';
+      card.innerHTML=`<div class="big">🌸</div><div class="tx">${esc(c.tx)}</div><div class="sub">${esc(c.sub)}</div>`;
+    }else{
+      card.className='rd-card';
+      card.innerHTML=`<div class="num">${esc(c.num)}</div><div class="tx">${esc(c.tx)}</div>`;
+    }
+    stage.appendChild(card);
+  });
+  rdIdx=0; rdShow();
+  $('#reader').classList.add('show');
+}
+function rdShow(){
+  const cards=$('#rdStage').querySelectorAll('.rd-card');
+  cards.forEach((c,i)=>c.classList.toggle('cur', i===rdIdx));
+  const dots=$('#rdDots'); dots.innerHTML='';
+  rdCards.forEach((_,i)=>{
+    const d=document.createElement('div'); d.className='rd-dot'+(i===rdIdx?' on':''); dots.appendChild(d);
+  });
+}
+function rdNext(){ if(rdIdx<rdCards.length-1){ rdIdx++; rdShow(); } else { closeReader(); } }
+function rdPrev(){ if(rdIdx>0){ rdIdx--; rdShow(); } }
+function closeReader(){ $('#reader').classList.remove('show'); }
+
+/* =========================================================
+   나 — 통계 / 인사이트 / 설정 / 대기명단
+   ========================================================= */
+function last7Keys(){
+  const arr=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    arr.push(d.toLocaleDateString('sv-SE'));
+  }
+  return arr;
+}
+function entryScore(e){
+  if(!e) return 0;
+  let s=0;
+  const moodVal={good:5,soso:4,tired:2,sad:1,blank:3};
+  if(e.mood) s+=moodVal[e.mood]||3;
+  if(e.energy) s+={light:3,ok:2,heavy:1}[e.energy]||0;
+  if((e.cares||[]).length) s+=Math.min(2,(e.cares||[]).length);
+  return s; // 0~10
+}
+function hasActivity(e){
+  return !!(e && (e.mood || e.energy || (e.signals||[]).length || (e.cares||[]).length || (e.praise||'').trim()));
+}
+function renderMe(){
+  $('#meName').textContent = sisterName();
+
+  // streak (오늘 또는 어제부터 연속)
+  let streak=0;
+  for(let i=0;i<400;i++){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const e=daily[d.toLocaleDateString('sv-SE')];
+    if(hasActivity(e)) streak++;
+    else { if(i===0) continue; break; } // 오늘 아직 안 했어도 어제까지 연속이면 인정
+  }
+  const total = Object.values(daily).filter(hasActivity).length;
+  const praiseCount = Object.values(daily).filter(e=>(e.praise||'').trim()).length;
+  $('#statStreak').textContent=streak;
+  $('#statTotal').textContent=total;
+  $('#statPraise').textContent=praiseCount;
+
+  // weekly flow
+  const flow=$('#flowChart'); flow.innerHTML='';
+  const wk=['일','월','화','수','목','금','토'];
+  last7Keys().forEach(k=>{
+    const e=daily[k]; const sc=entryScore(e);
+    const pct = e&&hasActivity(e) ? Math.max(12, sc*10) : 0;
+    const dt=new Date(k+'T00:00:00');
+    const bar=document.createElement('div'); bar.className='bar';
+    bar.innerHTML=`<div class="fill ${pct?'':'empty'}" style="height:${pct||5}%"></div><div class="d">${wk[dt.getDay()]}</div>`;
+    flow.appendChild(bar);
+  });
+
+  // insight
+  $('#meInsight').innerHTML='';
+  $('#meInsight').appendChild(buildInsight());
+
+  // settings
+  renderChipGroupSet();
+  setSeg('#setAge','a',String(profile?.age_band||40));
+  setSeg('#setFont','f',profile?.font_scale||'md');
+  setSeg('#setTheme','t',profile?.theme||'light');
+  bindSettingHandlers();
+  updateInstallBtn();
+}
+function buildInsight(){
+  const wrap=document.createElement('div'); wrap.className='insight';
+  const recent = last7Keys().map(k=>daily[k]).filter(hasActivity);
+  let msg;
+  if(recent.length===0){
+    msg='아직 기록이 없어요. 오늘 기분 하나만 콕 찍어봐도, 일주일 뒤엔 내 마음 흐름이 보여요.';
+  }else{
+    const tiredDays = recent.filter(e=>e.mood==='tired'||e.mood==='sad'||e.energy==='heavy').length;
+    const caredDays = recent.filter(e=>(e.cares||[]).length>0).length;
+    if(tiredDays>=Math.ceil(recent.length/2)){
+      msg=`이번 주, 지치는 날이 좀 많았네요. 누구보다 애쓰고 있다는 뜻이에요. 오늘은 \'나를 위한 한 가지\'를 꼭 하나 챙겨봐요. 디노 언니가 응원해요. 💗`;
+    }else if(caredDays>=Math.ceil(recent.length*0.6)){
+      msg=`나를 챙긴 날이 많았어요, 정말 잘하고 있어요! 이 다정함이 ${sisterName()}를 더 단단하게 만들어요. 🌿`;
+    }else{
+      msg=`꾸준히 기록하고 있는 ${sisterName()}, 그 자체로 멋져요. 작은 챙김 하나가 쌓이면 큰 힘이 돼요.`;
+    }
+  }
+  wrap.innerHTML=`<div class="t">💡 디노 언니의 한마디</div><p>${esc(msg)}</p>`;
+  return wrap;
+}
+function renderChipGroupSet(){
+  const box=$('#setInterests'); box.innerHTML='';
+  const cur=new Set(profile?.interests||[]);
+  INTERESTS.forEach(it=>{
+    const c=document.createElement('button');
+    c.className='chip'+(cur.has(it.k)?' on':'');
+    c.textContent=it.l;
+    c.onclick=()=>{
+      cur.has(it.k)?cur.delete(it.k):cur.add(it.k);
+      profile.interests=[...cur]; save(LS.profile,profile); renderChipGroupSet();
+    };
+    box.appendChild(c);
+  });
+}
+function setSeg(sel,attr,val){
+  $$(sel+' button').forEach(b=>b.classList.toggle('active', b.dataset[attr]===val));
+}
+function bindSettingHandlers(){
+  $$('#setAge button').forEach(b=>b.onclick=()=>{ setSeg('#setAge','a',b.dataset.a); profile.age_band=+b.dataset.a; save(LS.profile,profile); });
+  $$('#setFont button').forEach(b=>b.onclick=()=>{ setSeg('#setFont','f',b.dataset.f); document.documentElement.dataset.fontscale=b.dataset.f; profile.font_scale=b.dataset.f; save(LS.profile,profile); });
+  $$('#setTheme button').forEach(b=>b.onclick=()=>{ setSeg('#setTheme','t',b.dataset.t); document.documentElement.dataset.theme=b.dataset.t; profile.theme=b.dataset.t; save(LS.profile,profile); });
+}
+function cycleTheme(){
+  const next = (profile?.theme==='dark')?'light':'dark';
+  document.documentElement.dataset.theme=next;
+  if(profile){ profile.theme=next; save(LS.profile,profile); }
+  if(curTab==='me') setSeg('#setTheme','t',next);
+}
+function joinWaitlist(){
+  const v=$('#waitInput').value.trim();
+  if(!v){ toast('연락처를 입력해주세요'); return; }
+  save(LS.waitlist, { contact:v, at:new Date().toISOString() });
+  // TODO(서버): salon_waitlist → contacts 테이블 연동 (배포 후)
+  $('#waitlistCard').innerHTML=`<div class="q" style="margin:0">신청 완료 ✓</div>
+    <p style="color:var(--ink-soft);margin-top:8px;line-height:1.5">살롱이 열리면 가장 먼저 알려드릴게요. 그때 또 만나요 🌸</p>`;
+  toast('신청됐어요! 곧 만나요 💌');
+}
+function resetAll(){
+  if(!confirm('모든 기록이 지워져요. 계속할까요?')) return;
+  Object.values(LS).forEach(k=>localStorage.removeItem(k));
+  profile=null; daily={}; chat={messages:[]};
+  init();
+}
+
+/* =========================================================
+   PWA
+   ========================================================= */
+let deferredInstallPrompt=null;
+function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
+function isKakaoInApp(){ return /KAKAOTALK/i.test(navigator.userAgent); }
+function isIOSDevice(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; }
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredInstallPrompt=e; updateInstallBtn(); });
+function updateInstallBtn(){
+  const el=$('#installBtn'); if(!el) return;
+  if(isStandalone()){ el.textContent='✅ 홈 화면에 추가됨'; el.disabled=true; el.style.opacity=.6; }
+}
+async function installPWA(){
+  if(isStandalone()){ toast('이미 홈 화면에 있어요'); return; }
+  if(isKakaoInApp()){ alert('카카오톡 안에서는 추가가 안 돼요.\n\n오른쪽 위 [⋮] → "다른 브라우저로 열기"를 눌러주세요.'); return; }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const {outcome}=await deferredInstallPrompt.userChoice;
+    if(outcome==='accepted') toast('홈 화면에 추가됐어요 🎉');
+    deferredInstallPrompt=null; updateInstallBtn(); return;
+  }
+  if(isIOSDevice()){ alert('📱 iPhone 추가 방법\n\n1) 하단 [공유] 버튼\n2) "홈 화면에 추가"\n3) [추가]'); return; }
+  alert('📱 추가 방법\n\n1) 브라우저 [⋮] 메뉴\n2) "홈 화면에 추가" / "앱 설치"\n3) [추가]');
+}
+
+/* ---------- 서비스 워커 ---------- */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+  }).catch(()=>{});
+  let _reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(_reloaded) return; _reloaded=true; window.location.reload(); });
+}
+
+/* =========================================================
+   init
+   ========================================================= */
+function init(){
+  applyPrefs();
+  if(!profile || !profile.owner_name && !(profile.interests||[]).length){
+    // 호칭/관심사 둘 다 비어있으면 온보딩
+    obAge=40; obInterests=new Set();
+    setTab('onboard'); renderOnboard();
+  }else{
+    setTab('home');
+  }
+}
+init();
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    daily=load(LS.daily,{});
+  }
+});
+</script>
+</body>
+</html>

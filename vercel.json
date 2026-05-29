@@ -23,7 +23,8 @@
     { "source": "/roleplay", "destination": "/roleplay/index.html" },
     { "source": "/library", "destination": "/library/index.html" },
     { "source": "/p/:slug", "destination": "/p/index.html" },
-    { "source": "/care", "destination": "/care/index.html" }
+    { "source": "/care", "destination": "/care/index.html" },
+    { "source": "/salon", "destination": "/salon/index.html" }
   ],
   "headers": [
     {
@@ -232,6 +233,25 @@
     },
     {
       "source": "/care/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/salon/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/salon/" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/salon/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" }
+      ]
+    },
+    {
+      "source": "/salon/index.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]
