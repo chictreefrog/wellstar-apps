@@ -252,6 +252,58 @@
     </div>
   </div>
 
+  <!-- ============ 첫 진입: 홈 화면 추가 안내 ============ -->
+  <div id="welcome" class="screen hidden">
+    <header style="padding-top:calc(28px + env(safe-area-inset-top));padding-bottom:0;justify-content:center">
+      <div class="brand" style="flex-direction:column;align-items:center;gap:4px">
+        <span class="dino" style="font-size:3em">🦕</span>
+        <div style="text-align:center">옆집디노 안심케어<small>매일 부모님 안부 확인</small></div>
+      </div>
+    </header>
+
+    <div class="card-box" style="margin-top:24px;background:var(--green-soft);border-color:var(--green)">
+      <h2 style="color:var(--green-ink);font-size:1.15em;margin:0 0 8px;font-weight:800">📲 먼저 홈 화면에 추가해주세요</h2>
+      <p style="margin:0;color:var(--green-ink);line-height:1.6">
+        앱처럼 켜야 매일 약 알림이 와요.<br>
+        한 번만 추가하면 끝, 5초면 됩니다.
+      </p>
+    </div>
+
+    <button id="installCta" class="btn" style="margin-top:18px;font-size:1.1em;padding:18px" onclick="installPWA()">
+      📲 홈 화면에 추가하기
+    </button>
+
+    <!-- iOS 안내 (자동 표시) -->
+    <div id="iosHint" class="card-box hidden" style="margin-top:14px;background:var(--amber-soft);border-color:var(--amber)">
+      <h3 style="margin:0 0 10px;font-size:1em;font-weight:800">📱 iPhone 사용자분</h3>
+      <ol style="margin:0;padding-left:20px;line-height:1.8">
+        <li>아래 [공유] 버튼 누르기 <span style="font-size:1.3em">⬆️</span></li>
+        <li>"<b>홈 화면에 추가</b>" 선택</li>
+        <li>오른쪽 위 [<b>추가</b>] 누르기</li>
+      </ol>
+    </div>
+
+    <!-- 카카오톡 인앱 브라우저 안내 -->
+    <div id="kakaoHint" class="card-box hidden" style="margin-top:14px;background:#FEF3C7;border-color:#F59E0B">
+      <h3 style="margin:0 0 10px;font-size:1em;font-weight:800;color:#92400E">⚠️ 카카오톡에서 열림</h3>
+      <p style="margin:0 0 12px;color:#78350F;line-height:1.5">
+        카카오톡 안에서는 앱 추가가 안 돼요.<br>
+        오른쪽 위 [⋮] 메뉴 → "다른 브라우저로 열기" 선택해주세요.
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button onclick="skipInstall()" style="background:none;border:none;color:var(--ink-soft);text-decoration:underline;font-size:.95em;cursor:pointer;font-family:inherit">
+        지금은 그냥 둘러보기
+      </button>
+    </div>
+
+    <div class="foot" style="margin-top:32px">
+      자녀가 먼저 세팅한 후 부모님께 보여드려요<br>
+      🦕 옆집디노가 가족과 함께해요
+    </div>
+  </div>
+
   <!-- ============ 온보딩 (자녀 세팅) ============ -->
   <div id="onboard" class="screen hidden">
     <div class="step-dino">🦕</div>
@@ -387,13 +439,65 @@ let meds    = load(LS.meds,[]);
 let log     = load(LS.log,{});
 
 /* ---------- screen routing ---------- */
-const SCREENS=['home','onboard','meds','settings'];
+const SCREENS=['welcome','home','onboard','meds','settings'];
 function go(name){
   SCREENS.forEach(s=>$('#'+s).classList.toggle('hidden', s!==name));
   window.scrollTo(0,0);
   if(name==='home') renderHome();
   if(name==='meds') renderMedEdit();
   if(name==='settings') renderSettings();
+  if(name==='welcome') renderWelcome();
+}
+
+/* ---------- ?ref= 영업인 추적 ---------- */
+(function captureRef() {
+  try {
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref && !localStorage.getItem('care_ref')) {
+      localStorage.setItem('care_ref', ref.trim().toUpperCase());
+      localStorage.setItem('care_ref_at', new Date().toISOString());
+    }
+  } catch {}
+})();
+
+/* ---------- 첫 진입 화면 (홈 화면 추가 안내) ---------- */
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+}
+function isKakaoInApp() {
+  return /KAKAOTALK/i.test(navigator.userAgent);
+}
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function renderWelcome() {
+  // iOS면 iOS 안내 표시
+  const iosHint = document.getElementById('iosHint');
+  if (iosHint) iosHint.classList.toggle('hidden', !isIOSDevice());
+
+  // 카톡 인앱이면 카톡 안내 표시 + 설치 버튼 숨김
+  const kakaoHint = document.getElementById('kakaoHint');
+  const installBtn = document.getElementById('installCta');
+  if (isKakaoInApp()) {
+    if (kakaoHint) kakaoHint.classList.remove('hidden');
+    if (installBtn) installBtn.style.display = 'none';
+  } else {
+    if (kakaoHint) kakaoHint.classList.add('hidden');
+    if (installBtn) installBtn.style.display = '';
+  }
+
+  // 안드로이드에서 즉시 설치 가능하면 버튼 라벨 변경
+  if (deferredInstallPrompt && installBtn) {
+    installBtn.textContent = '📲 한 번에 홈 화면에 추가';
+  }
+}
+
+function skipInstall() {
+  // "지금은 둘러보기" → 온보딩 또는 홈으로
+  if (profile && profile.guardian_phone) go('home');
+  else go('onboard');
 }
 
 /* ---------- toast ---------- */
@@ -738,26 +842,40 @@ function updateInstallStatus() {
   else el.textContent = '안내 보기';
 }
 async function installPWA() {
-  const standalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone;
-  if (standalone) {
+  if (isStandalone()) {
     toast('이미 홈 화면에 추가됐어요');
+    return;
+  }
+  // 카톡 인앱 브라우저면 외부 브라우저로 안내
+  if (isKakaoInApp()) {
+    alert('카카오톡 안에서는 앱 추가가 안 돼요.\n\n오른쪽 위 [⋮] 메뉴를 누르고\n"다른 브라우저로 열기"를 선택해주세요.');
     return;
   }
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') toast('홈 화면에 추가됐어요 🎉');
+    if (outcome === 'accepted') {
+      toast('홈 화면에 추가됐어요 🎉');
+      setTimeout(() => skipInstall(), 1200);  // 자동으로 온보딩 진행
+    }
     deferredInstallPrompt = null;
     updateInstallStatus();
     return;
   }
-  // iOS 또는 안내 모달
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  alert(isIOS
-    ? '📱 iPhone 추가 방법\n\n1) 하단 [공유] 버튼 누르기\n2) "홈 화면에 추가" 선택\n3) [추가] 누르기\n\n그러면 홈 화면 앱처럼 켤 수 있어요'
-    : '📱 안드로이드 추가 방법\n\n1) Chrome 상단 [⋮] 메뉴\n2) "홈 화면에 추가" 또는 "앱 설치"\n3) [추가] 누르기'
-  );
+  // iOS 또는 prompt 없는 경우 → 안내
+  if (isIOSDevice()) {
+    // welcome 화면이면 이미 iOS 안내 있음 — 추가 alert 안 뜨고 상단 안내 강조
+    const hint = document.getElementById('iosHint');
+    if (hint && !hint.classList.contains('hidden')) {
+      hint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      hint.style.boxShadow = '0 0 0 4px var(--amber)';
+      setTimeout(() => { hint.style.boxShadow = ''; }, 1800);
+    } else {
+      alert('📱 iPhone 추가 방법\n\n1) 화면 하단 [공유] 버튼 누르기\n2) "홈 화면에 추가" 선택\n3) [추가] 누르기');
+    }
+    return;
+  }
+  alert('📱 안드로이드 추가 방법\n\n1) Chrome 상단 [⋮] 메뉴\n2) "홈 화면에 추가" 또는 "앱 설치"\n3) [추가] 누르기');
 }
 
 /* ---------- 서비스 워커 등록 + 자동 업데이트 ---------- */
@@ -778,12 +896,20 @@ if ('serviceWorker' in navigator) {
 /* ---------- init ---------- */
 function init(){
   applyPrefs();
-  if(profile && profile.guardian_phone){ go('home'); }
-  else { go('onboard'); }
-  // 알림 상태 + 설치 상태 표시 업데이트
+  // 화면 결정 로직
+  // 1) 이미 홈 화면에 추가됨 (standalone) → 정상 흐름 (온보딩 or 홈)
+  // 2) standalone 아님 + 처음 진입 → welcome (홈 화면 추가 안내)
+  // 3) 이미 welcome 본 적 있고 데이터 있음 → 정상 흐름
+  const seenWelcome = localStorage.getItem('care_welcome_seen') === '1';
+  if (isStandalone() || seenWelcome) {
+    if (profile && profile.guardian_phone) go('home');
+    else go('onboard');
+  } else {
+    localStorage.setItem('care_welcome_seen', '1');
+    go('welcome');
+  }
   updateNotifStatus();
   updateInstallStatus();
-  // 약 시간 알림 체크 시작
   startNotifCheck();
 }
 init();
