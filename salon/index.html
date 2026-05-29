@@ -365,11 +365,11 @@
     </div>
 
     <div class="card">
-      <div class="q">몸은 좀 어때요?</div>
+      <div class="q">컨디션은 어때요?</div>
       <div class="seg" id="energyRow">
-        <button data-v="light">가벼워요 🌤</button>
-        <button data-v="ok">보통이에요 🙂</button>
-        <button data-v="heavy">무거워요 😮‍💨</button>
+        <button data-v="light">쌩쌩 🔋</button>
+        <button data-v="ok">보통 🙂</button>
+        <button data-v="heavy">방전 🪫</button>
       </div>
     </div>
 
@@ -384,8 +384,9 @@
     </div>
 
     <div class="card">
-      <div class="q">오늘의 칭찬일기 🌸<small>오늘의 나에게 한마디 건넨다면</small></div>
-      <textarea id="praiseInput" rows="2" placeholder="예: 힘든데도 끝까지 해낸 내가 대견해" oninput="savePraise()"></textarea>
+      <div class="q">오늘의 칭찬일기 🌸<small>직접 써도 좋고, 아래에서 골라도 좋아요</small></div>
+      <textarea id="praiseInput" rows="2" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="오늘의 나에게 한마디 건넨다면…" oninput="savePraise()"></textarea>
+      <div class="chips" id="praiseEx" style="margin-top:10px"></div>
     </div>
 
     <div class="sec"><h2>오늘의 추천</h2></div>
@@ -581,6 +582,15 @@ const QUOTES = [
   '남을 챙기느라 미뤄둔 나, 오늘은 챙겨봐요.',
   '괜찮아요. 천천히 가도 돼요.',
   '당신의 하루엔 분명 잘한 순간이 있었어요.',
+];
+
+// 칭찬일기 예시 — 탭하면 입력칸에 채워지고, 그대로 두거나 고쳐 써도 돼요
+const PRAISE_EXAMPLES = [
+  '오늘도 잘 버틴 내가 대견해',
+  '작은 것도 해낸 내가 기특해',
+  '충분히 잘하고 있어, 나',
+  '나를 챙긴 하루였어',
+  '애쓴 만큼, 나한테 잘했어',
 ];
 
 const ARTICLES = [
@@ -854,6 +864,7 @@ function renderHome(){
 
   // praise
   $('#praiseInput').value = e.praise || '';
+  renderPraiseExamples(e);
 
   // 추천 (관심사·연령 기반 상위 2개)
   const recs = rankArticles().slice(0,2);
@@ -875,7 +886,24 @@ function renderChipGroup(sel, items, arr, isCare){
     box.appendChild(c);
   });
 }
-function savePraise(){ todayEntry().praise = $('#praiseInput').value; persistDaily(); }
+function savePraise(){ todayEntry().praise = $('#praiseInput').value; persistDaily(); renderPraiseExamples(todayEntry()); }
+function renderPraiseExamples(e){
+  const box=$('#praiseEx'); if(!box) return;
+  box.innerHTML='';
+  const cur=(e.praise||'').trim();
+  PRAISE_EXAMPLES.forEach(text=>{
+    const c=document.createElement('button');
+    c.className='chip'+(cur===text?' on':'');
+    c.textContent=text;
+    c.onclick=()=>{
+      const ta=$('#praiseInput');
+      ta.value = (cur===text) ? '' : text;   // 같은 걸 다시 누르면 비움
+      savePraise();
+      ta.focus();
+    };
+    box.appendChild(c);
+  });
+}
 function persistDaily(){ daily[todayKey()]=todayEntry(); save(LS.daily, daily); }
 
 /* =========================================================
