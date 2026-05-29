@@ -293,12 +293,15 @@
     </div>
 
     <div style="text-align:center;margin-top:24px">
-      <button onclick="skipInstall()" style="background:none;border:none;color:var(--ink-soft);text-decoration:underline;font-size:.95em;cursor:pointer;font-family:inherit">
-        지금은 그냥 둘러보기
+      <button onclick="skipInstall()" style="background:none;border:none;color:var(--ink-soft);text-decoration:underline;font-size:1em;cursor:pointer;font-family:inherit;padding:8px 16px">
+        나중에 추가하고 먼저 둘러볼래요
       </button>
     </div>
 
-    <div class="foot" style="margin-top:32px">
+    <div class="foot" style="margin-top:32px;line-height:1.7">
+      💡 <b>왜 홈 화면에 추가해야 하나요?</b><br>
+      앱처럼 켜야 매일 약 시간 알림이 와요.<br>
+      카톡으로 받은 링크는 알림이 안 와요.<br><br>
       자녀가 먼저 세팅한 후 부모님께 보여드려요<br>
       🦕 옆집디노가 가족과 함께해요
     </div>
@@ -495,7 +498,8 @@ function renderWelcome() {
 }
 
 function skipInstall() {
-  // "지금은 둘러보기" → 온보딩 또는 홈으로
+  // "지금은 둘러보기" → 사용자 명시 액션으로 기록 → 다음부턴 welcome 안 보임
+  localStorage.setItem('care_install_dismissed', '1');
   if (profile && profile.guardian_phone) go('home');
   else go('onboard');
 }
@@ -856,7 +860,11 @@ async function installPWA() {
     const { outcome } = await deferredInstallPrompt.userChoice;
     if (outcome === 'accepted') {
       toast('홈 화면에 추가됐어요 🎉');
-      setTimeout(() => skipInstall(), 1200);  // 자동으로 온보딩 진행
+      localStorage.setItem('care_install_dismissed', '1');
+      setTimeout(() => {
+        if (profile && profile.guardian_phone) go('home');
+        else go('onboard');
+      }, 1200);
     }
     deferredInstallPrompt = null;
     updateInstallStatus();
@@ -896,16 +904,16 @@ if ('serviceWorker' in navigator) {
 /* ---------- init ---------- */
 function init(){
   applyPrefs();
-  // 화면 결정 로직
-  // 1) 이미 홈 화면에 추가됨 (standalone) → 정상 흐름 (온보딩 or 홈)
-  // 2) standalone 아님 + 처음 진입 → welcome (홈 화면 추가 안내)
-  // 3) 이미 welcome 본 적 있고 데이터 있음 → 정상 흐름
-  const seenWelcome = localStorage.getItem('care_welcome_seen') === '1';
-  if (isStandalone() || seenWelcome) {
+  // 화면 결정:
+  // 1) standalone (홈 화면에서 켬) → 정상 흐름
+  // 2) 사용자가 이미 명시적으로 '둘러보기' 눌렀거나 설치 완료 → 정상 흐름
+  // 3) 그 외 (일반 브라우저 + 안 봤거나 SW reload 등) → welcome (사용자가 클릭해야 넘어감)
+  // ※ welcome은 사용자 명시 액션 후에만 넘어감 — 자동 스킵 X
+  const dismissed = localStorage.getItem('care_install_dismissed') === '1';
+  if (isStandalone() || dismissed) {
     if (profile && profile.guardian_phone) go('home');
     else go('onboard');
   } else {
-    localStorage.setItem('care_welcome_seen', '1');
     go('welcome');
   }
   updateNotifStatus();

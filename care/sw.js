@@ -1,4 +1,4 @@
-const CACHE_NAME = 'care-v1';
+const CACHE_NAME = 'care-v2-no-auto-skip';
 const APP_PATH = '/care/';
 
 self.addEventListener('install', e => {
