@@ -421,6 +421,14 @@ textarea { resize: none; min-height: 80px; }
       </div>
       <div style="color:#30D158;font-size:20px;font-weight:800;flex-shrink:0">→</div>
     </div>
+    <div class="card" onclick="shareSalonApp()" style="cursor:pointer;margin-top:12px;background:linear-gradient(135deg,rgba(232,99,138,0.16),rgba(232,99,138,0.05));border:1px solid rgba(232,99,138,0.35);display:flex;align-items:center;gap:14px;padding:18px">
+      <div style="width:54px;height:54px;border-radius:14px;background:rgba(232,99,138,0.22);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0">💗</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:800;margin-bottom:3px;color:var(--text)">언니들의 살롱 보내기</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">30~50대 여성용 · 매일 1분 나 챙김 + 디노 언니 AI 상담 (무료)</div>
+      </div>
+      <div style="color:#E8638A;font-size:20px;font-weight:800;flex-shrink:0">→</div>
+    </div>
     <div style="font-size:11px;color:var(--text3);margin:6px 16px 0;text-align:center;line-height:1.5">탭하면 카톡 공유 메시지가 자동으로 만들어져요</div>
     <div style="height:20px"></div>
   </div>
@@ -1493,6 +1501,67 @@ ${url}`;
         title: '부모님 안심케어',
         text: message
       });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  // 폴백: 클립보드 복사
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(message);
+      showToast('✅ 공유 메시지 복사됨 — 카톡에 붙여넣으세요');
+      return;
+    } catch {}
+  }
+  // 최종 폴백: textarea
+  const ta = document.createElement('textarea');
+  ta.value = message;
+  ta.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('✅ 공유 메시지 복사됨 — 카톡에 붙여넣으세요');
+  } catch {
+    showToast('복사 실패 — 길게 눌러서 복사하세요');
+  }
+  document.body.removeChild(ta);
+}
+
+// ══════════════════════════════
+// 언니들의 살롱 단독 공유 — 고객(30~50대 여성)에게 직접 보내기
+// 안심케어와 동일 패턴: ?ref= 로 영업인 추적, 카톡 공유 메시지 자동 생성
+// ══════════════════════════════
+async function shareSalonApp() {
+  let refCode = '';
+  try {
+    if (window.dinoSupabase) {
+      const { data: { session } } = await window.dinoSupabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await window.dinoSupabase
+          .from('profiles').select('id, business_code').eq('id', session.user.id).single();
+        refCode = profile?.business_code || profile?.id?.replace(/-/g, '').slice(0, 8).toUpperCase() || '';
+      }
+    }
+  } catch {}
+
+  const url = refCode
+    ? `https://app.wellstar.life/salon/?ref=${encodeURIComponent(refCode)}`
+    : `https://app.wellstar.life/salon/`;
+
+  const message = `요즘 나 챙기기 좋은 앱 하나 발견했어요 🌿
+
+매일 딱 1분, 오늘 내 기분이랑 컨디션 체크하고
+디노 언니(AI)가 다정하게 이야기 들어주는 곳이에요.
+위로되는 글도 많아서 종종 들여다보게 돼요.
+
+👇 부담 없이 한번 둘러봐요 (무료)
+${url}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: '언니들의 살롱', text: message });
       return;
     } catch (e) {
       if (e.name === 'AbortError') return;
