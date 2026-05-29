@@ -1,4 +1,4 @@
-const CACHE_NAME = 'diary-v9';
+const CACHE_NAME = 'diary-v10-care-share';
 const APP_PATH = '/diary/';
 
 self.addEventListener('install', e => {

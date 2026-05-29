@@ -410,6 +410,19 @@ textarea { resize: none; min-height: 80px; }
       <div class="card-label">파이프라인 현황</div>
       <div id="pipeline-summary" class="pipeline-summary"></div>
     </div>
+
+    <!-- 고객에게 보낼 도구 -->
+    <div class="section-title" style="margin-top:24px">📤 고객에게 보낼 도구</div>
+    <div class="card" onclick="shareCareApp()" style="cursor:pointer;background:linear-gradient(135deg,rgba(46,125,91,0.15),rgba(46,125,91,0.05));border:1px solid rgba(46,125,91,0.35);display:flex;align-items:center;gap:14px;padding:18px">
+      <div style="width:54px;height:54px;border-radius:14px;background:rgba(46,125,91,0.25);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0">💚</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:800;margin-bottom:3px;color:var(--text)">부모님 안심케어 보내기</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">고객 부모님이 매일 약 체크 → 자녀에게 안부 신호 (무료)</div>
+      </div>
+      <div style="color:#30D158;font-size:20px;font-weight:800;flex-shrink:0">→</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:6px 16px 0;text-align:center;line-height:1.5">탭하면 카톡 공유 메시지가 자동으로 만들어져요</div>
+    <div style="height:20px"></div>
   </div>
 
   <!-- ── 고객 ── -->
@@ -1443,6 +1456,69 @@ function showToast(msg) {
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════
+// 안심케어 단독 공유 — 고객에게 직접 보내기
+// ══════════════════════════════
+async function shareCareApp() {
+  // 본인 ref code 가져오기 (사업자번호 또는 id prefix)
+  let refCode = '';
+  try {
+    if (window.dinoSupabase) {
+      const { data: { session } } = await window.dinoSupabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await window.dinoSupabase
+          .from('profiles').select('id, business_code').eq('id', session.user.id).single();
+        refCode = profile?.business_code || profile?.id?.replace(/-/g, '').slice(0, 8).toUpperCase() || '';
+      }
+    }
+  } catch {}
+
+  const url = refCode
+    ? `https://app.wellstar.life/care/?ref=${encodeURIComponent(refCode)}`
+    : `https://app.wellstar.life/care/`;
+
+  const message = `부모님 약 챙기시는 거 도와드리는 무료 앱이에요 🦕
+
+매일 약 체크하면 자녀에게 '오늘도 안심하셔도 돼요' 신호가 가요.
+며칠 동안 체크 없으면 자동으로 자녀에게 안부 문자도 가고요.
+
+👇 아래 링크 눌러서 [홈 화면에 추가]만 해주세요
+${url}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: '부모님 안심케어',
+        text: message
+      });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  // 폴백: 클립보드 복사
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(message);
+      showToast('✅ 공유 메시지 복사됨 — 카톡에 붙여넣으세요');
+      return;
+    } catch {}
+  }
+  // 최종 폴백: textarea
+  const ta = document.createElement('textarea');
+  ta.value = message;
+  ta.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('✅ 공유 메시지 복사됨 — 카톡에 붙여넣으세요');
+  } catch {
+    showToast('복사 실패 — 길게 눌러서 복사하세요');
+  }
+  document.body.removeChild(ta);
 }
 
 // ══════════════════════════════
