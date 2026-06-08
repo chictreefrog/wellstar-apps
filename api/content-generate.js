@@ -50,18 +50,28 @@ module.exports = async function handler(req, res) {
   }
   if (!userId) return res.status(401).json({ error: 'invalid_user' });
 
-  // 2. 프로필에서 role + 소속 회사 + 페르소나 조회
+  // 2. 프로필 role 조회 (안전 — 항상 존재하는 컬럼만)
   let role = 'guest';
   let companyId = null;
   let persona = null;
   try {
     const profileRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role,company_id,persona`,
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     if (profileRes.ok) {
       const rows = await profileRes.json();
       if (rows[0]?.role) role = rows[0].role;
+    }
+  } catch {}
+  // 회사/페르소나 (personas.sql 적용 전이면 컬럼이 없을 수 있어 별도로 — 실패해도 role/생성에 영향 없음)
+  try {
+    const pr = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=company_id,persona`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (pr.ok) {
+      const rows = await pr.json();
       companyId = rows[0]?.company_id || null;
       persona = rows[0]?.persona || null;
     }

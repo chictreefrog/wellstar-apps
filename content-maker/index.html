@@ -93,6 +93,7 @@ textarea.form-input{min-height:80px;resize:vertical}
     </div>
   </div>
 
+  <button id="personaBtn" onclick="openPersona()" style="width:100%;padding:11px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;margin-bottom:10px;font-family:inherit">💼 내 사업 프로필 설정 — 콘텐츠 정확도 ↑</button>
   <button class="btn btn-primary" id="genBtn" onclick="generate()">콘텐츠 생성하기</button>
   <div id="usageInfo" style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px;min-height:14px"></div>
 
@@ -421,7 +422,15 @@ function updateUsageInfo(used, limit, remaining, data) {
   }
 }
 
+function openPersona(){ if(window.DinoPersona) DinoPersona.open(()=>{ window.__personaSet=true; updatePersonaBtn(); }); }
+function updatePersonaBtn(){ const b=document.getElementById('personaBtn'); if(!b) return; b.textContent = window.__personaSet ? '💼 내 사업 프로필 ✓ (수정)' : '💼 내 사업 프로필 설정 — 콘텐츠 정확도 ↑'; }
+
 async function generate() {
+  // 프로필 미설정 시 먼저 설정 유도 (저장 후 자동으로 생성 재시도)
+  if (window.DinoPersona && window.__personaSet === false) {
+    DinoPersona.open(() => { window.__personaSet = true; updatePersonaBtn(); generate(); });
+    return;
+  }
   const channel = sel('channelChips');
   const type = sel('typeChips');
   const tone = sel('toneChips');
@@ -510,6 +519,7 @@ function showToast(msg) {
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
 <script src="/shared/credits.js"></script>
+<script src="/shared/persona.js"></script>
 <script src="/shared/login-gate.js"></script>
 <script src="/shared/theme-toggle.js"></script>
 <script src="/shared/nav.js?v=2"></script>
@@ -523,6 +533,12 @@ function showToast(msg) {
     const { data } = await window.dinoSupabase.from('profiles').select('credit_balance').eq('id', session.user.id).single();
     window.__creditBalance = data ? (data.credit_balance || 0) : 0;
     updateUsageInfo(null, null, null, null);
+    // 페르소나(컬럼이 아직 없을 수 있어 별도 try)
+    try {
+      const { data: pp } = await window.dinoSupabase.from('profiles').select('company_id, persona').eq('id', session.user.id).single();
+      window.__personaSet = !!(pp && pp.company_id && pp.persona && Object.keys(pp.persona).length);
+    } catch (e2) { window.__personaSet = false; }
+    updatePersonaBtn();
   } catch (e) {}
 })();
 </script>
