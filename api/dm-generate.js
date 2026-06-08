@@ -8,7 +8,7 @@ const credits = require('./_credits');
  * Body:   { purpose(라벨), tone(라벨), channel(kakao|instagram|sms), context }
  * 응답:   { message, alt, used, limit, role, credit_used, credit_balance }
  *
- * 무료: 회원 1일 20건 / 게스트 1일 3건 → 초과 시 크레딧(건당 30) 차감
+ * 무료: 회원 1일 5건 / 게스트 1일 3건 → 초과 시 크레딧(건당 20) 차감
  */
 const CHANNEL_GUIDE = {
   kakao: '카카오톡 — 2~4문장, 친근한 대화체, 이모지 1~2개 OK, 너무 길지 않게',
@@ -55,8 +55,8 @@ module.exports = async function handler(req, res) {
     if (pr.ok) { const rows = await pr.json(); companyId = rows[0]?.company_id || null; persona = rows[0]?.persona || null; }
   } catch {}
 
-  // 3. 일일 한도 (회원 20 / 게스트 3)
-  const quota = role === 'guest' ? 3 : 20;
+  // 3. 일일 한도 (회원 5 / 게스트 3)
+  const quota = role === 'guest' ? 3 : 5;
   const kstNow = new Date(Date.now() + 9 * 3600 * 1000); kstNow.setUTCHours(0, 0, 0, 0);
   const sinceISO = new Date(kstNow.getTime() - 9 * 3600 * 1000).toISOString();
   let used = 0;
