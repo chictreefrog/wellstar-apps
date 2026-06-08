@@ -63,8 +63,8 @@ module.exports = async function handler(req, res) {
     }
   } catch {}
 
-  // 3. 일일 한도 결정
-  const quota = role === 'guest' ? 1 : 5;
+  // 3. 일일 한도 결정 (회원 1일 3건 — 확정 2026-06-09)
+  const quota = role === 'guest' ? 1 : 3;
 
   // 4. KST 캘린더 자정 이후 사용량 조회
   const kstMidnightUTC = kstTodayMidnight();
@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     if (role === 'guest') {
       return res.status(429).json({
         error: 'rate_limit', used: todayUsed, limit: quota, role,
-        message: `오늘 무료 콘텐츠 ${quota}건을 다 썼어요. 팀에 합류하면 하루 5건까지 가능해요!`
+        message: `오늘 무료 콘텐츠 ${quota}건을 다 썼어요. 팀에 합류하면 하루 3건까지 가능해요!`
       });
     }
     const bal = await credits.getBalance(SUPABASE_URL, SUPABASE_KEY, userId);
