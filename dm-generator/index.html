@@ -112,7 +112,9 @@ textarea.form-input{min-height:70px;resize:vertical}
       </div>
     </div>
 
+    <button id="personaBtn" onclick="openPersona()" style="width:100%;padding:11px;border-radius:10px;border:1px dashed #FF6B35;background:transparent;color:#FF6B35;font-size:13px;cursor:pointer;margin-bottom:10px;font-family:inherit">💼 내 사업 프로필 설정 — 정확도 ↑</button>
     <button class="btn btn-primary" id="generateBtn" onclick="generateMessage()">메시지 생성하기</button>
+    <div id="dmBalance" style="text-align:center;font-size:11px;color:#999;margin-top:8px"></div>
 
     <div class="result-box" id="resultBox">
       <div class="result-label">생성된 메시지</div>
@@ -255,38 +257,72 @@ const MSG_DB = {
   }
 };
 
-function generateMessage() {
-  const purpose = getSelected('purposeChips');
-  const tone = getSelected('toneChips');
-  const channel = getSelected('channelChips');
-  const context = document.getElementById('context').value.trim();
+function getSelectedLabel(id){ const c=document.querySelector('#'+id+' .chip.active'); return c?c.textContent.trim():''; }
+function openPersona(){ if(window.DinoPersona) DinoPersona.open(()=>{ window.__personaSet=true; updatePersonaBtn(); }); }
+function updatePersonaBtn(){ const b=document.getElementById('personaBtn'); if(!b) return; b.textContent = window.__personaSet ? '💼 내 사업 프로필 ✓ (수정)' : '💼 내 사업 프로필 설정 — 정확도 ↑'; }
+function updateBalanceLine(){ const el=document.getElementById('dmBalance'); if(el && typeof window.__creditBalance==='number') el.textContent='💎 잔액 '+window.__creditBalance.toLocaleString('ko-KR'); }
 
+function renderResult(main, alt){
+  document.getElementById('resultText').textContent = main;
+  document.getElementById('resultBox').style.display = 'block';
+  if (alt && alt !== main) { document.getElementById('altText').textContent = alt; document.getElementById('altBox').style.display = 'block'; }
+  else { document.getElementById('altBox').style.display = 'none'; }
+  document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 정적 템플릿 폴백 (AI 실패/토큰 없음)
+function renderFromTemplate(purpose, tone, channel, context){
   const msgs = MSG_DB[purpose]?.[tone];
-  if (!msgs || !msgs.length) {
-    showToast('다른 조합을 선택해주세요');
-    return;
-  }
-
+  if (!msgs || !msgs.length) { showToast('다른 조합을 선택해주세요'); return; }
   const contextText = context || '관심사';
   const idx = Math.floor(Math.random() * msgs.length);
   let mainMsg = msgs[idx].replace(/\{context\}/g, contextText);
-  let altIdx = (idx + 1) % msgs.length;
-  let altMsg = msgs[altIdx].replace(/\{context\}/g, contextText);
+  let altMsg = msgs[(idx + 1) % msgs.length].replace(/\{context\}/g, contextText);
+  if (channel === 'sms') mainMsg = mainMsg.replace(/😊|💛|✨|🔥|😆|😄|🎉|ㅎㅎ|ㅋㅋ/g, '').replace(/\s{2,}/g, ' ').trim();
+  renderResult(mainMsg, altMsg);
+}
 
-  // Channel adjustments
-  if (channel === 'sms') {
-    mainMsg = mainMsg.replace(/😊|💛|✨|🔥|😆|😄|🎉|ㅎㅎ|ㅋㅋ/g, '').replace(/\s{2,}/g, ' ').trim();
+async function generateMessage(){
+  // 프로필 미설정 시 먼저 설정 유도
+  if (window.DinoPersona && window.__personaSet === false) {
+    DinoPersona.open(() => { window.__personaSet = true; updatePersonaBtn(); generateMessage(); });
+    return;
   }
+  const pKey = getSelected('purposeChips'), tKey = getSelected('toneChips'), channel = getSelected('channelChips');
+  const purpose = getSelectedLabel('purposeChips'), tone = getSelectedLabel('toneChips');
+  const context = document.getElementById('context').value.trim();
+  if (!purpose || !tone) { showToast('목적과 톤을 선택해주세요'); return; }
 
-  document.getElementById('resultText').textContent = mainMsg;
-  document.getElementById('resultBox').style.display = 'block';
+  const btn = document.getElementById('generateBtn'); const old = btn.textContent;
+  btn.disabled = true; btn.textContent = 'AI 작성 중…';
+  try {
+    let token = '';
+    if (window.dinoSupabase) { const { data } = await window.dinoSupabase.auth.getSession(); token = data?.session?.access_token || ''; }
+    if (!token) { renderFromTemplate(pKey, tKey, channel, context); return; }
 
-  if (altMsg !== mainMsg) {
-    document.getElementById('altText').textContent = altMsg;
-    document.getElementById('altBox').style.display = 'block';
+    const res = await fetch('/api/dm-generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ purpose, tone, channel, context })
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (res.status === 429) {
+      showToast(data.message || '오늘 사용 한도에 도달했어요');
+      if (data.need_credit) setTimeout(() => { if (confirm('💎 충전하면 계속 쓸 수 있어요. 충전 페이지로 갈까요?')) location.href = '/charge'; }, 150);
+      return;
+    }
+    if (res.ok && data.message) {
+      renderResult(data.message, data.alt);
+      if (typeof data.credit_balance === 'number') { window.__creditBalance = data.credit_balance; updateBalanceLine(); }
+    } else {
+      renderFromTemplate(pKey, tKey, channel, context);
+      showToast('AI 응답이 없어 템플릿으로 보여드려요');
+    }
+  } catch (e) {
+    renderFromTemplate(pKey, tKey, channel, context);
+  } finally {
+    btn.disabled = false; btn.textContent = old;
   }
-
-  document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
 }
 
 function regenerate() {
@@ -314,8 +350,25 @@ renderTemplates();
 </script>
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
+<script src="/shared/credits.js"></script>
+<script src="/shared/persona.js"></script>
 <script src="/shared/login-gate.js"></script>
 <script src="/shared/theme-toggle.js"></script>
 <script src="/shared/nav.js?v=2"></script>
+<script>
+// 잔액 + 페르소나 초기화
+(async function dmInit(){
+  try{
+    if(!window.dinoSupabase) await new Promise(r=>window.addEventListener('dino-supabase-ready',r,{once:true}));
+    const { data:{session} }=await window.dinoSupabase.auth.getSession();
+    if(!session) return;
+    const { data }=await window.dinoSupabase.from('profiles').select('credit_balance').eq('id',session.user.id).single();
+    window.__creditBalance = data ? (data.credit_balance||0) : 0; updateBalanceLine();
+    try{ const { data:pp }=await window.dinoSupabase.from('profiles').select('company_id,persona').eq('id',session.user.id).single();
+      window.__personaSet=!!(pp&&pp.company_id&&pp.persona&&Object.keys(pp.persona).length); }catch(e2){ window.__personaSet=false; }
+    updatePersonaBtn();
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

@@ -78,7 +78,7 @@ textarea{min-height:54px;resize:vertical}
 <script src="/shared/supabase.js"></script>
 <script src="/shared/auth.js"></script>
 <script>
-let sb=null, session=null;
+let sb=null, session=null, editingId=null;
 function el(id){return document.getElementById(id);}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
@@ -97,6 +97,7 @@ async function init(){
 
 // ── 링크 파싱 ──
 async function parseLink(){
+  editingId=null;
   const url=el('url').value.trim();
   if(!/^https?:\/\//i.test(url)){ showMsg('parseMsg','올바른 링크를 입력해주세요.',false); return; }
   const btn=el('parseBtn'); btn.disabled=true; btn.textContent='정리 중… (10~20초)';
@@ -111,6 +112,7 @@ async function parseLink(){
     el('prodList').innerHTML='';
     (data.products&&data.products.length?data.products:[{}]).forEach(p=>addProduct(p));
     el('editForm').style.display='block';
+    el('saveBtn').textContent='💾 저장';
     showMsg('parseMsg','✅ 정리됐어요. 검토·수정 후 저장하세요.',true);
   }catch(e){ showMsg('parseMsg','네트워크 오류',false); }
   finally{ btn.disabled=false; btn.textContent='🔎 링크 불러와서 정리'; }
@@ -142,15 +144,24 @@ async function saveCompany(){
   const name=el('cName').value.trim();
   if(!name){ showMsg('saveMsg','회사명을 입력해주세요.',false); return; }
   const btn=el('saveBtn'); btn.disabled=true; btn.textContent='저장 중…';
+  const fields={ name, website:el('url').value.trim()||null, brand_tone:el('cTone').value.trim()||null, notes:el('cNotes').value.trim()||null };
   try{
-    const { data:comp, error }=await sb.from('companies').insert({
-      name, website:el('url').value.trim()||null, brand_tone:el('cTone').value.trim()||null, notes:el('cNotes').value.trim()||null
-    }).select().single();
-    if(error){ showMsg('saveMsg','저장 실패: '+error.message,false); return; }
-    const prods=collectProducts().map(p=>({...p, company_id:comp.id}));
+    let companyId;
+    if(editingId){
+      const { error }=await sb.from('companies').update(fields).eq('id', editingId);
+      if(error){ showMsg('saveMsg','수정 실패: '+error.message,false); return; }
+      companyId=editingId;
+      await sb.from('company_products').delete().eq('company_id', companyId); // 제품 교체
+    } else {
+      const { data:comp, error }=await sb.from('companies').insert(fields).select().single();
+      if(error){ showMsg('saveMsg','저장 실패: '+error.message,false); return; }
+      companyId=comp.id;
+    }
+    const prods=collectProducts().map(p=>({...p, company_id:companyId}));
     if(prods.length){ const { error:pe }=await sb.from('company_products').insert(prods); if(pe){ showMsg('saveMsg','회사는 저장됨, 제품 저장 실패: '+pe.message,false); } }
-    showMsg('saveMsg','✅ 저장 완료!',true);
-    el('editForm').style.display='none'; el('url').value=''; el('parseMsg').textContent='';
+    showMsg('saveMsg', editingId?'✅ 수정 완료!':'✅ 저장 완료!', true);
+    editingId=null;
+    el('editForm').style.display='none'; el('url').value=''; el('parseMsg').textContent=''; el('saveBtn').textContent='💾 저장';
     loadList();
   }catch(e){ showMsg('saveMsg','오류: '+e.message,false); }
   finally{ btn.disabled=false; btn.textContent='💾 저장'; }
@@ -165,7 +176,9 @@ async function loadList(){
   box.innerHTML=comps.map(c=>{
     const ps=(prods||[]).filter(p=>p.company_id===c.id);
     const plist=ps.map(p=>`· ${esc(p.name)}${p.category?` (${esc(p.category)})`:''}${p.benefits?` — ${esc(p.benefits)}`:''}`).join('<br>')||'(제품 없음)';
-    return `<div class="comp-item"><button class="btn-ghost" style="float:right" onclick="delCompany('${c.id}','${esc(c.name)}')">삭제</button>
+    return `<div class="comp-item"><div style="float:right;display:flex;gap:6px">
+        <button class="btn-ghost" onclick="editCompany('${c.id}')">수정</button>
+        <button class="btn-ghost" onclick="delCompany('${c.id}','${esc(c.name)}')">삭제</button></div>
       <h4>${esc(c.name)}</h4>${c.brand_tone?`<div class="p" style="color:var(--text3)">${esc(c.brand_tone)}</div>`:''}
       <div class="p">${plist}</div></div>`;
   }).join('');
@@ -174,6 +187,18 @@ async function delCompany(id,name){
   if(!confirm(`'${name}' 회사와 제품을 모두 삭제할까요?`)) return;
   await sb.from('companies').delete().eq('id',id);
   loadList();
+}
+async function editCompany(id){
+  editingId=id;
+  const { data:c }=await sb.from('companies').select('*').eq('id',id).single();
+  const { data:ps }=await sb.from('company_products').select('*').eq('company_id',id);
+  el('cName').value=c.name||''; el('cTone').value=c.brand_tone||''; el('cNotes').value=c.notes||''; el('url').value=c.website||'';
+  el('prodList').innerHTML='';
+  ((ps&&ps.length)?ps:[{}]).forEach(p=>addProduct(p));
+  el('editForm').style.display='block';
+  el('saveBtn').textContent='💾 수정 저장';
+  showMsg('parseMsg', `✏️ '${c.name}' 수정 중 — 고치고 저장하세요`, true);
+  el('editForm').scrollIntoView({behavior:'smooth'});
 }
 
 function showMsg(id,text,ok){ const m=el(id); m.textContent=text; m.className='msg '+(ok?'ok':'err'); }
