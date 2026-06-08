@@ -388,14 +388,19 @@ function renderResult(caption, hook, hashtags) {
   document.getElementById('hookCard').style.display = hook ? 'block' : 'none';
 }
 
-function renderRateLimit(used, limit, role) {
-  const msg = role === 'guest'
-    ? `⏰ 오늘 무료 사용 한도(${limit}건)에 도달했어요.\n\n팀에 합류하시면 하루 5건까지 사용할 수 있어요!\n프로필에서 초대 코드를 입력해주세요.`
-    : `⏰ 오늘 사용 한도(${limit}건)에 도달했어요.\n\n내일 다시 시도해주세요. 더 많은 사용이 필요하시면 피드백으로 알려주세요!`;
+function renderRateLimit(used, limit, role, data) {
+  const msg = (data && data.need_credit && data.message)
+    ? '⏰ ' + data.message
+    : (role === 'guest'
+      ? `⏰ 오늘 무료 사용 한도(${limit}건)에 도달했어요.\n\n팀에 합류하시면 하루 5건까지 사용할 수 있어요!\n프로필에서 초대 코드를 입력해주세요.`
+      : `⏰ 오늘 사용 한도(${limit}건)에 도달했어요.\n\n내일 다시 시도해주세요. 더 많은 사용이 필요하시면 피드백으로 알려주세요!`);
   document.getElementById('captionText').textContent = msg;
   document.getElementById('captionCard').style.display = 'block';
   document.getElementById('hashCard').style.display = 'none';
   document.getElementById('hookCard').style.display = 'none';
+  if (data && data.need_credit) {
+    setTimeout(() => { if (confirm('💎 충전하면 계속 만들 수 있어요. 충전 페이지로 갈까요?')) location.href = '/charge'; }, 150);
+  }
 }
 
 function updateUsageInfo(used, limit, remaining) {

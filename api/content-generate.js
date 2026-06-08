@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const credits = require('./_credits');
 
 /**
  * AI 콘텐츠 생성기 백엔드
@@ -86,13 +87,23 @@ module.exports = async function handler(req, res) {
     if (m) todayUsed = parseInt(m[1], 10);
   } catch {}
 
+  let payWithCredit = false;
   if (todayUsed >= quota) {
-    const message = role === 'guest'
-      ? `오늘 사용 한도(${quota}건)에 도달했어요. 팀에 합류하면 하루 5건까지 가능해요!`
-      : `오늘 사용 한도(${quota}건)에 도달했어요. 내일 다시 시도해주세요.`;
-    return res.status(429).json({
-      error: 'rate_limit', used: todayUsed, limit: quota, role, message
-    });
+    // 무료 한도 소진
+    if (role === 'guest') {
+      return res.status(429).json({
+        error: 'rate_limit', used: todayUsed, limit: quota, role,
+        message: `오늘 무료 콘텐츠 ${quota}건을 다 썼어요. 팀에 합류하면 하루 5건까지 가능해요!`
+      });
+    }
+    const bal = await credits.getBalance(SUPABASE_URL, SUPABASE_KEY, userId);
+    if (bal < credits.COST.content) {
+      return credits.needCreditResponse(res, 'content', bal, {
+        used: todayUsed, limit: quota, role,
+        message: `오늘 무료 콘텐츠 ${quota}건을 다 썼어요. 충전하면 1건당 ${credits.COST.content}크레딧으로 더 만들 수 있어요.`
+      });
+    }
+    payWithCredit = true;
   }
 
   // 5. Gemini로 콘텐츠 생성
@@ -149,6 +160,13 @@ module.exports = async function handler(req, res) {
     })
   }).catch(() => {});
 
+  // 무료 한도 초과분 크레딧 차감 (생성 성공 후)
+  let creditBalance = null;
+  if (payWithCredit) {
+    const sp = await credits.spend(SUPABASE_URL, SUPABASE_KEY, userId, 'content', null);
+    if (sp.ok) creditBalance = sp.balance;
+  }
+
   return res.status(200).json({
     caption: content.caption,
     hook: content.hook,
@@ -156,7 +174,9 @@ module.exports = async function handler(req, res) {
     used: todayUsed + 1,
     limit: quota,
     remaining: quota - todayUsed - 1,
-    role
+    role,
+    credit_used: payWithCredit ? credits.COST.content : 0,
+    credit_balance: creditBalance
   });
 };
 

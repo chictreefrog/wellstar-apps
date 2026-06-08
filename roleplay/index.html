@@ -447,6 +447,7 @@ async function requestFirstAiTurn() {
     hideTyping();
     if (res.status === 429) {
       addMeta('⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'));
+      if (data.need_credit) setTimeout(() => { if (confirm('💎 충전하면 더 연습할 수 있어요. 충전 페이지로 갈까요?')) location.href = '/charge'; }, 150);
       return;
     }
     if (!res.ok || !data.reply) {
@@ -619,6 +620,7 @@ async function sendMessage() {
     if (res.status === 429) {
       addMeta('⏰ ' + (data.message || '오늘 사용 한도에 도달했어요'));
       document.getElementById('sendBtn').disabled = false;
+      if (data.need_credit) setTimeout(() => { if (confirm('💎 충전하면 더 연습할 수 있어요. 충전 페이지로 갈까요?')) location.href = '/charge'; }, 150);
       return;
     }
     // 잘림 — 사용자에게 명확한 안내 + 재시도 가능

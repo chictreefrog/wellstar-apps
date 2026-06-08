@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const credits = require('./_credits');
 
 /**
  * POST /api/roleplay-chat
@@ -116,6 +117,7 @@ module.exports = async function handler(req, res) {
     }
 
     let usedCount = 0;
+    let payWithCredit = false; // 무료 한도 초과분을 크레딧으로 처리하는지
     try {
       const cntRes = await fetch(
         `${SUPABASE_URL}/rest/v1/roleplay_sessions?user_id=eq.${userId}&created_at=gte.${encodeURIComponent(sinceISO)}&select=id`,
@@ -127,10 +129,22 @@ module.exports = async function handler(req, res) {
     } catch {}
 
     if (usedCount >= quota) {
-      const msg = isGuest
-        ? `체험기간 롤플레이 ${quota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
-        : `${quotaWindowLabel} 롤플레이 한도(${quota}회 · 1회 = 권장 15턴)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
-      return res.status(429).json({ error: 'rate_limit', used: usedCount, limit: quota, role, message: msg });
+      // 무료 한도 소진
+      if (isGuest) {
+        return res.status(429).json({
+          error: 'rate_limit', used: usedCount, limit: quota, role,
+          message: `체험기간 롤플레이 ${quota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
+        });
+      }
+      // 회원: 크레딧으로 새 세션 진행 (세션 생성 직후 차감)
+      const bal = await credits.getBalance(SUPABASE_URL, SUPABASE_KEY, userId);
+      if (bal < credits.COST.roleplay) {
+        return credits.needCreditResponse(res, 'roleplay', bal, {
+          used: usedCount, limit: quota, role,
+          message: `오늘 무료 롤플레이를 다 썼어요. 충전하면 1세션당 ${credits.COST.roleplay}크레딧으로 더 연습할 수 있어요.`
+        });
+      }
+      payWithCredit = true;
     }
 
     // 새 세션 생성
@@ -153,6 +167,11 @@ module.exports = async function handler(req, res) {
     const newRow = (await insertRes.json())[0];
     sessionId = newRow.id;
     turnCount = 0;
+
+    // 무료 한도 초과분은 크레딧으로 차감 (세션당 1회)
+    if (payWithCredit) {
+      await credits.spend(SUPABASE_URL, SUPABASE_KEY, userId, 'roleplay', sessionId);
+    }
   }
 
   // 4. Gemini 시스템 프롬프트 구성 (mode별로 다름)

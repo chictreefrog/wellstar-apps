@@ -925,6 +925,7 @@ async function sendMessage() {
       hideTyping();
       addMessage('assistant', '⏰ ' + (data.message || '사용 한도에 도달했어요'), false, []);
       updateUsageBar(data.used || 0, data.limit || 150, data.window || '이번 달');
+      if (data.need_credit) setTimeout(() => { if (confirm('💎 충전하면 계속 사용할 수 있어요. 충전 페이지로 갈까요?')) location.href = '/charge'; }, 150);
       return;
     }
 

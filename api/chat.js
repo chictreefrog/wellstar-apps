@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const credits = require('./_credits');
 
 module.exports = async function handler(req, res) {
   // 인라인 명시적 CORS 헤더 (cors.js import 사용 안 함 — 기존 교훈)
@@ -26,6 +27,7 @@ module.exports = async function handler(req, res) {
   let userId = null;
   let role = 'guest';
   let guestStartedAt = null;
+  let payWithCredit = false; // 무료 한도 초과분을 크레딧으로 처리하는지
   const authHeader = req.headers.authorization || '';
   const accessToken = authHeader.replace(/^Bearer\s+/i, '').trim();
 
@@ -93,16 +95,23 @@ module.exports = async function handler(req, res) {
     } catch (e) { console.error('chat usage count failed:', e); }
 
     if (usedCount >= quota) {
-      return res.status(429).json({
-        error: 'rate_limit',
-        used: usedCount,
-        limit: quota,
-        role,
-        window: quotaUnit,
-        message: isGuest
-          ? `체험기간 챗봇 ${quota}회를 모두 사용했어요. 팀에 합류하면 월 150회까지!`
-          : `${quotaUnit} 챗봇 사용 한도(${quota}회)에 도달했어요. 사용권을 구매하거나 다음 달을 기다려주세요.`
-      });
+      // 무료 한도 소진
+      if (isGuest) {
+        // 게스트는 결제 대신 팀 합류로 유도
+        return res.status(429).json({
+          error: 'rate_limit', used: usedCount, limit: quota, role, window: quotaUnit,
+          message: `체험기간 챗봇 ${quota}회를 모두 사용했어요. 팀에 합류하면 월 150회까지 무료예요!`
+        });
+      }
+      // 회원: 크레딧으로 이어가기 (잔액 부족 시 충전 안내)
+      const bal = await credits.getBalance(SUPABASE_URL, SUPABASE_KEY, userId);
+      if (bal < credits.COST.chatbot) {
+        return credits.needCreditResponse(res, 'chatbot', bal, {
+          used: usedCount, limit: quota, role, window: quotaUnit,
+          message: `${quotaUnit} 무료 챗봇 ${quota}회를 다 썼어요. 충전하면 1답변당 ${credits.COST.chatbot}크레딧으로 계속 사용할 수 있어요.`
+        });
+      }
+      payWithCredit = true;
     }
   }
 
@@ -252,11 +261,18 @@ module.exports = async function handler(req, res) {
     }).catch(() => {});
   }
 
+  // 크레딧 차감 (무료 한도 초과분) — 답변이 정상 생성된 경우에만 실행됨
+  let creditBalance = null;
+  if (payWithCredit && userId) {
+    const sp = await credits.spend(SUPABASE_URL, SUPABASE_KEY, userId, 'chatbot', null);
+    if (sp.ok) creditBalance = sp.balance;
+  }
+
   return res.status(200).json({
     reply,
     citations,
     quickReplies: getQuickReplies(scenario, message),
-    usage: { used: usedCount + 1, limit: quota, remaining: Math.max(0, quota - usedCount - 1), role, window: quotaUnit }
+    usage: { used: usedCount + 1, limit: quota, remaining: Math.max(0, quota - usedCount - 1), role, window: quotaUnit, credit_used: payWithCredit ? credits.COST.chatbot : 0, credit_balance: creditBalance }
   });
 }
 

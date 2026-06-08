@@ -1,4 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
+const credits = require('./_credits');
 
 /**
  * POST /api/roleplay-review
@@ -66,6 +67,7 @@ module.exports = async function handler(req, res) {
   const sess = sessions[0];
 
   // 이 세션에 이미 회고가 있으면 한도 차감 없이 재반환 가능. 새 회고 생성이면 한도 체크.
+  let payWithCredit = false;
   const isNewReview = !sess.review || !sess.review.summary;
   if (isNewReview) {
     // 카운트 윈도우: 게스트는 가입일 이후, 회원은 KST 자정 이후
@@ -90,15 +92,21 @@ module.exports = async function handler(req, res) {
       if (m) usedReviews = parseInt(m[1], 10);
     } catch {}
     if (usedReviews >= reviewQuota) {
-      const msg = isGuest
-        ? `체험기간 회고 ${reviewQuota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
-        : `${quotaWindowLabel} 회고 한도(${reviewQuota}회)에 도달했어요. 사용권을 구매하거나 내일 다시 시도해주세요.`;
-      return res.status(429).json({
-        error: 'rate_limit',
-        message: msg,
-        used: usedReviews,
-        limit: reviewQuota
-      });
+      // 무료 한도 소진
+      if (isGuest) {
+        return res.status(429).json({
+          error: 'rate_limit', used: usedReviews, limit: reviewQuota,
+          message: `체험기간 회고 ${reviewQuota}회를 모두 사용했어요. 팀에 합류하면 매일 1회 사용 가능해요!`
+        });
+      }
+      const bal = await credits.getBalance(SUPABASE_URL, SUPABASE_KEY, userId);
+      if (bal < credits.COST.review) {
+        return credits.needCreditResponse(res, 'review', bal, {
+          used: usedReviews, limit: reviewQuota,
+          message: `오늘 무료 회고를 다 썼어요. 충전하면 1회당 ${credits.COST.review}크레딧으로 더 받을 수 있어요.`
+        });
+      }
+      payWithCredit = true;
     }
   }
 
@@ -203,6 +211,11 @@ ${dialog}
       detail: String(lastError?.message || lastError || 'unknown').slice(0, 200),
       finishReason: lastFinishReason
     });
+  }
+
+  // 무료 한도 초과분 크레딧 차감 (회고 생성 성공 후)
+  if (payWithCredit) {
+    await credits.spend(SUPABASE_URL, SUPABASE_KEY, userId, 'review', session_id);
   }
 
   // DB 업데이트
