@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>💎 크레딧 충전 — 옆집디노</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a14; --bg2:#12122a; --card:#1a1a30;
+  --border:rgba(255,255,255,0.08); --text:#F5F5F7;
+  --text2:rgba(255,255,255,0.7); --text3:rgba(255,255,255,0.45);
+  --accent:#FF6B35; --accent2:#BF5AF2; --green:#30D158; --warn:#FF9F0A; --red:#FF453A;
+}
+body.light-theme{
+  --bg:#F5F5F7; --bg2:#FFF; --card:#FFF;
+  --border:rgba(0,0,0,0.08); --text:#1A1A2E;
+  --text2:rgba(0,0,0,0.7); --text3:rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 100px}
+.header{padding:18px 0 14px;display:flex;align-items:center;gap:10px}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:var(--text);text-decoration:none}
+.title{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:14px}
+
+.bal-label{font-size:13px;color:var(--text3);margin-bottom:6px}
+.bal-num{font-size:34px;font-weight:900;letter-spacing:-1px}
+.bal-num .unit{font-size:18px;font-weight:700;color:var(--text2);margin-left:4px}
+.bal-sub{font-size:12px;color:var(--text3);margin-top:6px}
+
+.sec-title{font-size:15px;font-weight:800;margin:18px 2px 10px}
+.pkgs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pkg{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:16px 12px;cursor:pointer;text-align:center;transition:all .15s}
+.pkg.sel{border-color:var(--accent);background:linear-gradient(135deg,rgba(255,107,53,0.14),rgba(191,90,242,0.10))}
+.pkg .won{font-size:19px;font-weight:900}
+.pkg .cr{font-size:12px;color:var(--text3);margin-top:3px}
+
+.field-label{font-size:13px;color:var(--text2);margin:16px 2px 6px}
+.input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:15px;outline:none;font-family:inherit}
+.input:focus{border-color:var(--accent)}
+
+.btn{width:100%;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF6B35,#FF8F65);color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:16px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.msg{margin-top:12px;padding:13px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;display:none}
+.msg.show{display:block}
+.msg.ok{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3)}
+.msg.err{background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3)}
+.note{font-size:12px;color:var(--text3);line-height:1.6;margin-top:14px}
+
+.tx{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.tx:last-child{border-bottom:none}
+.tx-l .t1{font-size:14px;font-weight:600}
+.tx-l .t2{font-size:11.5px;color:var(--text3);margin-top:2px}
+.tx-amt{font-size:15px;font-weight:800}
+.tx-amt.plus{color:var(--green)}
+.tx-amt.minus{color:var(--text2)}
+.empty{text-align:center;color:var(--text3);font-size:13px;padding:24px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <a class="back-btn" id="backBtn" href="/main">←</a>
+    <div class="title">💎 크레딧 충전</div>
+  </div>
+
+  <!-- 잔액 -->
+  <div class="card">
+    <div class="bal-label">내 크레딧 잔액</div>
+    <div class="bal-num"><span id="balNum">—</span><span class="unit">크레딧</span></div>
+    <div class="bal-sub">1 크레딧 = 1원 · 무료 한도를 모두 쓴 뒤 차감돼요</div>
+  </div>
+
+  <div id="appBody" style="display:none">
+    <!-- 패키지 -->
+    <div class="sec-title">충전 금액 선택</div>
+    <div class="pkgs" id="pkgs"></div>
+
+    <!-- 휴대폰 -->
+    <div class="field-label">결제 링크 받을 휴대폰 번호</div>
+    <input class="input" id="phone" type="tel" inputmode="numeric" maxlength="11" placeholder="01012345678">
+
+    <button class="btn" id="payBtn" onclick="charge()">카카오톡으로 결제하기</button>
+    <div class="msg" id="msg"></div>
+    <div class="note">
+      · 결제하기를 누르면 <b>카카오톡으로 결제 링크</b>가 전송돼요. 카톡에서 카드/간편결제로 완료하면 크레딧이 자동 충전됩니다.<br>
+      · 충전 후 이 화면을 새로고침하면 잔액이 반영돼요.
+    </div>
+
+    <!-- 사용/충전 내역 -->
+    <div class="sec-title">최근 내역</div>
+    <div class="card" id="txCard"><div class="empty">내역을 불러오는 중…</div></div>
+  </div>
+
+  <div id="needLogin" class="card" style="display:none;text-align:center">
+    <div style="font-size:14px;color:var(--text2);margin-bottom:14px">충전하려면 로그인이 필요해요.</div>
+    <button class="btn" onclick="DinoAuth&&DinoAuth.showLogin()">로그인 / 회원가입</button>
+  </div>
+</div>
+
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
+<script src="/shared/credits.js"></script>
+<script>
+const PACKAGES = [5000, 10000, 30000, 50000];
+let sb = null, session = null, selected = 10000;
+
+// 라이트테마 동기화
+try { if (localStorage.getItem('dino_theme') === 'light') document.body.classList.add('light-theme'); } catch(e){}
+
+// 돌아갈 경로(?from=)가 있으면 뒤로가기 버튼에 반영
+try {
+  const from = new URLSearchParams(location.search).get('from');
+  if (from) document.getElementById('backBtn').setAttribute('href', from);
+} catch(e){}
+
+function fmt(n){ return (n||0).toLocaleString('ko-KR'); }
+function showMsg(text, ok){
+  const m = document.getElementById('msg');
+  m.textContent = text;
+  m.className = 'msg show ' + (ok ? 'ok' : 'err');
+}
+
+function renderPackages(){
+  const el = document.getElementById('pkgs');
+  el.innerHTML = PACKAGES.map(p => `
+    <div class="pkg ${p===selected?'sel':''}" data-p="${p}" onclick="selectPkg(${p})">
+      <div class="won">${fmt(p)}원</div>
+      <div class="cr">${fmt(p)} 크레딧</div>
+    </div>`).join('');
+}
+function selectPkg(p){ selected = p; renderPackages(); }
+
+async function init(){
+  if (window.dinoSupabase) sb = window.dinoSupabase;
+  else { await new Promise(r => window.addEventListener('dino-supabase-ready', r, { once:true })); sb = window.dinoSupabase; }
+
+  const { data:{ session: s } } = await sb.auth.getSession();
+  if (!s){
+    document.getElementById('needLogin').style.display = 'block';
+    if (window.DinoAuth){ DinoAuth.onAuthChange(()=>{ if (DinoAuth.isLoggedIn()) location.reload(); }); }
+    return;
+  }
+  session = s;
+  document.getElementById('appBody').style.display = 'block';
+  renderPackages();
+  await refreshBalance();
+  await prefillPhone();
+  await loadHistory();
+
+  // 결제 후 돌아온 경우(?paid=1): 몇 초간 잔액을 재조회해 자동 반영
+  if (new URLSearchParams(location.search).get('paid') === '1'){
+    showMsg('결제 확인 중이에요… 잠시만요 (자동으로 잔액이 반영돼요)', true);
+    let tries = 0;
+    const iv = setInterval(async ()=>{ tries++; await refreshBalance(); await loadHistory(); if (tries>=5) clearInterval(iv); }, 3000);
+  }
+}
+
+async function refreshBalance(){
+  if (!session) return;
+  const { data } = await sb.from('profiles').select('credit_balance').eq('id', session.user.id).single();
+  document.getElementById('balNum').textContent = fmt(data ? data.credit_balance : 0);
+}
+
+async function prefillPhone(){
+  const { data } = await sb.from('profiles').select('phone').eq('id', session.user.id).single();
+  if (data && data.phone) document.getElementById('phone').value = data.phone;
+}
+
+async function charge(){
+  const phone = (document.getElementById('phone').value || '').replace(/\D/g,'');
+  if (phone.length < 10){ showMsg('올바른 휴대폰 번호를 입력해주세요.', false); return; }
+
+  const btn = document.getElementById('payBtn');
+  btn.disabled = true; btn.textContent = '결제 요청 중…';
+  try {
+    const { data:{ session: cur } } = await sb.auth.getSession();
+    const token = cur ? cur.access_token : null;
+    if (!token){ showMsg('로그인이 만료됐어요. 다시 로그인해주세요.', false); return; }
+
+    const res = await fetch('/api/payapp-create', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ package_price: selected, phone }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success){ showMsg(data.message || '결제 요청에 실패했어요.', false); }
+    else { showMsg('✅ ' + data.message, true); }
+  } catch(e){
+    showMsg('네트워크 오류예요. 잠시 후 다시 시도해주세요.', false);
+  } finally {
+    btn.disabled = false; btn.textContent = '카카오톡으로 결제하기';
+  }
+}
+
+const KIND_LABEL = { charge:'크레딧 충전', use:'사용', refund:'환불', bonus:'보너스', adjust:'조정' };
+const TOOL_LABEL = { chatbot:'챗봇', roleplay:'롤플레이', content:'콘텐츠', review:'회고', payment:'결제' };
+async function loadHistory(){
+  const { data } = await sb.from('credit_transactions')
+    .select('delta, balance_after, kind, tool, memo, created_at')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending:false }).limit(20);
+  const card = document.getElementById('txCard');
+  if (!data || data.length === 0){ card.innerHTML = '<div class="empty">아직 내역이 없어요</div>'; return; }
+  card.innerHTML = data.map(t => {
+    const plus = t.delta >= 0;
+    const name = t.memo || (KIND_LABEL[t.kind] || t.kind) + (t.tool && t.tool!=='payment' ? ' · '+(TOOL_LABEL[t.tool]||t.tool) : '');
+    const d = new Date(t.created_at);
+    const ds = `${d.getMonth()+1}.${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<div class="tx"><div class="tx-l"><div class="t1">${name}</div><div class="t2">${ds} · 잔액 ${fmt(t.balance_after)}</div></div>
+      <div class="tx-amt ${plus?'plus':'minus'}">${plus?'+':''}${fmt(t.delta)}</div></div>`;
+  }).join('');
+}
+
+// 다른 탭/카톡에서 결제 완료 후 돌아오면 자동 갱신
+window.addEventListener('focus', ()=>{ if (session){ refreshBalance(); loadHistory(); } });
+
+init();
+</script>
+</body>
+</html>

@@ -107,7 +107,9 @@ module.exports = async function handler(req, res) {
         temperature: 0.9,
         topP: 0.95,
         maxOutputTokens: 800,
-        responseMimeType: 'application/json'
+        responseMimeType: 'application/json',
+        // 2.5 Flash의 thinking이 토큰을 먹어 비용↑/잘림 유발 → 정해진 JSON 생성엔 추론 불필요하므로 끔
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
     const text = (response.text || '').trim();

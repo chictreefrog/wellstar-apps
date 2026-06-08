@@ -143,9 +143,10 @@ ${dialog}
   // 시도 1: responseMimeType=application/json (Gemini가 JSON 구조 보장)
   // 시도 2: mimeType 없이 + 정규식 JSON 추출 (fallback)
   async function generateAttempt(useMimeType) {
+    // thinkingBudget:0 — thinking이 출력 토큰 예산을 먹어 회고 본문이 잘리던 문제 해결 + 비용↓
     const cfg = useMimeType
-      ? { temperature: 0.7, maxOutputTokens: MAX_TOKENS, responseMimeType: 'application/json' }
-      : { temperature: 0.5, maxOutputTokens: MAX_TOKENS };
+      ? { temperature: 0.7, maxOutputTokens: MAX_TOKENS, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
+      : { temperature: 0.5, maxOutputTokens: MAX_TOKENS, thinkingConfig: { thinkingBudget: 0 } };
     const textPrompt = useMimeType ? prompt : (prompt + '\n\n반드시 위 JSON 형식으로만 응답하세요.');
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',
