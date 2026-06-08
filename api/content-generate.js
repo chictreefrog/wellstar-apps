@@ -50,16 +50,20 @@ module.exports = async function handler(req, res) {
   }
   if (!userId) return res.status(401).json({ error: 'invalid_user' });
 
-  // 2. 프로필에서 role 조회
+  // 2. 프로필에서 role + 소속 회사 + 페르소나 조회
   let role = 'guest';
+  let companyId = null;
+  let persona = null;
   try {
     const profileRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role`,
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=role,company_id,persona`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     if (profileRes.ok) {
       const rows = await profileRes.json();
       if (rows[0]?.role) role = rows[0].role;
+      companyId = rows[0]?.company_id || null;
+      persona = rows[0]?.persona || null;
     }
   } catch {}
 
@@ -106,8 +110,11 @@ module.exports = async function handler(req, res) {
     payWithCredit = true;
   }
 
-  // 5. Gemini로 콘텐츠 생성
-  const prompt = buildPrompt(channel, type, tone, keyword);
+  // 5. 내 사업 정보(회사 카탈로그 + 페르소나) 로드 → 프롬프트 주입
+  const bizContext = await loadBizContext(SUPABASE_URL, SUPABASE_KEY, companyId, persona);
+
+  // 6. Gemini로 콘텐츠 생성
+  const prompt = buildPrompt(channel, type, tone, keyword, bizContext);
   let content;
   try {
     const client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -189,7 +196,7 @@ function kstTodayMidnight() {
 }
 
 // Gemini 프롬프트 구성
-function buildPrompt(channel, type, tone, keyword) {
+function buildPrompt(channel, type, tone, keyword, biz) {
   const TYPES = {
     daily: '일상/브이로그 — 가벼운 하루 이야기, 소소한 발견',
     review: '제품 후기 — 직접 사용한 솔직한 후기, 변화 체감 위주',
@@ -226,8 +233,12 @@ function buildPrompt(channel, type, tone, keyword) {
     facebook: '관련 해시태그 5개'
   };
 
-  return `당신은 한국어 SNS 콘텐츠 작가입니다. "옆집디노 AI 세일즈 시스템"을 사용하는 네트워크 마케팅 영업인이 자신의 SNS에 올릴 게시물을 만들어주세요.
-
+  const bizBlock = (biz && biz.text) ? biz.text : '';
+  const bizRules = (biz && biz.hasInfo)
+    ? `\n7. 위 '내 사업 정보'의 회사명·제품명은 고유명사다. 절대 다른 단어로 바꾸거나 교정하지 말 것 (예: '웰런스'를 '웰니스'로 바꾸지 말 것).\n8. 특정 AI 도구/시스템이 아니라, 위 '내 사업 정보'의 회사·제품·사업을 알리는 콘텐츠를 쓸 것.`
+    : '';
+  return `당신은 네트워크 마케팅 영업인의 한국어 SNS 콘텐츠 작가입니다. 이 영업인이 자신의 SNS에 올릴 '진짜 본인 이야기' 같은 게시물을 만들어주세요.
+${bizBlock}
 [조건]
 - 채널: ${CHANNELS[channel] || channel}
 - 콘텐츠 유형: ${TYPES[type] || type}
@@ -240,7 +251,7 @@ function buildPrompt(channel, type, tone, keyword) {
 3. 키워드가 제품/효능이면 그에 어울리는 구체적 변화를 묘사 (예: "피로개선" → "오후에 늘어지지 않게 됐어요")
 4. 채널 특성에 맞는 길이와 형식 엄수
 5. 마크다운(##, **, ---) 절대 사용 금지 — 일반 텍스트만
-6. "구매하세요", "지금 신청" 같은 직접적 판매 문구 피할 것
+6. "구매하세요", "지금 신청" 같은 직접적 판매 문구 피할 것${bizRules}
 
 [출력 형식 — 반드시 다음 JSON 한 가지만, 다른 텍스트 금지]
 {
@@ -248,4 +259,47 @@ function buildPrompt(channel, type, tone, keyword) {
   "hook": "본문의 첫 줄을 SNS 미리보기에 맞게 다듬은 한 줄 후킹 문장",
   "hashtags": "해시태그: ${HASHTAG_RULES[channel]} (한 줄에 '#태그 #태그' 형식)"
 }`;
+}
+
+// 회사 카탈로그 + 페르소나 → 프롬프트용 컨텍스트 블록 생성
+function _sbAuth(key) { return { apikey: key, Authorization: `Bearer ${key}` }; }
+async function loadBizContext(url, key, companyId, persona) {
+  const out = { hasInfo: false, text: '' };
+  let company = null, products = [];
+  if (companyId) {
+    try {
+      const [cRes, pRes] = await Promise.all([
+        fetch(`${url}/rest/v1/companies?id=eq.${companyId}&select=name,brand_tone,notes`, { headers: _sbAuth(key) }),
+        fetch(`${url}/rest/v1/company_products?company_id=eq.${companyId}&select=name,category,benefits,cautions`, { headers: _sbAuth(key) }),
+      ]);
+      company = (await cRes.json())[0] || null;
+      products = (await pRes.json()) || [];
+    } catch {}
+  }
+  const p = persona || {};
+  // 사용자가 고른 주 판매상품으로 필터 (persona.products = 제품명 배열)
+  let focus = products;
+  if (Array.isArray(p.products) && p.products.length && products.length) {
+    const set = new Set(p.products);
+    const f = products.filter(x => set.has(x.name));
+    if (f.length) focus = f;
+  }
+  const lines = [];
+  if (company?.name) lines.push(`- 회사/브랜드: ${company.name}${company.brand_tone ? ` (${company.brand_tone})` : ''}`);
+  focus.slice(0, 4).forEach(pr => {
+    lines.push(`- 제품: ${pr.name}${pr.category ? ` (${pr.category})` : ''}${pr.benefits ? ` — 핵심: ${pr.benefits}` : ''}`);
+  });
+  if (p.target) lines.push(`- 타깃 고객: ${p.target}`);
+  const who = [p.age_band, p.gender].filter(Boolean).join(' ');
+  const whoLine = [who, p.region ? `${p.region} 활동` : '', p.sales_stage].filter(Boolean).join(' · ');
+  if (whoLine) lines.push(`- 작성자: ${whoLine}`);
+  if (p.purpose) lines.push(`- 콘텐츠 목적: ${p.purpose}`);
+  if (p.motivation) lines.push(`- 계기/한마디: ${p.motivation}`);
+  const cautions = [company?.notes, ...focus.map(x => x.cautions)].filter(Boolean).join(' / ');
+  if (cautions) lines.push(`- ⚠️ 피해야 할 표현(쓰지 말 것): ${cautions}`);
+  if (lines.length) {
+    out.hasInfo = true;
+    out.text = `\n[내 사업 정보 — 이걸 바탕으로 진짜 내 이야기처럼 작성]\n${lines.join('\n')}\n`;
+  }
+  return out;
 }
