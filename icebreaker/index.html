@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🧊 아이스브레이킹 — 옆집디노</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--bg2:#12122a;--card:#1a1a30;--border:rgba(255,255,255,0.08);--text:#F5F5F7;--text2:rgba(255,255,255,0.7);--text3:rgba(255,255,255,0.45);--accent:#FF6B35;--green:#30D158}
+body.light-theme{--bg:#F5F5F7;--bg2:#FFF;--card:#FFF;--border:rgba(0,0,0,0.08);--text:#1A1A2E;--text2:rgba(0,0,0,0.7);--text3:rgba(0,0,0,0.45)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 110px}
+.header{text-align:center;padding:24px 0 6px}
+.header .emoji{font-size:40px}
+.header h1{font-size:24px;font-weight:900;margin-top:6px}
+.header p{font-size:13px;color:var(--text2);margin-top:4px}
+.section-title{font-size:15px;font-weight:800;margin:20px 2px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:13px;cursor:pointer}
+.chip.active{border-color:var(--accent);background:linear-gradient(135deg,rgba(255,107,53,0.18),rgba(191,90,242,0.10));color:var(--accent);font-weight:700}
+.input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;outline:none;font-family:inherit;margin-top:10px}
+.input:focus{border-color:var(--accent)}
+.btn{width:100%;padding:15px;border-radius:14px;border:none;background:linear-gradient(135deg,#FF6B35,#FF8F65);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:14px}
+.btn:disabled{opacity:.55}
+.persona-btn{width:100%;padding:11px;border-radius:10px;border:1px dashed #FF6B35;background:transparent;color:#FF6B35;font-size:13px;cursor:pointer;margin-top:14px;font-family:inherit}
+.bal{text-align:center;font-size:11px;color:var(--text3);margin-top:8px}
+.opener{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px;font-size:14.5px;line-height:1.55;position:relative}
+.opener .copy{position:absolute;top:10px;right:10px;background:transparent;border:1px solid var(--border);color:var(--text2);font-size:11px;border-radius:8px;padding:4px 8px;cursor:pointer}
+.divider{height:1px;background:var(--border);margin:24px 0 4px}
+.card-row{display:flex;gap:8px;margin-top:10px}
+.card-btn{flex:1;padding:13px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.card-out{background:linear-gradient(135deg,rgba(48,209,88,0.1),rgba(255,107,53,0.06));border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:12px;font-size:15.5px;line-height:1.6;display:none}
+.card-out .lbl{font-size:11px;color:var(--text3);margin-bottom:6px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;display:none;z-index:999}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><div class="emoji">🧊</div><h1>아이스브레이킹</h1><p>"무슨 말 먼저 꺼내지?" — 어색함을 풀어드려요</p></div>
+
+  <!-- AI 상황별 오프닝 -->
+  <div class="section-title">🗣️ 상황별 첫 멘트 (AI)</div>
+  <div class="chips" id="situationChips">
+    <div class="chip active" data-v="첫 만남 (대면)">첫 만남</div>
+    <div class="chip" data-v="오랜만에 다시 연락">오랜만에</div>
+    <div class="chip" data-v="소개로 알게 된 사이">소개받음</div>
+    <div class="chip" data-v="카톡/DM 첫 인사">카톡 첫인사</div>
+    <div class="chip" data-v="모임·행사에서 만남">모임/행사</div>
+  </div>
+  <input class="input" id="context" placeholder="상황·상대 정보 (선택) — 예: 헬스장에서 자주 보는 분, 40대">
+  <button class="persona-btn" id="personaBtn" onclick="openPersona()">💼 내 사업 프로필 설정 — 정확도 ↑</button>
+  <button class="btn" id="genBtn" onclick="generate()">첫 멘트 만들기</button>
+  <div class="bal" id="bal"></div>
+  <div id="openers"></div>
+
+  <div class="divider"></div>
+
+  <!-- 무료 카드 -->
+  <div class="section-title">🎴 대화 카드 (무료 · 무제한)</div>
+  <div class="card-row">
+    <button class="card-btn" onclick="showCard('q')">🎲 공감 질문</button>
+    <button class="card-btn" onclick="showCard('c')">💬 가벼운 잡담거리</button>
+  </div>
+  <div class="card-out" id="cardOut"><div class="lbl" id="cardLbl"></div><div id="cardText"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/shared/supabase.js"></script>
+<script src="/shared/auth.js"></script>
+<script src="/shared/credits.js"></script>
+<script src="/shared/persona.js"></script>
+<script src="/shared/login-gate.js"></script>
+<script src="/shared/theme-toggle.js"></script>
+<script src="/shared/nav.js?v=2"></script>
+<script>
+try{ if(localStorage.getItem('dino_theme')==='light') document.body.classList.add('light-theme'); }catch(e){}
+
+const QUESTIONS = [
+  '요즘 제일 시간 많이 쓰는 일이 뭐예요?',
+  '주말엔 보통 뭐 하면서 쉬세요?',
+  '요즘 새로 시작하거나 빠져 있는 거 있으세요?',
+  '에너지는 주로 어디서 충전하세요?',
+  '요즘 가장 신경 쓰는 일이 뭐예요?',
+  '하루 중에 제일 좋아하는 시간이 언제예요?',
+  '최근에 본 것 중에 추천하고 싶은 거 있어요? (책·영상·맛집 뭐든)',
+  '요즘 컨디션은 좀 어떠세요?',
+  '이 동네(회사) 오래 계셨어요?',
+  '원래 활동적인 편이세요, 집순이·집돌이 편이세요?',
+  '요즘 제일 큰 고민이 있다면 어떤 거예요?',
+  '올해 꼭 해보고 싶은 거 있으세요?',
+  '커피파예요, 차파예요? ㅎㅎ',
+  '아침형이세요, 저녁형이세요?',
+  '요즘 뭐 할 때 제일 행복하세요?',
+  '최근에 \'아 잘했다\' 싶은 일 있었어요?'
+];
+const CHITCHAT = [
+  '오늘 날씨가 딱 산책하기 좋더라고요 ㅎㅎ',
+  '여기 분위기 좋네요. 자주 오세요?',
+  '아 저도 그거 요즘 관심 많았는데, 반갑네요!',
+  '오늘 하루 어떠셨어요? 바쁘셨죠?',
+  '이런 자리 오면 늘 누구한테 먼저 말 걸까 고민돼요 ㅎㅎ',
+  '저는 낯을 좀 가리는 편인데, 먼저 인사드리고 싶었어요.',
+  '오는 길 안 막히셨어요? 요즘 길이 좀 그렇더라고요.',
+  '커피 한 잔 하면서 얘기해요. 제가 살게요 ㅎㅎ',
+  '표정이 좋으세요. 좋은 일 있으셨나 봐요?',
+  '날이 갑자기 추워졌(더워졌)네요. 감기 조심하세요!',
+  '오랜만이에요! 그동안 잘 지내셨어요?',
+  '여기 처음이라 좀 두리번거렸어요 ㅎㅎ 반가워요.',
+  '주말 잘 보내셨어요? 저는 푹 쉬었어요.',
+  '점심 드셨어요? 이 근처 맛있는 데 아세요?',
+  '오늘 컨디션 좋아 보이세요. 비결이 뭐예요?',
+  '저 사실 이런 모임 처음인데, 옆에 계셔서 든든해요 ㅎㅎ'
+];
+
+function $(id){return document.getElementById(id);}
+function getSituation(){ const c=document.querySelector('#situationChips .chip.active'); return c?c.dataset.v:''; }
+document.getElementById('situationChips').addEventListener('click',e=>{ const c=e.target.closest('.chip'); if(!c)return; document.querySelectorAll('#situationChips .chip').forEach(x=>x.classList.remove('active')); c.classList.add('active'); });
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',2200); }
+function copy(txt){ navigator.clipboard.writeText(txt).then(()=>toast('복사됐어요 📋')); }
+
+function openPersona(){ if(window.DinoPersona) DinoPersona.open(()=>{ window.__personaSet=true; updatePersonaBtn(); }); }
+function updatePersonaBtn(){ const b=$('personaBtn'); if(!b)return; b.textContent = window.__personaSet ? '💼 내 사업 프로필 ✓ (수정)' : '💼 내 사업 프로필 설정 — 정확도 ↑'; }
+function updateBal(){ const el=$('bal'); if(el && typeof window.__creditBalance==='number') el.textContent='💎 잔액 '+window.__creditBalance.toLocaleString('ko-KR'); }
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function copyEl(id){ const el=document.getElementById(id); if(el) copy(el.textContent); }
+function renderOpeners(list){
+  $('openers').innerHTML = list.map((o,i)=>`<div class="opener"><span id="op${i}">${escapeHtml(o)}</span><button class="copy" onclick="copyEl('op${i}')">복사</button></div>`).join('');
+}
+
+async function generate(){
+  if (window.DinoPersona && window.__personaSet === false) {
+    DinoPersona.open(()=>{ window.__personaSet=true; updatePersonaBtn(); generate(); });
+    return;
+  }
+  const situation=getSituation(); const context=$('context').value.trim();
+  if(!situation){ toast('상황을 선택해주세요'); return; }
+  const btn=$('genBtn'); const old=btn.textContent; btn.disabled=true; btn.textContent='AI 작성 중…';
+  try{
+    let token='';
+    if(window.dinoSupabase){ const { data }=await window.dinoSupabase.auth.getSession(); token=data?.session?.access_token||''; }
+    if(!token){ if(window.DinoAuth) DinoAuth.showLogin(); return; }
+    const res=await fetch('/api/icebreaker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({situation,context})});
+    const data=await res.json().catch(()=>({}));
+    if(res.status===429){
+      toast(data.message||'오늘 한도에 도달했어요');
+      if(data.need_credit) setTimeout(()=>{ if(confirm('💎 충전하면 계속 쓸 수 있어요. 충전 페이지로 갈까요?')) location.href='/charge'; },150);
+      return;
+    }
+    if(res.ok && data.openers){
+      renderOpeners(data.openers);
+      if(typeof data.credit_balance==='number'){ window.__creditBalance=data.credit_balance; updateBal(); }
+    } else {
+      toast(data.message||'생성 실패. 잠시 후 다시 시도해주세요');
+    }
+  }catch(e){ toast('네트워크 오류예요'); }
+  finally{ btn.disabled=false; btn.textContent=old; }
+}
+
+function showCard(kind){
+  const arr = kind==='q' ? QUESTIONS : CHITCHAT;
+  const lbl = kind==='q' ? '🎲 공감 질문 — 상대가 편하게 답할 수 있어요' : '💬 가벼운 잡담거리 — 분위기를 풀어요';
+  const txt = arr[Math.floor(Math.random()*arr.length)];
+  $('cardLbl').textContent=lbl;
+  $('cardText').innerHTML = `<span id="cardSrc">${escapeHtml(txt)}</span> <button style="margin-left:6px;background:transparent;border:1px solid var(--border);color:var(--text2);font-size:11px;border-radius:8px;padding:3px 8px;cursor:pointer" onclick="copyEl('cardSrc')">복사</button>`;
+  $('cardOut').style.display='block';
+}
+
+// 초기화 (잔액 + 페르소나)
+(async function init(){
+  try{
+    if(!window.dinoSupabase) await new Promise(r=>window.addEventListener('dino-supabase-ready',r,{once:true}));
+    const { data:{session} }=await window.dinoSupabase.auth.getSession();
+    if(!session) return;
+    const { data }=await window.dinoSupabase.from('profiles').select('credit_balance').eq('id',session.user.id).single();
+    window.__creditBalance = data ? (data.credit_balance||0) : 0; updateBal();
+    try{ const { data:pp }=await window.dinoSupabase.from('profiles').select('company_id,persona').eq('id',session.user.id).single();
+      window.__personaSet=!!(pp&&pp.company_id&&pp.persona&&Object.keys(pp.persona).length); }catch(e2){ window.__personaSet=false; }
+    updatePersonaBtn();
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

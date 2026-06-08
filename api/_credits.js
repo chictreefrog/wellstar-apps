@@ -5,7 +5,7 @@
  */
 
 // 도구별 차감 단가 (확정 2026-06-09)
-const COST = { chatbot: 10, roleplay: 100, content: 50, review: 50, dm: 20 };
+const COST = { chatbot: 10, roleplay: 100, content: 50, review: 50, dm: 20, icebreaker: 20 };
 
 // 현재 잔액 조회 (실패 시 0)
 async function getBalance(url, key, userId) {
