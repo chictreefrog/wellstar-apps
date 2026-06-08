@@ -549,7 +549,7 @@ body.light-theme .input-bar {
 
   <!-- 사용량 표시 -->
   <div id="usageBar" style="display:none;padding:8px 16px;font-size:11px;color:var(--text-secondary);border-bottom:1px solid var(--border);background:rgba(255,107,53,0.06);text-align:center">
-    💬 <span id="usageWindow">이번 달</span> 사용 <b id="usageUsed" style="color:var(--accent)">0</b> / <span id="usageLimit">150</span>회
+    💬 <span id="usageWindow">이번 달</span> 사용 <b id="usageUsed" style="color:var(--accent)">0</b> / <span id="usageLimit">150</span>회<span id="usageCreditWrap" style="display:none"> · 💎 잔액 <b id="usageCredit" style="color:var(--accent)">0</b></span>
   </div>
 
   <!-- Chat Area -->
@@ -657,6 +657,15 @@ function updateUsageBar(used, limit, windowLabel) {
   }
 }
 
+function setCreditBadge(bal) {
+  if (bal == null) return;
+  const wrap = document.getElementById('usageCreditWrap');
+  const el = document.getElementById('usageCredit');
+  if (!wrap || !el) return;
+  el.textContent = (bal || 0).toLocaleString('ko-KR');
+  wrap.style.display = 'inline';
+}
+
 async function initUsage() {
   try {
     if (!window.dinoSupabase) {
@@ -670,7 +679,7 @@ async function initUsage() {
     if (!session) return;
 
     const { data: profile } = await window.dinoSupabase
-      .from('profiles').select('role, guest_started_at').eq('id', session.user.id).single();
+      .from('profiles').select('role, guest_started_at, credit_balance').eq('id', session.user.id).single();
     const role = profile?.role || 'partner';
     const isGuest = role === 'guest';
     const limit = isGuest ? 30 : 150;
@@ -697,6 +706,7 @@ async function initUsage() {
       .gte('created_at', sinceISO);
 
     updateUsageBar(count || 0, limit, windowLabel);
+    setCreditBadge(profile?.credit_balance);
   } catch (e) {
     console.error('[chatbot] initUsage failed:', e);
   }
@@ -939,6 +949,7 @@ async function sendMessage() {
     }
 
     if (data.usage) updateUsageBar(data.usage.used, data.usage.limit, data.usage.window);
+    if (data.usage && data.usage.credit_balance != null) setCreditBadge(data.usage.credit_balance);
   } catch (err) {
     hideTyping();
     addMessage('assistant', '죄송합니다. 잠시 오류가 발생했어요. 다시 한번 말씀해주세요. 🙏', false, []);

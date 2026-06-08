@@ -789,26 +789,34 @@ async function loadTodayUsage() {
         .gte('created_at', kstMidnightUTC.toISOString()),
       window.dinoSupabase
         .from('profiles')
-        .select('role')
+        .select('role, credit_balance')
         .eq('id', session.user.id)
         .single()
     ]);
 
     const role = profileRes?.data?.role || 'guest';
-    // 회원 1일 1회 (1회 = 권장 15턴, 더 이어가도 OK)
-    // 게스트는 체험기간 누적 3회 — 일일 카운트 대신 누적이라 별도 처리 필요시 추후
-    const limit = role === 'guest' ? 3 : 1;
+    const creditBalance = profileRes?.data?.credit_balance || 0;
+    const isGuest = role === 'guest';
+    // 회원 1일 1회 (1회 = 권장 15턴, 더 이어가도 OK) / 게스트는 체험기간 누적 3회
+    const limit = isGuest ? 3 : 1;
     const used = count || 0;
     const remaining = Math.max(0, limit - used);
 
     tEl.innerHTML = `<span style="color:${remaining === 0 ? '#FF453A' : 'var(--accent)'}">${used}회</span> / ${limit}회`;
-    lEl.innerHTML = `남은 횟수<br><b style="color:${remaining === 0 ? '#FF453A' : 'var(--green)'};font-size:14px">${remaining}회</b>`;
+    lEl.innerHTML = `남은 횟수 <b style="color:${remaining === 0 ? '#FF453A' : 'var(--green)'};font-size:14px">${remaining}회</b><br>💎 잔액 ${creditBalance.toLocaleString('ko-KR')}`;
 
     const startBtn = document.getElementById('startBtn');
     if (remaining === 0) {
-      startBtn.textContent = '오늘 사용 한도 도달 — 내일 다시';
-      startBtn.disabled = true;
-      startBtn.dataset.locked = '1';
+      if (isGuest) {
+        // 게스트: 결제 대신 팀 합류 유도
+        startBtn.textContent = '체험 한도 도달 — 팀 합류 시 매일 1회';
+        startBtn.disabled = true;
+        startBtn.dataset.locked = '1';
+      } else {
+        // 회원: 무료 1회 소진 → 크레딧으로 계속 (세션당 100). 잠그지 않음(페르소나 선택 시 활성화)
+        startBtn.textContent = '💎 크레딧으로 시작 (세션당 100)';
+        startBtn.dataset.locked = '';
+      }
     }
   } catch (e) {
     console.error('usage load err:', e);
