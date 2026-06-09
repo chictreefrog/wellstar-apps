@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
   const SUPABASE_URL = process.env.DINO_SUPABASE_URL;
   const SUPABASE_KEY = process.env.DINO_SUPABASE_KEY;
   const cleanPhone = String(phone || '').replace(/\D/g, '');
-  const SALON_DAILY = 7;
+  const SALON_DAILY = 3;
   const kstToday = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   let leadRow = null, usedToday = 0;
   if (cleanPhone.length >= 10 && SUPABASE_URL && SUPABASE_KEY) {
