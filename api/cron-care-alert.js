@@ -53,8 +53,9 @@ module.exports = async function handler(req, res) {
       if (to.length < 10) continue;
       if (to.startsWith('82')) to = '0' + to.substring(2);
 
-      const parentName = s.parent_name || '부모님';
-      const text = `[옆집디노 안심케어]\n${s.guardian_name ? s.guardian_name + '님, ' : ''}${parentName}이 ${days}일째 안부 체크인이 없어요.\n한 번 연락해보시겠어요? 🙏`;
+      const pn = s.parent_name || '부모님';
+      const parentHonor = pn.endsWith('님') ? pn : pn + '님';   // "어머니"→"어머니님", "부모님"→그대로
+      const text = `[옆집디노 안심케어]\n${s.guardian_name ? s.guardian_name + '님, ' : ''}${parentHonor}이 ${days}일째 안부 체크인이 없어요.\n한 번 연락해보시겠어요? 🙏`;
 
       const date = new Date().toISOString();
       const salt = crypto.randomBytes(32).toString('hex');
