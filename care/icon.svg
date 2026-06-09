@@ -1,0 +1,77 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF7EC"/>
+      <stop offset="1" stop-color="#FCE6CC"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="256" cy="230" r="210" fill="url(#halo)"/>
+
+  <!-- cardigan (shoulders) -->
+  <path d="M80 512 C80 430 158 396 256 396 C354 396 432 430 432 512 Z" fill="#3C8E6A"/>
+  <path d="M214 400 L256 468 L298 400 Z" fill="#2E7D5B"/>
+  <path d="M84 512 C92 470 120 446 150 432" fill="none" stroke="#56A484" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+  <path d="M428 512 C420 470 392 446 362 432" fill="none" stroke="#56A484" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- neck -->
+  <rect x="224" y="356" width="64" height="58" rx="26" fill="#EBB389"/>
+
+  <!-- back hair (silver frame) -->
+  <ellipse cx="256" cy="234" rx="152" ry="158" fill="#EAEAEF"/>
+  <!-- bun -->
+  <ellipse cx="256" cy="92" rx="44" ry="37" fill="#E5E5EC"/>
+  <path d="M232 84 q24 -22 48 0" fill="none" stroke="#CFCFD7" stroke-width="5" stroke-linecap="round"/>
+  <!-- hair waves -->
+  <path d="M138 196 q-16 36 8 78" fill="none" stroke="#D6D6DE" stroke-width="6" stroke-linecap="round"/>
+  <path d="M168 176 q-16 30 0 64" fill="none" stroke="#D6D6DE" stroke-width="5" stroke-linecap="round"/>
+  <path d="M374 196 q16 36 -8 78" fill="none" stroke="#D6D6DE" stroke-width="6" stroke-linecap="round"/>
+  <path d="M344 176 q16 30 0 64" fill="none" stroke="#D6D6DE" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- ears + pearl earrings -->
+  <ellipse cx="138" cy="262" rx="20" ry="26" fill="#F2C49C"/>
+  <ellipse cx="374" cy="262" rx="20" ry="26" fill="#F2C49C"/>
+  <circle cx="138" cy="292" r="7" fill="#FCFCFE" stroke="#E2D9C9" stroke-width="2"/>
+  <circle cx="374" cy="292" r="7" fill="#FCFCFE" stroke="#E2D9C9" stroke-width="2"/>
+
+  <!-- face -->
+  <ellipse cx="256" cy="256" rx="128" ry="136" fill="#F6CCA4"/>
+
+  <!-- eyebrows -->
+  <path d="M180 212 q26 -12 52 -1" fill="none" stroke="#C8C8D0" stroke-width="6" stroke-linecap="round"/>
+  <path d="M280 211 q26 -11 52 1" fill="none" stroke="#C8C8D0" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- blush -->
+  <ellipse cx="178" cy="300" rx="25" ry="15" fill="#F0978B" opacity="0.45"/>
+  <ellipse cx="334" cy="300" rx="25" ry="15" fill="#F0978B" opacity="0.45"/>
+
+  <!-- glasses -->
+  <circle cx="206" cy="252" r="40" fill="#FFFFFF" opacity="0.22"/>
+  <circle cx="306" cy="252" r="40" fill="#FFFFFF" opacity="0.22"/>
+  <circle cx="206" cy="252" r="40" fill="none" stroke="#C99A3D" stroke-width="8"/>
+  <circle cx="306" cy="252" r="40" fill="none" stroke="#C99A3D" stroke-width="8"/>
+  <path d="M246 250 q10 -11 20 0" fill="none" stroke="#C99A3D" stroke-width="8" stroke-linecap="round"/>
+  <path d="M168 246 L140 250" fill="none" stroke="#C99A3D" stroke-width="8" stroke-linecap="round"/>
+  <path d="M344 246 L372 250" fill="none" stroke="#C99A3D" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- smiling eyes -->
+  <path d="M188 256 q18 -20 36 0" fill="none" stroke="#5A4632" stroke-width="7" stroke-linecap="round"/>
+  <path d="M288 256 q18 -20 36 0" fill="none" stroke="#5A4632" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- nose -->
+  <path d="M250 298 q7 6 15 2" fill="none" stroke="#DE9C76" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- smile -->
+  <path d="M220 324 q36 30 72 0" fill="none" stroke="#C15D46" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- heart pin on cardigan -->
+  <g transform="translate(210,450)">
+    <path d="M0 7 C0 7 -15 -4 -15 -15 C-15 -23 -6 -25 0 -16 C6 -25 15 -23 15 -15 C15 -4 0 7 0 7 Z" fill="#FF8088" stroke="#FFFFFF" stroke-width="2.5"/>
+  </g>
+</svg>

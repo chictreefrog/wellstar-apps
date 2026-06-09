@@ -1,4 +1,4 @@
-const CACHE_NAME = 'care-v2-no-auto-skip';
+const CACHE_NAME = 'care-v3-grandma-icon';
 const APP_PATH = '/care/';
 
 self.addEventListener('install', e => {
