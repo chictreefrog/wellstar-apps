@@ -414,10 +414,12 @@
         <div class="nm">디노 언니</div>
         <div class="st">늘 여기 있어요</div>
       </div>
+      <button class="icon-btn" onclick="exportChat()" aria-label="대화 저장">💾</button>
       <button class="icon-btn" onclick="clearChat()" aria-label="대화 비우기">🧹</button>
     </div>
     <div class="chat-scroll" id="chatScroll"></div>
     <div class="chat-sugg" id="chatSugg"></div>
+    <div id="chatLimitHint" style="display:none;text-align:center;font-size:12px;color:#c9648c;padding:6px 14px 0;line-height:1.4"></div>
     <div class="chat-input">
       <textarea id="chatText" rows="1" placeholder="편하게 이야기해요…" oninput="autoGrow(this)" onkeydown="chatKey(event)"></textarea>
       <button class="send" id="chatSend" onclick="sendChat()" aria-label="보내기">↑</button>
@@ -1015,7 +1017,8 @@ async function sendChat(){
     });
     const data = await r.json().catch(()=>({}));
     reply = (data && data.reply) ? data.reply : '';
-  }catch(e){ reply=''; }
+    window.__lastChatData = data || {};
+  }catch(e){ reply=''; window.__lastChatData={}; }
 
   typing.remove();
   if(!reply){
@@ -1026,10 +1029,49 @@ async function sendChat(){
   sc.appendChild(bubble('sister', reply));
   chatBusy=false; $('#chatSend').disabled=false;
   scrollChat();
+  updateLimitHint(window.__lastChatData.remaining);
 }
 function clearChat(){
-  if(!confirm('디노 언니와의 대화를 비울까요?')) return;
+  if(!confirm('디노 언니와의 대화를 비울까요?\n비우면 되돌릴 수 없어요. 💾로 먼저 저장할 수 있어요.')) return;
   chat={ messages:[] }; save(LS.chat, chat); renderChat();
+  updateLimitHint(null);
+}
+
+// 대화 저장(내보내기) — 카톡/메모로 공유하거나 텍스트로 다운로드
+function exportChat(){
+  const msgs=(chat&&chat.messages)||[];
+  if(!msgs.length){ toast('아직 저장할 대화가 없어요'); return; }
+  const me=(profile&&profile.owner_name||'').trim()||'나';
+  const d=new Date();
+  const dateStr=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  const body=msgs.map(m=>(m.role==='user'?me:'디노 언니')+'\n'+m.text).join('\n\n');
+  const text=`🌿 언니들의 살롱 · 디노 언니와의 대화\n${dateStr}\n\n${body}\n\n— 디노 언니가 늘 응원해요 💛`;
+  if(navigator.share){
+    navigator.share({ title:'디노 언니와의 대화', text }).catch(()=>{});
+  }else if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('📋 대화를 복사했어요. 메모에 붙여넣어 보관하세요')).catch(()=>downloadChatText(text,dateStr));
+  }else{
+    downloadChatText(text,dateStr);
+  }
+}
+function downloadChatText(text,dateStr){
+  try{
+    const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`디노언니_대화_${dateStr}.txt`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    toast('💾 대화를 저장했어요');
+  }catch(e){ toast('저장에 실패했어요'); }
+}
+
+// 오늘 남은 대화 횟수를 부드럽게 안내 (갑작스러운 끊김 방지)
+function updateLimitHint(remaining){
+  const el=$('#chatLimitHint'); if(!el) return;
+  if(remaining===null||remaining===undefined||remaining>2){ el.style.display='none'; return; }
+  if(remaining<=0){ el.textContent='💛 오늘 이야기는 여기까지예요. 내일 또 만나요'; }
+  else { el.textContent=`🌿 오늘은 ${remaining}번 더 이야기 나눌 수 있어요`; }
+  el.style.display='block';
 }
 
 /* =========================================================

@@ -40,27 +40,32 @@ module.exports = async function handler(req, res) {
   const cleanPhone = String(phone || '').replace(/\D/g, '');
   const SALON_DAILY = 3;
   const kstToday = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-  let leadRow = null;
+  let leadRow = null, usedToday = 0;
   if (cleanPhone.length >= 10 && SUPABASE_URL && SUPABASE_KEY) {
     try {
       const lr = await fetch(`${SUPABASE_URL}/rest/v1/customer_leads?phone=eq.${cleanPhone}&source=eq.salon&select=*&limit=1`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
       leadRow = (await lr.json())[0] || null;
     } catch {}
-    const usedToday = (leadRow && leadRow.ai_used_date === kstToday) ? (leadRow.ai_used_count || 0) : 0;
+    usedToday = (leadRow && leadRow.ai_used_date === kstToday) ? (leadRow.ai_used_count || 0) : 0;
     if (usedToday >= SALON_DAILY) {
       const who = (name && String(name).trim()) ? `${String(name).trim()} 언니, ` : '';
       return res.status(200).json({
         reply: `${who}오늘은 여기까지 이야기 나눴어요 💛\n내일 또 만나요. 오늘 하루도 토닥토닥, 잘 보내요 🌿`,
-        limit: true
+        limit: true, remaining: 0, dailyLimit: SALON_DAILY
       });
     }
   }
+  // 오늘의 마지막 한 번이면, 디노언니가 자연스럽게 마무리 인사를 담도록
+  const isLastTurn = cleanPhone.length >= 10 && usedToday === SALON_DAILY - 1;
 
   // ★ 조용한 안전망 — 진짜 위기 신호 감지 (idiomatic "죽겠다"는 제외)
   const crisis = detectCrisis(message);
 
   const systemPrompt = buildSisterPrompt(name, ageBand, crisis);
+  const sysInstruction = isLastTurn
+    ? systemPrompt + `\n\n[오늘의 마무리]\n이번이 오늘 나누는 마지막 이야기예요. 평소처럼 충분히 공감해 준 뒤, 끝에 "오늘은 여기까지, 내일 또 만나요" 같은 따뜻한 마무리 인사를 자연스럽게 덧붙여요. 갑자기 끊는 느낌 없이 다정하게 마쳐요.`
+    : systemPrompt;
 
   // history → Gemini contents ({role,text} 스펙)
   const contents = [];
@@ -83,7 +88,7 @@ module.exports = async function handler(req, res) {
       model: 'gemini-2.5-flash',
       contents,
       config: {
-        systemInstruction: systemPrompt,
+        systemInstruction: sysInstruction,
         temperature: 0.85,
         topP: 0.9,
         maxOutputTokens: 1024,
@@ -104,7 +109,9 @@ module.exports = async function handler(req, res) {
       last = await generateOnce();
       if (last.text && (last.finishReason === 'STOP' || last.finishReason === 'UNKNOWN')) {
         await bumpSalonUsage(SUPABASE_URL, SUPABASE_KEY, cleanPhone, leadRow, kstToday);
-        return res.status(200).json({ reply: last.text });
+        let remaining = null;
+        if (cleanPhone.length >= 10) remaining = Math.max(0, SALON_DAILY - (usedToday + 1));
+        return res.status(200).json({ reply: last.text, remaining, dailyLimit: SALON_DAILY });
       }
       console.warn(`sister-chat attempt ${attempt} finishReason=${last.finishReason} len=${last.text.length}`);
       if (attempt < 2) await new Promise(r => setTimeout(r, 1200));
