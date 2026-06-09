@@ -26,9 +26,24 @@ module.exports = async function handler(req, res) {
   };
   if (b.guardian_name) row.guardian_name = String(b.guardian_name).slice(0, 40);
   if (b.parent_name) row.parent_name = String(b.parent_name).slice(0, 40);
-  if (b.ref) row.ref = String(b.ref).slice(0, 40);
   const days = parseInt(b.alert_after_days, 10);
   if (days >= 1 && days <= 14) row.alert_after_days = days;
+  // ref(영업인) → inviter_id, team_id 귀속 (앱 리드 탭 + 비용 집계용)
+  if (b.ref) {
+    const cleanRef = String(b.ref).trim().toUpperCase();
+    row.ref = cleanRef.slice(0, 40);
+    const h = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+    try {
+      let pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles?business_code=eq.${encodeURIComponent(cleanRef)}&select=id,team_id&limit=1`, { headers: h });
+      let rows = await pr.json();
+      if (!rows?.[0]) {
+        pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,team_id`, { headers: h });
+        const all = await pr.json();
+        rows = [(all || []).find(p => p.id.replace(/-/g, '').slice(0, 8).toUpperCase() === cleanRef)].filter(Boolean);
+      }
+      if (rows?.[0]) { row.inviter_id = rows[0].id; if (rows[0].team_id) row.team_id = rows[0].team_id; }
+    } catch {}
+  }
 
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/care_subscribers?on_conflict=guardian_phone`, {

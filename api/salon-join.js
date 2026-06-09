@@ -20,21 +20,21 @@ module.exports = async function handler(req, res) {
   if (!SUPABASE_URL || !SUPABASE_KEY) return res.status(500).json({ error: 'server_not_configured' });
   const sbHeaders = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-  // ref(business_code/id-prefix) → 영업인 profile id
-  let inviterId = null;
+  // ref(business_code/id-prefix) → 영업인 profile id + team_id
+  let inviterId = null, inviterTeam = null;
   const cleanRef = b.ref ? String(b.ref).trim().toUpperCase() : '';
   if (cleanRef) {
     try {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?business_code=eq.${encodeURIComponent(cleanRef)}&select=id&limit=1`, { headers: sbHeaders });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?business_code=eq.${encodeURIComponent(cleanRef)}&select=id,team_id&limit=1`, { headers: sbHeaders });
       const rows = await r.json();
-      if (rows?.[0]) inviterId = rows[0].id;
+      if (rows?.[0]) { inviterId = rows[0].id; inviterTeam = rows[0].team_id; }
     } catch {}
     if (!inviterId) {
       try {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id`, { headers: sbHeaders });
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,team_id`, { headers: sbHeaders });
         const all = await r.json();
         const m = (all || []).find(p => p.id.replace(/-/g, '').slice(0, 8).toUpperCase() === cleanRef);
-        if (m) inviterId = m.id;
+        if (m) { inviterId = m.id; inviterTeam = m.team_id; }
       } catch {}
     }
   }
@@ -47,6 +47,7 @@ module.exports = async function handler(req, res) {
   if (b.age_band) row.age_band = String(b.age_band).slice(0, 20);
   if (cleanRef) row.ref = cleanRef;
   if (inviterId) row.inviter_id = inviterId;
+  if (inviterTeam) row.team_id = inviterTeam;
 
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/customer_leads?on_conflict=phone,source`, {

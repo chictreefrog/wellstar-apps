@@ -288,6 +288,13 @@ body.light-theme .invite-code { color: #1A1A2E; }
 
     <!-- ═══ LEADS TAB ═══ -->
     <div class="tab-content" id="tab-leads">
+      <!-- 살롱·케어에서 수집된 실제 고객 리드 (연락 가능한 연락처) -->
+      <div id="customerLeadsSection" style="display:none;margin-bottom:22px">
+        <div class="section-title">📇 수집된 고객 리드 <span id="customerLeadsCount" style="font-size:11px;color:var(--text3);font-weight:500"></span></div>
+        <div id="customerLeadsList"></div>
+      </div>
+
+      <div class="section-title">🔗 리드마그넷 공유</div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px">잠재고객에게 공유하면 내 DB로 자동 수집돼요</div>
       <!-- 리드마그넷 카드 (JS로 동적 렌더링) -->
       <div id="leadMagnetCards"></div>
@@ -401,6 +408,9 @@ async function loadDashboard() {
 
   // Load lead stats
   loadLeadStats(members || []);
+
+  // Load 살롱·케어 고객 리드
+  loadCustomerLeads();
 
   // Render invite section based on role
   renderInviteSection();
@@ -808,6 +818,50 @@ async function loadLeadStats(members) {
     console.error('lead-stats fetch error:', e);
     renderLeadMagnetCards({});
   }
+}
+
+// 살롱·케어에서 수집된 고객 리드 (연락 가능한 실제 연락처) — service_role API 경유
+async function loadCustomerLeads() {
+  const section = document.getElementById('customerLeadsSection');
+  const list = document.getElementById('customerLeadsList');
+  if (!section || !list || !sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) return;
+    const res = await fetch('/api/my-leads', { headers: { 'Authorization': `Bearer ${session.access_token}` } });
+    const data = await res.json();
+    const leads = data.leads || [];
+    if (!leads.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    document.getElementById('customerLeadsCount').textContent = `· 총 ${data.total}명`;
+    list.innerHTML = renderCustomerLeadCards(leads, data.counts);
+  } catch (e) { console.error('my-leads fetch error:', e); }
+}
+
+function renderCustomerLeadCards(leads, counts) {
+  const head = `<div style="font-size:11px;color:var(--text3);margin-bottom:10px">💇 살롱 ${counts?.salon || 0}명 · 💝 케어 ${counts?.care || 0}명 · 카드를 누르면 전화 걸기</div>`;
+  const body = leads.map(l => {
+    const isCare = l.source === 'care';
+    const badge = isCare ? '💝 케어' : '💇 살롱';
+    const color = isCare ? '#FF6B9D' : '#BF5AF2';
+    const digits = String(l.phone || '').replace(/\D/g, '');
+    const phoneFmt = digits.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3') || '번호 없음';
+    const name = l.name || (isCare ? '보호자' : '고객');
+    const sub = isCare ? (l.parent_name ? `부모님 ${l.parent_name}` : '') : (l.age_band ? `${l.age_band}대` : '');
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) : '';
+    const meta = [sub, date].filter(Boolean).join(' · ');
+    return `<a href="tel:${digits}" style="display:block;text-decoration:none;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${name}</span>
+        <span style="font-size:10px;font-weight:700;color:${color};background:${color}1a;border-radius:6px;padding:2px 8px">${badge}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;color:#4FC3F7;font-family:'Courier New',monospace">${phoneFmt}</span>
+        <span style="font-size:11px;color:var(--text3)">${meta}</span>
+      </div>
+    </a>`;
+  }).join('');
+  return head + body;
 }
 
 async function openPartnerLeads(ref, name) {
