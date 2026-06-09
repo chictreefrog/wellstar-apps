@@ -2,7 +2,8 @@
   "crons": [
     { "path": "/api/cron-insight", "schedule": "0 23 * * *" },
     { "path": "/api/cron-followup", "schedule": "0 0 * * *" },
-    { "path": "/api/cron-challenge", "schedule": "0 10 * * *" }
+    { "path": "/api/cron-challenge", "schedule": "0 10 * * *" },
+    { "path": "/api/cron-care-alert", "schedule": "0 1 * * *" }
   ],
   "rewrites": [
     { "source": "/planner", "destination": "/planner/index.html" },

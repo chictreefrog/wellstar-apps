@@ -531,11 +531,20 @@ function pingSafe(){
    기준 초과 시 SMS API로 자녀에게 안부 문자를 보냄.
    (휴대폰은 백그라운드 감지가 안 되므로 감지는 반드시 서버에서.) */
 async function syncCheckin(iso){
-  // TODO(Claude Code): 실제 연동
-  // await fetch('https://blogtool.wellstar.life/api/care-checkin',{
-  //   method:'POST', headers:{'Content-Type':'application/json'},
-  //   body: JSON.stringify({ phone: profile.guardian_phone, last_active: iso })
-  // });
+  try{
+    if(!profile || !profile.guardian_phone) return;
+    await fetch('/api/care-checkin', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        guardian_phone: profile.guardian_phone,
+        guardian_name: profile.guardian_name || null,
+        parent_name: profile.parent_name || null,
+        alert_after_days: profile.alert_after_days || 2,
+        ref: localStorage.getItem('care_ref') || null,
+        last_active: iso || new Date().toISOString()
+      })
+    });
+  }catch(e){ /* 오프라인 등 — 다음 체크인 때 다시 동기화 */ }
 }
 
 /* ---------- 메인 렌더 ---------- */
@@ -643,6 +652,7 @@ function saveOnboard(){
   profile={ parent_name:parent, guardian_name:guardian, guardian_phone:phone,
             alert_after_days:obDays, theme:'light', font_scale:'lg' };
   save(LS.profile,profile); applyPrefs();
+  syncCheckin(new Date().toISOString());   // 세팅 즉시 서버 등록(자녀 번호·기준일)
   go('meds');
 }
 
