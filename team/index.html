@@ -423,7 +423,7 @@ function renderMembers(members) {
 
   const html = members.map(m => {
     const initial = (m.display_name || '?')[0];
-    const role = m.role === 'leader' ? '리더' : '파트너';
+    const role = m.role === 'leader' ? '리더' : (m.role === 'admin' ? '관리자' : '파트너');
     return `<div class="member-card">
       <div class="member-avatar">${initial}</div>
       <div class="member-info">
