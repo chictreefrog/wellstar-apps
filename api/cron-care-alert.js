@@ -75,6 +75,19 @@ module.exports = async function handler(req, res) {
           headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
           body: JSON.stringify({ last_alerted_at: new Date().toISOString() }),
         });
+        // 영업인 귀속 집계 (ref → inviter_id) — 비용 모니터링/청구용
+        let inviterId = null;
+        if (s.ref) {
+          try {
+            const ir = await fetch(`${SUPABASE_URL}/rest/v1/profiles?business_code=eq.${encodeURIComponent(String(s.ref).toUpperCase())}&select=id&limit=1`, { headers: sbHeaders });
+            inviterId = (await ir.json())[0]?.id || null;
+          } catch {}
+        }
+        await fetch(`${SUPABASE_URL}/rest/v1/customer_ai_log`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+          body: JSON.stringify({ inviter_id: inviterId, source: 'care_sms', lead_phone: to }),
+        }).catch(() => {});
       } else {
         console.error('[cron-care-alert] solapi fail', await smsRes.text());
       }

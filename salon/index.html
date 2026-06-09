@@ -943,10 +943,45 @@ function autoGrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHei
 function chatKey(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
 }
+async function ensureSalonPhone(){
+  if(profile && profile.phone) return true;
+  return new Promise(resolve=>showPhoneGate(resolve));
+}
+function showPhoneGate(resolve){
+  const old=document.getElementById('salonGate'); if(old) old.remove();
+  const ov=document.createElement('div'); ov.id='salonGate';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML=`<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px 30px;font-family:inherit;color:#352C22">
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">디노 언니와 이야기하려면 🌿</div>
+    <div style="font-size:13px;color:#888;margin-bottom:4px">번호만 알려주시면 바로 시작해요.</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:14px">🔒 마음·일기 기록은 이 폰에만 저장돼요. 번호는 소식·알림용으로만 써요.</div>
+    <input id="sgPhone" type="tel" inputmode="numeric" maxlength="11" placeholder="휴대폰 번호 (01012345678)" style="width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;font-size:15px;outline:none;font-family:inherit;margin-bottom:8px">
+    <div id="sgErr" style="color:#e35;font-size:12px;min-height:16px;margin-bottom:4px"></div>
+    <button id="sgGo" style="width:100%;padding:15px;border:none;border-radius:12px;background:#c9648c;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">시작하기</button>
+    <button id="sgSkip" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">나중에</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const done=(v)=>{ ov.remove(); resolve(v); };
+  document.getElementById('sgSkip').onclick=()=>done(false);
+  document.getElementById('sgGo').onclick=async()=>{
+    const ph=(document.getElementById('sgPhone').value||'').replace(/\D/g,'');
+    if(ph.length<10){ document.getElementById('sgErr').textContent='올바른 번호를 입력해주세요'; return; }
+    const btn=document.getElementById('sgGo'); btn.disabled=true; btn.textContent='시작 중…';
+    if(!profile) profile={};
+    profile.phone=ph; save(LS.profile, profile);
+    try{
+      await fetch('/api/salon-join',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ phone:ph, name:(profile.owner_name||'').trim()||null, age_band:profile.age_band||null, ref:localStorage.getItem('salon_ref')||null, source:'salon' })});
+    }catch(e){}
+    done(true);
+  };
+}
+
 async function sendChat(){
   if(chatBusy) return;
   const t=$('#chatText'); const msg=t.value.trim();
   if(!msg) return;
+  if(!(await ensureSalonPhone())) return;   // 디노언니 첫 사용 시 번호 게이트(리드 수집)
   t.value=''; autoGrow(t);
 
   chat.messages.push({ role:'user', text:msg });
@@ -970,6 +1005,8 @@ async function sendChat(){
         history: chat.messages.slice(-16).map(m=>({ role:m.role==='user'?'user':'sister', text:m.text })),
         name: (profile?.owner_name||'').trim() || undefined,
         ageBand: profile?.age_band || undefined,
+        phone: (profile?.phone||'') || undefined,
+        ref: localStorage.getItem('salon_ref') || undefined,
       })
     });
     const data = await r.json().catch(()=>({}));

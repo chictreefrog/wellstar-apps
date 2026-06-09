@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
-  const { message, history, name, ageBand } = req.body || {};
+  const { message, history, name, ageBand, phone } = req.body || {};
   if (!message || !String(message).trim()) {
     return res.status(400).json({ error: 'message 필요' });
   }
@@ -32,6 +32,29 @@ module.exports = async function handler(req, res) {
   if (!GEMINI_API_KEY) {
     // 키가 없어도 사용자에겐 따뜻하게
     return res.status(200).json({ reply: warmFallback(false, name) });
+  }
+
+  // ═══ 살롱 고객 일일 한도(디노언니 3회/일) + 영업인 귀속 집계 ═══
+  const SUPABASE_URL = process.env.DINO_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.DINO_SUPABASE_KEY;
+  const cleanPhone = String(phone || '').replace(/\D/g, '');
+  const SALON_DAILY = 3;
+  const kstToday = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  let leadRow = null;
+  if (cleanPhone.length >= 10 && SUPABASE_URL && SUPABASE_KEY) {
+    try {
+      const lr = await fetch(`${SUPABASE_URL}/rest/v1/customer_leads?phone=eq.${cleanPhone}&source=eq.salon&select=*&limit=1`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+      leadRow = (await lr.json())[0] || null;
+    } catch {}
+    const usedToday = (leadRow && leadRow.ai_used_date === kstToday) ? (leadRow.ai_used_count || 0) : 0;
+    if (usedToday >= SALON_DAILY) {
+      const who = (name && String(name).trim()) ? `${String(name).trim()} 언니, ` : '';
+      return res.status(200).json({
+        reply: `${who}오늘은 여기까지 이야기 나눴어요 💛\n내일 또 만나요. 오늘 하루도 토닥토닥, 잘 보내요 🌿`,
+        limit: true
+      });
+    }
   }
 
   // ★ 조용한 안전망 — 진짜 위기 신호 감지 (idiomatic "죽겠다"는 제외)
@@ -80,6 +103,7 @@ module.exports = async function handler(req, res) {
       attempt++;
       last = await generateOnce();
       if (last.text && (last.finishReason === 'STOP' || last.finishReason === 'UNKNOWN')) {
+        await bumpSalonUsage(SUPABASE_URL, SUPABASE_KEY, cleanPhone, leadRow, kstToday);
         return res.status(200).json({ reply: last.text });
       }
       console.warn(`sister-chat attempt ${attempt} finishReason=${last.finishReason} len=${last.text.length}`);
@@ -92,6 +116,23 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ reply: warmFallback(crisis, name) });
   }
 };
+
+// ═══ 살롱 일일 사용 증가 + 영업인 집계 로그 ═══
+async function bumpSalonUsage(url, key, phone, leadRow, today) {
+  if (!url || !key || !phone || phone.length < 10) return;
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  const newCount = ((leadRow && leadRow.ai_used_date === today) ? (leadRow.ai_used_count || 0) : 0) + 1;
+  try {
+    await fetch(`${url}/rest/v1/customer_leads?phone=eq.${phone}&source=eq.salon`, {
+      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify({ ai_used_date: today, ai_used_count: newCount, last_seen: new Date().toISOString() })
+    });
+    await fetch(`${url}/rest/v1/customer_ai_log`, {
+      method: 'POST', headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify({ inviter_id: leadRow ? leadRow.inviter_id : null, source: 'salon_ai', lead_phone: phone })
+    });
+  } catch {}
+}
 
 // ═══ 위기 신호 감지 ═══
 // 진짜 위기 표현만 매칭. 관용구("피곤해 죽겠다", "배고파 죽겠어")는 의도적으로 제외.
