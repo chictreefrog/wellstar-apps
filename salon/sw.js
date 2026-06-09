@@ -1,4 +1,4 @@
-const CACHE_NAME = 'salon-v1';
+const CACHE_NAME = 'salon-v2-phone-gate';
 const APP_PATH = '/salon/';
 
 self.addEventListener('install', e => {
