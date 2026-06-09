@@ -944,21 +944,25 @@ function chatKey(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
 }
 async function ensureSalonPhone(){
-  if(profile && profile.phone) return true;
-  return new Promise(resolve=>showPhoneGate(resolve));
+  if(profile && profile.phone) return true;            // 이미 번호 있음 → 통과
+  if(!localStorage.getItem('salon_free_used')){        // 가치 먼저: 첫 대화 1회는 번호 없이 무료
+    localStorage.setItem('salon_free_used','1');        // (대화 비우기로 리셋되지 않는 별도 플래그)
+    return true;
+  }
+  return new Promise(resolve=>showPhoneGate(resolve));  // 두 번째 메시지부터 번호 요청
 }
 function showPhoneGate(resolve){
   const old=document.getElementById('salonGate'); if(old) old.remove();
   const ov=document.createElement('div'); ov.id='salonGate';
   ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center';
   ov.innerHTML=`<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px 30px;font-family:inherit;color:#352C22">
-    <div style="font-size:18px;font-weight:800;margin-bottom:6px">디노 언니와 이야기하려면 🌿</div>
-    <div style="font-size:13px;color:#888;margin-bottom:4px">번호만 알려주시면 바로 시작해요.</div>
-    <div style="font-size:12px;color:#aaa;margin-bottom:14px">🔒 마음·일기 기록은 이 폰에만 저장돼요. 번호는 소식·알림용으로만 써요.</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">우리 더 이야기 나눠요 💛</div>
+    <div style="font-size:13px;color:#888;margin-bottom:4px">번호만 살짝 남겨주시면, 디노 언니가 잊지 않고 계속 곁에서 챙겨드릴게요.</div>
+    <div style="font-size:12px;color:#aaa;margin-bottom:14px">🔒 마음·일기 기록은 이 폰에만 저장돼요. 번호는 따뜻한 소식·알림에만 쓰고, 다른 곳엔 절대 보내지 않아요.</div>
     <input id="sgPhone" type="tel" inputmode="numeric" maxlength="11" placeholder="휴대폰 번호 (01012345678)" style="width:100%;padding:14px;border:1px solid #ddd;border-radius:12px;font-size:15px;outline:none;font-family:inherit;margin-bottom:8px">
     <div id="sgErr" style="color:#e35;font-size:12px;min-height:16px;margin-bottom:4px"></div>
-    <button id="sgGo" style="width:100%;padding:15px;border:none;border-radius:12px;background:#c9648c;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">시작하기</button>
-    <button id="sgSkip" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">나중에</button>
+    <button id="sgGo" style="width:100%;padding:15px;border:none;border-radius:12px;background:#c9648c;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">네, 계속할래요</button>
+    <button id="sgSkip" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">다음에요</button>
   </div>`;
   document.body.appendChild(ov);
   const done=(v)=>{ ov.remove(); resolve(v); };
