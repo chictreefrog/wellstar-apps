@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
   const cleanPhone = String(phone || '').replace(/\D/g, '');
   const SALON_DAILY = 3;
   const kstToday = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-  let leadRow = null, usedToday = 0;
+  let leadRow = null, usedToday = 0, paidBalance = 0, payMode = 'free';
   if (cleanPhone.length >= 10 && SUPABASE_URL && SUPABASE_KEY) {
     try {
       const lr = await fetch(`${SUPABASE_URL}/rest/v1/customer_leads?phone=eq.${cleanPhone}&source=eq.salon&select=*&limit=1`,
@@ -48,16 +48,21 @@ module.exports = async function handler(req, res) {
       leadRow = (await lr.json())[0] || null;
     } catch {}
     usedToday = (leadRow && leadRow.ai_used_date === kstToday) ? (leadRow.ai_used_count || 0) : 0;
+    paidBalance = leadRow ? (leadRow.paid_balance || 0) : 0;
     if (usedToday >= SALON_DAILY) {
-      const who = (name && String(name).trim()) ? `${String(name).trim()} 언니, ` : '';
-      return res.status(200).json({
-        reply: `${who}오늘은 여기까지 이야기 나눴어요 💛\n내일 또 만나요. 오늘 하루도 토닥토닥, 잘 보내요 🌿`,
-        limit: true, remaining: 0, dailyLimit: SALON_DAILY
-      });
+      if (paidBalance > 0) {
+        payMode = 'paid';                        // 무료 소진 → 구매한 대화권으로 계속
+      } else {
+        const who = (name && String(name).trim()) ? `${String(name).trim()} 언니, ` : '';
+        return res.status(200).json({
+          reply: `${who}오늘 무료 3번 이야기를 다 나눴어요 💛\n더 이야기하고 싶으면, 디노 언니와 더 함께할 대화권을 더할 수 있어요. 아래에서 골라봐요 🌿`,
+          limit: true, remaining: 0, dailyLimit: SALON_DAILY, needPurchase: true
+        });
+      }
     }
   }
-  // 오늘의 마지막 한 번이면, 디노언니가 자연스럽게 마무리 인사를 담도록
-  const isLastTurn = cleanPhone.length >= 10 && usedToday === SALON_DAILY - 1;
+  // 오늘의 마지막 "무료" 한 번이고 구매분도 없으면, 디노언니가 자연스럽게 마무리 인사
+  const isLastTurn = payMode === 'free' && cleanPhone.length >= 10 && usedToday === SALON_DAILY - 1 && paidBalance <= 0;
 
   // ★ 조용한 안전망 — 진짜 위기 신호 감지 (idiomatic "죽겠다"는 제외)
   const crisis = detectCrisis(message);
@@ -108,10 +113,15 @@ module.exports = async function handler(req, res) {
       attempt++;
       last = await generateOnce();
       if (last.text && (last.finishReason === 'STOP' || last.finishReason === 'UNKNOWN')) {
-        await bumpSalonUsage(SUPABASE_URL, SUPABASE_KEY, cleanPhone, leadRow, kstToday);
-        let remaining = null;
-        if (cleanPhone.length >= 10) remaining = Math.max(0, SALON_DAILY - (usedToday + 1));
-        return res.status(200).json({ reply: last.text, remaining, dailyLimit: SALON_DAILY });
+        let remaining = null, paidRemaining = (cleanPhone.length >= 10) ? paidBalance : null;
+        if (payMode === 'paid') {
+          paidRemaining = await decSalonPaid(SUPABASE_URL, SUPABASE_KEY, cleanPhone, leadRow);
+          remaining = 0;
+        } else {
+          await bumpSalonUsage(SUPABASE_URL, SUPABASE_KEY, cleanPhone, leadRow, kstToday);
+          if (cleanPhone.length >= 10) remaining = Math.max(0, SALON_DAILY - (usedToday + 1));
+        }
+        return res.status(200).json({ reply: last.text, remaining, dailyLimit: SALON_DAILY, paidRemaining });
       }
       console.warn(`sister-chat attempt ${attempt} finishReason=${last.finishReason} len=${last.text.length}`);
       if (attempt < 2) await new Promise(r => setTimeout(r, 1200));
@@ -139,6 +149,25 @@ async function bumpSalonUsage(url, key, phone, leadRow, today) {
       body: JSON.stringify({ inviter_id: leadRow ? leadRow.inviter_id : null, source: 'salon_ai', lead_phone: phone })
     });
   } catch {}
+}
+
+// ═══ 구매한 대화권 1회 차감 (무료 소진 후) ═══
+async function decSalonPaid(url, key, phone, leadRow) {
+  const cur = (leadRow && leadRow.paid_balance) || 0;
+  const newPaid = Math.max(0, cur - 1);
+  if (!url || !key || !phone || phone.length < 10) return newPaid;
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+  try {
+    await fetch(`${url}/rest/v1/customer_leads?phone=eq.${phone}&source=eq.salon`, {
+      method: 'PATCH', headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify({ paid_balance: newPaid, last_seen: new Date().toISOString() })
+    });
+    await fetch(`${url}/rest/v1/customer_ai_log`, {
+      method: 'POST', headers: { ...headers, Prefer: 'return=minimal' },
+      body: JSON.stringify({ inviter_id: leadRow ? leadRow.inviter_id : null, source: 'salon_ai_paid', lead_phone: phone })
+    });
+  } catch {}
+  return newPaid;
 }
 
 // ═══ 위기 신호 감지 ═══

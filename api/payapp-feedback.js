@@ -35,7 +35,9 @@ module.exports = async function handler(req, res) {
     const mulNo     = body.mul_no || '';
     const payState  = parseInt(body.pay_state || '0', 10);
     const price     = parseInt(body.price || '0', 10);
+    const var1      = body.var1 || '';
     const userIdVar = body.var2 || '';
+    const isSalon   = var1.indexOf('salon_') === 0;  // 살롱 고객 대화권 구매
     if (!mulNo) return res.status(200).send('SUCCESS');
 
     const sbHeaders = {
@@ -46,6 +48,34 @@ module.exports = async function handler(req, res) {
 
     // ── 결제완료 (state=4) → 적립 ──
     if (payState === 4) {
+      // ── 살롱 고객 대화권 구매 (var1=salon_<count>, var2=phone) → 번호에 충전 ──
+      if (isSalon) {
+        const count = parseInt(var1.split('_')[1], 10) || 0;
+        const buyerPhone = userIdVar.replace(/\D/g, '');
+        if (count > 0 && buyerPhone.length >= 10) {
+          const pRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/customer_orders?payapp_order_id=eq.${encodeURIComponent(mulNo)}&status=neq.paid`,
+            { method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=representation' }, body: JSON.stringify({ status: 'paid', paid_at: new Date().toISOString() }) }
+          );
+          let upd = []; try { upd = await pRes.json(); } catch {}
+          if (Array.isArray(upd) && upd.length > 0) {
+            await rpcAddSalon(SUPABASE_URL, sbHeaders, buyerPhone, count);
+            console.log(`[payapp-feedback] salon credited phone=${buyerPhone} +${count} (mul_no=${mulNo})`);
+          } else {
+            const chk = await fetch(`${SUPABASE_URL}/rest/v1/customer_orders?payapp_order_id=eq.${encodeURIComponent(mulNo)}&select=status`, { headers: sbHeaders });
+            const rows = await chk.json().catch(() => []);
+            const alreadyPaid = Array.isArray(rows) && rows.some(r => r.status === 'paid');
+            if (!alreadyPaid && count > 0) {
+              await fetch(`${SUPABASE_URL}/rest/v1/customer_orders`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=minimal' },
+                body: JSON.stringify({ phone: buyerPhone, payapp_order_id: mulNo, count, price, status: 'paid', paid_at: new Date().toISOString() }) });
+              await rpcAddSalon(SUPABASE_URL, sbHeaders, buyerPhone, count);
+              console.log(`[payapp-feedback] salon fallback credited phone=${buyerPhone} +${count} (mul_no=${mulNo})`);
+            }
+          }
+        }
+        return res.status(200).send('SUCCESS');
+      }
+
       // 멱등 처리: status != paid 인 주문만 paid 로 전환하고, 그 행을 돌려받음
       const patchRes = await fetch(
         `${SUPABASE_URL}/rest/v1/credit_orders?payapp_order_id=eq.${encodeURIComponent(mulNo)}&status=neq.paid`,
@@ -89,8 +119,9 @@ module.exports = async function handler(req, res) {
 
     // ── 취소/환불 (8,9,32,64,70,71) → 주문 취소 표시. v1: 자동 차감 안 함(필요 시 수동) ──
     if ([8, 9, 32, 64, 70, 71].includes(payState)) {
+      const tbl = isSalon ? 'customer_orders' : 'credit_orders';
       await fetch(
-        `${SUPABASE_URL}/rest/v1/credit_orders?payapp_order_id=eq.${encodeURIComponent(mulNo)}`,
+        `${SUPABASE_URL}/rest/v1/${tbl}?payapp_order_id=eq.${encodeURIComponent(mulNo)}`,
         { method: 'PATCH', headers: { ...sbHeaders, Prefer: 'return=minimal' }, body: JSON.stringify({ status: 'cancelled' }) }
       );
       console.log(`[payapp-feedback] cancelled mul_no=${mulNo} state=${payState}`);
@@ -111,5 +142,14 @@ async function rpcAddCredits(url, headers, userId, amount, ref, memo) {
     method: 'POST',
     headers,
     body: JSON.stringify({ p_user: userId, p_amount: amount, p_kind: 'charge', p_ref: ref, p_memo: memo }),
+  }).catch(() => {});
+}
+
+// 살롱 고객 대화권 충전 (전화번호 기준)
+async function rpcAddSalon(url, headers, phone, count) {
+  return fetch(`${url}/rest/v1/rpc/add_salon_credits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ p_phone: phone, p_count: count }),
   }).catch(() => {});
 }

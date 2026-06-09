@@ -1029,12 +1029,13 @@ async function sendChat(){
   sc.appendChild(bubble('sister', reply));
   chatBusy=false; $('#chatSend').disabled=false;
   scrollChat();
-  updateLimitHint(window.__lastChatData.remaining);
+  updateChatHint(window.__lastChatData);
+  if(window.__lastChatData && window.__lastChatData.needPurchase) showBuySheet();
 }
 function clearChat(){
   if(!confirm('디노 언니와의 대화를 비울까요?\n비우면 되돌릴 수 없어요. 💾로 먼저 저장할 수 있어요.')) return;
   chat={ messages:[] }; save(LS.chat, chat); renderChat();
-  updateLimitHint(null);
+  updateChatHint({});
 }
 
 // 대화 저장(내보내기) — 카톡/메모로 공유하거나 텍스트로 다운로드
@@ -1065,13 +1066,53 @@ function downloadChatText(text,dateStr){
   }catch(e){ toast('저장에 실패했어요'); }
 }
 
-// 오늘 남은 대화 횟수를 부드럽게 안내 (갑작스러운 끊김 방지)
-function updateLimitHint(remaining){
+// 남은 대화 안내 (무료/구매분) + 갑작스러운 끊김 방지
+function updateChatHint(data){
   const el=$('#chatLimitHint'); if(!el) return;
-  if(remaining===null||remaining===undefined||remaining>2){ el.style.display='none'; return; }
-  if(remaining<=0){ el.textContent='💛 오늘 이야기는 여기까지예요. 내일 또 만나요'; }
-  else { el.textContent=`🌿 오늘은 ${remaining}번 더 이야기 나눌 수 있어요`; }
+  data=data||{};
+  if(data.needPurchase){ el.style.display='none'; return; }   // 구매 시트가 대신 뜸
+  const rem=data.remaining, paid=data.paidRemaining;
+  if(typeof paid==='number' && paid>0 && (rem===0||rem===null||rem===undefined)){
+    el.textContent=`💎 구매한 대화 ${paid}회 남았어요`; el.style.display='block'; return;
+  }
+  if(rem===null||rem===undefined||rem>2){ el.style.display='none'; return; }
+  if(rem<=0){ el.textContent='💛 오늘 무료 3회를 다 썼어요'; }
+  else { el.textContent=`🌿 오늘은 ${rem}번 더 무료로 이야기 나눌 수 있어요`; }
   el.style.display='block';
+}
+
+// 디노언니 추가 대화권 구매 시트
+function showBuySheet(){
+  const old=document.getElementById('salonBuy'); if(old) old.remove();
+  const ov=document.createElement('div'); ov.id='salonBuy';
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center';
+  const pack=(c,p,per,badge)=>`<button class="buyPack" data-pack="${c}" style="width:100%;text-align:left;padding:15px 16px;margin-bottom:10px;border:1.5px solid #f0c8d6;border-radius:14px;background:#fff7fa;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:15px;font-weight:800;color:#352C22">${c}회 <span style="font-size:12px;color:#c9648c;font-weight:700">${badge||''}</span></span>
+    <span style="text-align:right;line-height:1.3"><span style="font-size:15px;font-weight:800;color:#c9648c">${p.toLocaleString()}원</span><br><span style="font-size:11px;color:#aaa">${per}</span></span>
+  </button>`;
+  ov.innerHTML=`<div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:24px 20px 30px;font-family:inherit;color:#352C22">
+    <div style="font-size:18px;font-weight:800;margin-bottom:6px">디노 언니와 더 이야기해요 💛</div>
+    <div style="font-size:13px;color:#888;margin-bottom:16px">매일 무료 3회 외에 더 나누고 싶을 때 골라요.<br>구매한 횟수는 사라지지 않고 계속 쌓여요.</div>
+    ${pack(100,1000,'10원/회','')}
+    ${pack(300,2900,'약 9.7원/회','· 알뜰')}
+    <button id="buyCancel" style="width:100%;padding:10px;border:none;background:none;color:#aaa;font-size:13px;cursor:pointer;font-family:inherit;margin-top:2px">다음에요</button>
+    <div style="font-size:11px;color:#bbb;text-align:center;margin-top:6px">🔒 결제는 PayApp으로 안전하게 진행돼요</div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('.buyPack').forEach(b=>b.onclick=()=>startBuy(parseInt(b.dataset.pack,10), b));
+  document.getElementById('buyCancel').onclick=()=>ov.remove();
+}
+async function startBuy(pack, btn){
+  const ph=String((profile&&profile.phone)||'').replace(/\D/g,'');
+  if(ph.length<10){ toast('번호 정보가 없어요'); return; }
+  if(btn){ btn.disabled=true; btn.style.opacity=.6; }
+  try{
+    const r=await fetch('/api/salon-buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ phone:ph, pack })});
+    const d=await r.json().catch(()=>({}));
+    if(d&&d.payUrl){ location.href=d.payUrl; return; }
+    if(d&&d.success){ toast('📱 결제 링크를 보냈어요. 결제하면 자동 충전돼요 💛'); const s=document.getElementById('salonBuy'); if(s) s.remove(); return; }
+    toast((d&&d.message)||'결제 요청에 실패했어요'); if(btn){ btn.disabled=false; btn.style.opacity=1; }
+  }catch(e){ toast('결제 요청 중 오류가 났어요'); if(btn){ btn.disabled=false; btn.style.opacity=1; } }
 }
 
 /* =========================================================
