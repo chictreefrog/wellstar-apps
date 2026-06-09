@@ -123,7 +123,14 @@ function copy(txt){ navigator.clipboard.writeText(txt).then(()=>toast('복사됐
 
 function openPersona(){ if(window.DinoPersona) DinoPersona.open(()=>{ window.__personaSet=true; updatePersonaBtn(); }); }
 function updatePersonaBtn(){ const b=$('personaBtn'); if(!b)return; b.textContent = window.__personaSet ? '💼 내 사업 프로필 ✓ (수정)' : '💼 내 사업 프로필 설정 — 정확도 ↑'; }
-function updateBal(){ const el=$('bal'); if(el && typeof window.__creditBalance==='number') el.textContent='💎 잔액 '+window.__creditBalance.toLocaleString('ko-KR'); }
+function renderStatus(){
+  const el=$('bal'); if(!el) return;
+  const parts=[];
+  if(typeof window.__ibUsed==='number' && typeof window.__ibLimit==='number') parts.push(`오늘 ${window.__ibUsed}/${window.__ibLimit}건`);
+  if(typeof window.__creditBalance==='number') parts.push(`💎 잔액 ${window.__creditBalance.toLocaleString('ko-KR')}`);
+  el.textContent = parts.join(' · ');
+}
+function updateBal(){ renderStatus(); }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function copyEl(id){ const el=document.getElementById(id); if(el) copy(el.textContent); }
@@ -145,6 +152,10 @@ async function generate(){
     if(!token){ if(window.DinoAuth) DinoAuth.showLogin(); return; }
     const res=await fetch('/api/icebreaker',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({situation,context})});
     const data=await res.json().catch(()=>({}));
+    if(typeof data.used==='number') window.__ibUsed=data.used;
+    if(typeof data.limit==='number') window.__ibLimit=data.limit;
+    if(typeof data.credit_balance==='number') window.__creditBalance=data.credit_balance;
+    renderStatus();
     if(res.status===429){
       toast(data.message||'오늘 한도에 도달했어요');
       if(data.need_credit) setTimeout(()=>{ if(confirm('💎 충전하면 계속 쓸 수 있어요. 충전 페이지로 갈까요?')) location.href='/charge'; },150);
@@ -152,7 +163,6 @@ async function generate(){
     }
     if(res.ok && data.openers){
       renderOpeners(data.openers);
-      if(typeof data.credit_balance==='number'){ window.__creditBalance=data.credit_balance; updateBal(); }
     } else {
       toast(data.message||'생성 실패. 잠시 후 다시 시도해주세요');
     }
@@ -175,8 +185,16 @@ function showCard(kind){
     if(!window.dinoSupabase) await new Promise(r=>window.addEventListener('dino-supabase-ready',r,{once:true}));
     const { data:{session} }=await window.dinoSupabase.auth.getSession();
     if(!session) return;
-    const { data }=await window.dinoSupabase.from('profiles').select('credit_balance').eq('id',session.user.id).single();
-    window.__creditBalance = data ? (data.credit_balance||0) : 0; updateBal();
+    const { data }=await window.dinoSupabase.from('profiles').select('credit_balance, role').eq('id',session.user.id).single();
+    window.__creditBalance = data ? (data.credit_balance||0) : 0;
+    window.__ibLimit = (data && data.role==='guest') ? 2 : 5;
+    try{
+      const kst=new Date(Date.now()+9*3600*1000); kst.setUTCHours(0,0,0,0);
+      const since=new Date(kst.getTime()-9*3600*1000).toISOString();
+      const { count }=await window.dinoSupabase.from('content_usage').select('id',{count:'exact',head:true}).eq('user_id',session.user.id).eq('channel','icebreaker').gte('created_at',since);
+      window.__ibUsed = count||0;
+    }catch(e3){}
+    renderStatus();
     try{ const { data:pp }=await window.dinoSupabase.from('profiles').select('company_id,persona').eq('id',session.user.id).single();
       window.__personaSet=!!(pp&&pp.company_id&&pp.persona&&Object.keys(pp.persona).length); }catch(e2){ window.__personaSet=false; }
     updatePersonaBtn();
