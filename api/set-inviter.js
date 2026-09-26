@@ -59,8 +59,19 @@ module.exports = async function handler(req, res) {
   // 2. ref → 추천인 profile 찾기
   let inviterId = null;
 
+  // 2-0. 팀 초대 코드(teams.invite_code) → 팀장 — 초대 링크로 와서 사업자번호를 비워 둔 잠재고객도 추천인이 남게(2026-09-26)
+  //   ilike 는 대소문자만 무시하려는 것 — %·_ 같은 와일드카드가 섞인 값은 아예 안 찾는다.
+  if (/^[A-Z0-9-]{2,30}$/.test(cleanRef)) try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/teams?invite_code=ilike.${encodeURIComponent(cleanRef)}&select=leader_id&limit=1`,
+      { headers: sbHeaders }
+    );
+    const rows = await r.json();
+    if (rows?.[0]?.leader_id) inviterId = rows[0].leader_id;
+  } catch {}
+
   // 2a. business_code 매치
-  try {
+  if (!inviterId) try {
     const r = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?business_code=eq.${encodeURIComponent(cleanRef)}&select=id&limit=1`,
       { headers: sbHeaders }

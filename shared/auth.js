@@ -138,7 +138,8 @@ window.DinoAuth = (function() {
           <div class="dino-auth-title">프로필 설정</div>
           <div class="dino-auth-sub">이름을 입력하고, 팀에 합류하려면<br>초대 코드를 입력하세요</div>
           <input class="dino-auth-input" id="dino-name" type="text" placeholder="이름">
-          <input class="dino-auth-input" id="dino-biz-code" type="text" placeholder="사업자번호 / 설계사번호 (선택)">
+          <input class="dino-auth-input" id="dino-biz-code" type="text" placeholder="웰런스 사업자번호 (선택)" style="margin-bottom:6px">
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin:0 0 12px 4px">웰런스 사업자번호가 아직 없으시면 비워 두세요.</div>
           <input class="dino-auth-input" id="dino-invite" type="text" placeholder="초대 코드 (선택, 받은 코드 있으면 입력)" maxlength="20" style="text-transform:uppercase">
           <div class="dino-auth-error" id="dino-error-profile"></div>
           <button class="dino-auth-btn" id="dino-btn-profile" onclick="DinoAuth._saveProfile()">시작하기</button>
@@ -175,14 +176,8 @@ window.DinoAuth = (function() {
         if (pending && inviteInput && !inviteInput.value) {
           inviteInput.value = pending;
         }
-        // 초대 코드가 있으면 = 팀 합류 흐름 → 사업자번호 필수 표시
-        const bizInput = document.getElementById('dino-biz-code');
-        if (bizInput) {
-          const hasInvite = (pending || inviteInput?.value || '').trim().length > 0;
-          bizInput.placeholder = hasInvite
-            ? '사업자번호 / 설계사번호 (필수 — 팀 합류 시)'
-            : '사업자번호 / 설계사번호 (선택)';
-        }
+        // ★2026-09-26 사업자번호는 초대 코드가 있어도 선택(대표님). 전엔 「필수 — 팀 합류 시」라서
+        //   웰런스 사업자가 아닌 사람이 아무 번호나 넣고 팀 「파트너」가 됐다(DB 트리거가 번호만 보고 팀에 넣는다).
       } catch {}
     }
   }
@@ -402,13 +397,8 @@ window.DinoAuth = (function() {
       return;
     }
 
-    // 팀 초대 코드로 합류하는 경우 = 사업자만 합류 가능
-    // 본인의 사업자번호 / 설계사번호 입력이 필수
-    if (inviteCode && !bizCode) {
-      document.getElementById('dino-error-profile').textContent =
-        '팀에 합류하려면 본인의 사업자번호 / 설계사번호 입력이 필요해요';
-      return;
-    }
+    // 팀 합류 = 웰런스 사업자번호를 넣은 사람만. 초대 코드만 있고 번호가 비었으면
+    // 팀에는 넣지 않고 추천인만 기록한다(잠재고객 = guest). 사업자번호를 나중에 넣으면 DB 트리거가 팀에 넣는다.
 
     const btn = document.getElementById('dino-btn-profile');
     btn.disabled = true;
@@ -428,7 +418,7 @@ window.DinoAuth = (function() {
 
       if (profileErr) throw profileErr;
 
-      if (inviteCode) {
+      if (inviteCode && bizCode) {
         try {
           const { data: joinResult } = await supabase.rpc('join_team_by_code', { code: inviteCode });
           if (joinResult?.error) {
@@ -443,10 +433,10 @@ window.DinoAuth = (function() {
           // 초대코드 실패해도 가입은 진행
         }
       } else {
-        // 초대 코드는 없지만 앱 공유 링크의 ?ref= 가 sessionStorage에 있으면 추천인 기록
+        // 팀 합류가 아니면(사업자번호 없음) 추천인만 기록 — 초대 코드가 먼저, 없으면 앱 공유 링크의 ?ref=
         // (게스트로 가입해도 추천인 정보 추적 가능 → 나중에 사업자가 되면 추적 유지)
         try {
-          const pendingRef = sessionStorage.getItem('dino_pending_ref');
+          const pendingRef = inviteCode || sessionStorage.getItem('dino_pending_ref');
           if (pendingRef) {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.access_token) {
@@ -460,6 +450,7 @@ window.DinoAuth = (function() {
               });
             }
             sessionStorage.removeItem('dino_pending_ref');
+            sessionStorage.removeItem('dino_pending_invite');
           }
         } catch {}
       }
